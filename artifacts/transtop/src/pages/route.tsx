@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams, useSearch } from 'wouter';
-import { ArrowLeft, ArrowUpDown } from 'lucide-react';
-import { getGetRouteQueryKey, useGetRoute } from '@workspace/api-client-react';
+import { ArrowLeft, ArrowRight, ArrowUpDown, X } from 'lucide-react';
+import { getGetNetworkQueryKey, getGetRouteQueryKey, useGetNetwork, useGetRoute, type GetNetworkParams } from '@workspace/api-client-react';
 import { ModeSwitch } from '@/components/shell';
 import { AlertRow, Countdown, ErrorState, FavButton, MODE_NAME, RouteBadge, SkeletonCards, SourceLabel } from '@/components/transit';
 import { TransitMap } from '@/components/transit-map';
@@ -24,8 +24,22 @@ export default function RoutePage() {
   const activeDir = direction ?? dirs[0];
   const color = d?.route.color ?? '#888';
   const vehicles = useMemo(() => honest(d?.vehicles ?? [], mode).filter((v) => mode === 'demo' || !v.source.toLowerCase().includes('demo')).map((v) => ({ ...v, color, routeName: d?.route.name })), [d, mode, color]);
-  const shape = useMemo(() => (d ? { coords: d.shape, color } : null), [d, color]);
-  const mapStops = useMemo(() => (d?.stops ?? []).map((s) => ({ id: s.id, name: s.name, lat: s.lat, lon: s.lon, type: s.type, color })), [d, color]);
+  const netParams: GetNetworkParams = useMemo(() => ({ mode, routeId, zoom: 14 }), [mode, routeId]);
+  const net = useGetNetwork(netParams, { query: { queryKey: getGetNetworkQueryKey(netParams), staleTime: 60_000, retry: 1 } });
+  const [selStop, setSelStop] = useState<string | null>(null);
+  // Key geometry by content so 30-second route refreshes never refit the map.
+  const shapeKey = d ? `${d.route.id}|${activeDir ?? ''}|${JSON.stringify(d.shape)}` : '';
+  const shape = useMemo(() => {
+    if (!d || d.shape.length < 2) return null;
+    // In live mode never draw a stop-to-stop straight-line fallback; rely on official network shapes.
+    if (mode === 'live' && (net.data?.lines.length ?? 0) === 0 && d.shape.length <= 2) return null;
+    return { coords: d.shape, color };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shapeKey, color, mode, (net.data?.lines.length ?? 0) > 0]);
+  const branches = useMemo(() => (net.data?.lines ?? []).map((l) => ({ id: l.route.id, shapeId: l.shapeId, type: l.route.type, agency: l.route.agency, name: l.route.name, color: l.route.color, coords: l.shape })), [net.data]);
+  const mapStops = useMemo(() => (d?.stops ?? []).map((s) => ({ id: s.id, name: s.name, lat: s.lat, lon: s.lon, type: s.type, color, label: true, routes: s.routes.map((r) => ({ id: r.id, name: r.name, color: r.color })) })), [d, color]);
+  const picked = d?.stops.find((s) => s.id === selStop);
+  const pickedIndex = picked ? d!.stops.indexOf(picked) + 1 : 0;
   const center = d?.stops[0] ? { lat: d.stops[0].lat, lon: d.stops[0].lon } : { lat: 40.758, lon: -73.9855 };
 
   return (
@@ -69,7 +83,7 @@ export default function RoutePage() {
                     <li key={s.id} className="rise relative" style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
                       <Link href={`/stops/${encodeURIComponent(s.id)}`} data-testid={`link-route-stop-${s.id}`} aria-current={cur ? 'location' : undefined}
                         className={cn('flex min-h-[56px] items-center gap-4 rounded-xl py-2 pr-3 hover:bg-white/5', cur && 'bg-white/[.06]')}>
-                        <span className={cn('relative z-10 ml-[10px] shrink-0 rounded-full border-[3px] bg-background', cur ? 'h-[22px] w-[22px] -ml-px' : 'h-5 w-5')} style={{ borderColor: cur ? '#f4f1ea' : color }} />
+                        <span className={cn('relative z-10 ml-[6px] inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-[3px] bg-background text-[11px] font-bold tabular', (cur || selStop === s.id) && 'ring-2 ring-foreground')} style={{ borderColor: color }} aria-label={`Stop ${i + 1}`} data-testid={`text-stop-number-${i + 1}`}>{i + 1}</span>
                         <div className="min-w-0 flex-1">
                           <p className={cn('truncate', cur ? 'text-lg font-extrabold' : 'font-semibold')}>{s.name}{cur && <span className="ml-2 text-xs font-bold uppercase tracking-wider text-primary">Your stop</span>}</p>
                           {next && <SourceLabel source={next.source} className="mt-1" />}
@@ -82,7 +96,21 @@ export default function RoutePage() {
               </ol>
             </div>
             <aside className="space-y-3">
-              <TransitMap center={center} stops={mapStops} activeId={currentStop} shape={shape} vehicles={vehicles} className="h-[380px] w-full overflow-hidden rounded-2xl border border-border" label={`Map of route ${d.route.name}`} />
+              <TransitMap center={center} stops={mapStops} activeId={selStop ?? currentStop} shape={shape} network={branches} labelStops vehicles={vehicles} onSelect={setSelStop} className="h-[380px] w-full overflow-hidden rounded-2xl border border-border" label={`Map of route ${d.route.name}`} />
+              {mode === 'live' && net.data && (net.data.missingGeometry.length > 0 || net.data.lines.length === 0) && (
+                <p className="rounded-xl border border-border bg-card/60 px-3 py-2 text-xs text-muted-foreground" data-testid="text-route-geometry">Some or all official path geometry for this route is not published, so parts of the line may not be drawn. Numbered stops are shown at their true locations.</p>
+              )}
+              {net.data && net.data.lines.length > 1 && <p className="text-xs text-muted-foreground" data-testid="text-route-branches">{net.data.lines.length} official path shapes drawn; the selected direction is emphasized.</p>}
+              {picked ? (
+                <div className="rise rounded-2xl border border-card-border bg-card p-4" data-testid="card-route-selected-stop">
+                  <div className="flex items-start gap-3">
+                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-[3px] text-xs font-bold tabular" style={{ borderColor: color }}>{pickedIndex}</span>
+                    <div className="min-w-0 flex-1"><p className="font-bold">{picked.name}</p><div className="mt-1.5 flex flex-wrap gap-1.5">{picked.routes.map((r) => <RouteBadge key={r.id} name={r.name} color={r.color} size="sm" />)}</div></div>
+                    <button onClick={() => setSelStop(null)} aria-label="Clear stop" className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10"><X className="h-4 w-4" /></button>
+                  </div>
+                  <Link href={`/stops/${encodeURIComponent(picked.id)}`} data-testid="link-route-selected-stop" className="mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-primary px-4 text-sm font-bold text-primary-foreground">Arrivals<ArrowRight className="h-4 w-4" /></Link>
+                </div>
+              ) : <p className="text-xs text-muted-foreground">Tap a numbered stop on the map to see its routes.</p>}
               <div className="rounded-2xl border border-card-border bg-card p-4 text-sm">
                 <p className="font-bold">Vehicle positions</p>
                 {vehicles.length === 0 ? <p className="mt-1 text-muted-foreground">No positions available for this route right now.</p> : (

@@ -42,6 +42,28 @@ export function feedStatus(agency:string) {
   return {fresh:ok.length,total:adapters.find(a=>a.id===agency)?.realtimeUrls.length||0,
     updatedAt:feeds.length?new Date(Math.max(...feeds.map(f=>f.timestamp))*1000).toISOString():null};
 }
+/** Fresh feed headers do not make an old per-vehicle observation fresh. */
+export function freshVehicle(timestamp: number, now = Date.now()) {
+  return Number.isFinite(timestamp) && timestamp > 0 && now - timestamp * 1000 <= FRESH_MS && timestamp * 1000 <= now + 30000;
+}
+export function mapVehicles(mode: "live" | "demo" = "live") {
+  if (mode === "demo") return [];
+  const vehicles = new Map<string, { id: string; routeId: string; lat: number; lon: number; source: string; updatedAt: string }>();
+  for (const agency of adapters) for (const f of feedsFor(agency.id)) {
+    if (!fresh(f)) continue;
+    for (const e of f.entities) {
+      const v = e.vehicle, pos = v?.position, timestamp = Number(v?.timestamp);
+      if (!pos || !v.trip?.routeId || !freshVehicle(timestamp) ||
+        !Number.isFinite(pos.latitude) || !Number.isFinite(pos.longitude) ||
+        Math.abs(pos.latitude) > 90 || Math.abs(pos.longitude) > 180) continue;
+      const id = `${agency.id}:${e.id}`;
+      const item = { id, routeId: `${agency.id}:${v.trip.routeId}`, lat: pos.latitude, lon: pos.longitude,
+        source: `${agency.name} · official live vehicle`, updatedAt: new Date(timestamp * 1000).toISOString() };
+      if (!vehicles.has(id) || vehicles.get(id)!.updatedAt < item.updatedAt) vehicles.set(id, item);
+    }
+  }
+  return [...vehicles.values()];
+}
 const text=(t:any)=>t?.translation?.find((x:any)=>x.language==="en")?.text||t?.translation?.[0]?.text||"";
 export function liveAlerts():TransitAlert[] {
   const feed=cache.get(alertUrl); if(!feed||!fresh(feed))return [];

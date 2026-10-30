@@ -8,6 +8,7 @@ import type { Route } from './route';
 import type { Vehicle } from './vehicle';
 
 export interface NetworkLine {
+  shapeId: string;
   route: Route;
   shape: number[][];
   vehicles: Vehicle[];

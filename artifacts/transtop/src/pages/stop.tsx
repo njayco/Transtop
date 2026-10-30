@@ -24,7 +24,7 @@ export default function StopPage() {
     });
     return Array.from(m.entries()).map(([k, arr]) => ({ key: k, direction: k.split('|')[0], destination: k.split('|')[1], arr: arr.sort((x, y) => x.minutes - y.minutes) }));
   }, [stop, mode]);
-  const mapStops = useMemo(() => (stop ? [{ id: stop.id, name: stop.name, lat: stop.lat, lon: stop.lon, type: stop.type }] : []), [stop]);
+  const mapStops = useMemo(() => (stop ? [{ id: stop.id, name: stop.name, lat: stop.lat, lon: stop.lon, type: stop.type, label: true, routes: stop.routes }] : []), [stop]);
 
   return (
     <div className="mx-auto max-w-6xl">

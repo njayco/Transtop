@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'wouter';
-import { LocateFixed, Search, List, Map as MapIcon, X, MapPin } from 'lucide-react';
-import { getGetNetworkQueryKey, getGetStopsQueryKey, useGetAlerts, useGetNetwork, useGetSources, useGetStops, type GetNetworkParams, type GetStopsParams } from '@workspace/api-client-react';
+import { LocateFixed, Search, List, Map as MapIcon, X, MapPin, Globe2 } from 'lucide-react';
+import { getGetMapVehiclesQueryKey, getGetNetworkQueryKey, getGetStopsQueryKey, useGetAlerts, useGetMapVehicles, useGetNetwork, useGetSources, useGetStops, type GetMapVehiclesParams, type GetNetworkParams, type GetStopsParams } from '@workspace/api-client-react';
+import { RegionalMap } from '@/components/regional-map';
 import { MobileTop } from '@/components/shell';
 import { AlertRow, ErrorState, SkeletonCards, StopCard, TransitLines } from '@/components/transit';
 import { TransitMap, vehicleKind } from '@/components/transit-map';
@@ -9,6 +10,8 @@ import { RouteBadge } from '@/components/transit';
 import { TIMES_SQUARE, usePrefs } from '@/lib/prefs';
 import { ago } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
+import type { MapViewport } from '@/components/transit-map';
 
 const FILTERS = [
   { v: 'all', l: 'All' }, { v: 'subway', l: 'Subway' }, { v: 'bus', l: 'Bus' }, { v: 'rail', l: 'Commuter Rail' },
@@ -16,6 +19,7 @@ const FILTERS = [
 type Place = { lat: number; lon: number; label: string } | { q: string; label: string };
 
 export default function Nearby() {
+  const isMobile = useIsMobile();
   const { mode } = usePrefs();
   const [, nav] = useLocation();
   const [place, setPlace] = useState<Place>(TIMES_SQUARE);
@@ -36,30 +40,38 @@ export default function Nearby() {
   const stops = useGetStops(params, { query: { queryKey: getGetStopsQueryKey(params), refetchInterval: 30_000, retry: 1 } });
   const alerts = useGetAlerts({ mode });
   const list = stops.data?.stops ?? [];
-  const mapStops = useMemo(() => list.map((s) => ({ id: s.id, name: s.name, lat: s.lat, lon: s.lon, type: s.type })), [list]);
   const center = stops.data?.centerLat != null && stops.data?.centerLon != null
     ? { lat: stops.data.centerLat, lon: stops.data.centerLon }
     : 'lat' in place ? place : TIMES_SQUARE;
-  const netParams: GetNetworkParams = useMemo(() => ({ mode, ...(filter !== 'all' ? { type: filter } : {}), lat: center.lat, lon: center.lon }), [mode, filter, center.lat, center.lon]);
-  const networkQ = useGetNetwork(netParams, { query: { queryKey: getGetNetworkQueryKey(netParams), refetchInterval: 30_000, retry: 1 } });
-  const network = useMemo(() => ({ isError: networkQ.isError, data: networkQ.data?.filter((l) => (!agency || l.route.id.split(':')[0] === agency) && (svc === 'all' || (l.route.serviceClass ?? 'local') === svc)) }), [networkQ.isError, networkQ.data, agency, svc]);
+  const [viewport, setViewport] = useState<MapViewport | null>(null);
+  const onViewport = useCallback((v: MapViewport) => setViewport({ west: +v.west.toFixed(4), east: +v.east.toFixed(4), south: +v.south.toFixed(4), north: +v.north.toFixed(4), zoom: v.zoom }), []);
+  const netParams: GetNetworkParams = useMemo(() => ({ mode, ...(filter !== 'all' ? { type: filter } : {}), ...(agency ? { agency } : {}), serviceClass: svc, ...(viewport ?? { lat: center.lat, lon: center.lon, zoom: 14.5 }) }), [mode, filter, agency, svc, viewport, center.lat, center.lon]);
+  const networkQ = useGetNetwork(netParams, { query: { queryKey: getGetNetworkQueryKey(netParams), staleTime: 60_000, retry: 1 } });
+  const mapStops = useMemo(() => (networkQ.data?.stops ?? list).map((s) => ({ id: s.id, name: s.name, lat: s.lat, lon: s.lon, type: s.type, routes: s.routes })), [networkQ.data, list]);
+  const vParams: GetMapVehiclesParams = useMemo(() => ({ mode }), [mode]);
+  const vehQ = useGetMapVehicles(vParams, { query: { queryKey: getGetMapVehiclesQueryKey(vParams), refetchInterval: 30_000, retry: 1 } });
+  const [regional, setRegional] = useState(false);
+  const network = useMemo(() => ({ isError: networkQ.isError, data: networkQ.data?.lines.filter((l) => (!agency || l.route.id.split(':')[0] === agency) && (svc === 'all' || (l.route.serviceClass ?? 'local') === svc)) }), [networkQ.isError, networkQ.data, agency, svc]);
   const hoverRoutes = useMemo(() => new Set(list.find((s) => s.id === hover)?.routes.map((r) => r.id) ?? []), [list, hover]);
-  const lines = useMemo(() => (network.data ?? []).map((l) => ({ id: l.route.id, name: l.route.name, color: hoverRoutes.size && !hoverRoutes.has(l.route.id) ? '#55555c' : l.route.color, coords: l.shape })), [network.data, hoverRoutes]);
-  const vehicles = useMemo(() => (network.data ?? []).flatMap((l) => l.vehicles
-    .filter((v) => (mode === 'demo' ? true : vehicleKind(v.source) !== 'demo'))
-    .map((v) => ({ ...v, color: l.route.color, routeId: l.route.id, routeName: l.route.name }))), [network.data, mode]);
+  const lines = useMemo(() => (network.data ?? []).map((l) => ({ id: l.route.id, shapeId: l.shapeId, type: l.route.type, agency: l.route.agency, name: l.route.name, color: hoverRoutes.size && !hoverRoutes.has(l.route.id) ? '#55555c' : l.route.color, coords: l.shape })), [network.data, hoverRoutes]);
+  const legendRoutes = useMemo(() => { const m = new Map<string, NonNullable<typeof network.data>[number]['route']>(); (network.data ?? []).forEach((l) => { if (!m.has(l.route.id)) m.set(l.route.id, l.route); }); return [...m.values()]; }, [network.data]);
+  const vehicles = useMemo(() => { const byId = new Map(legendRoutes.map((r) => [r.id, r])); return (vehQ.data ?? [])
+    .filter((v) => byId.has(v.routeId) && (mode === 'demo' ? true : vehicleKind(v.source) !== 'demo'))
+    .map((v) => ({ ...v, color: byId.get(v.routeId)!.color, routeName: byId.get(v.routeId)!.name })); }, [vehQ.data, legendRoutes, mode]);
   const goRoute = (id: string) => nav(`/routes/${encodeURIComponent(id)}`);
   const legend = (
     <div className="space-y-1.5">
-      <div className="flex flex-wrap items-center gap-1.5" aria-label="Routes on map">
-        {(network.data ?? []).map((l) => (
-          <button key={l.route.id} onClick={() => goRoute(l.route.id)} aria-label={`Route ${l.route.name} details`} data-testid={`button-map-route-${l.route.id}`} className="transition-transform hover:scale-110"><RouteBadge name={l.route.name} color={l.route.color} size="sm" /></button>
+      <div className="flex max-h-24 flex-wrap items-center gap-1.5 overflow-y-auto" aria-label="Routes on map">
+        {legendRoutes.map((r) => (
+          <button key={r.id} onClick={() => goRoute(r.id)} aria-label={`Route ${r.name} details`} data-testid={`button-map-route-${r.id}`} className="transition-transform hover:scale-110"><RouteBadge name={r.name} color={r.color} size="sm" /></button>
         ))}
       </div>
       <p className="text-[11px] text-muted-foreground">
         {mode === 'demo' ? 'Demo data: lines and vehicle positions are samples, not real service. ' : 'Diamonds are agency-reported positions; dashed circles are approximate community areas. '}
         {network.isError ? 'Route lines unavailable right now.' : 'Positions refresh every 30 seconds.'}
       </p>
+      {networkQ.data?.truncated && <p className="text-xs text-muted-foreground">Map limit reached: zoom in or filter an operator. Not every visible path/stop is shown.</p>}
+      {(networkQ.data?.missingGeometry.length ?? 0) > 0 && <p className="text-xs text-muted-foreground">Some official route geometry is missing. Open Regional map for coverage details.</p>}
     </div>
   );
 
@@ -91,6 +103,10 @@ export default function Nearby() {
         <button onClick={() => setGeo('explain')} data-testid="button-use-location"
           className="inline-flex h-11 items-center gap-2 rounded-full bg-foreground px-4 text-sm font-bold text-background transition-transform active:scale-95">
           <LocateFixed className="h-4 w-4" />Use my location
+        </button>
+        <button onClick={() => setRegional(true)} data-testid="button-open-regional"
+          className="inline-flex h-11 items-center gap-2 rounded-full border border-primary/60 px-4 text-sm font-bold text-primary hover:bg-primary/10">
+          <Globe2 className="h-4 w-4" />Regional map
         </button>
         <button onClick={() => nav('/search')} className="inline-flex h-11 items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold text-muted-foreground hover:text-foreground" data-testid="button-open-search">
           Find a route or station
@@ -164,6 +180,13 @@ export default function Nearby() {
     </div>
   );
 
+  if (regional) return (
+    <div className="relative">
+      <MobileTop />
+      <div className="mx-auto max-w-7xl p-4 md:p-6"><RegionalMap onClose={() => setRegional(false)} /></div>
+    </div>
+  );
+
   return (
     <div className="relative md:grid md:h-[calc(100dvh-65px)] md:grid-cols-[440px_1fr] lg:grid-cols-[500px_1fr]">
       <TransitLines className="absolute inset-x-0 top-0 h-72 w-full opacity-40 md:hidden" />
@@ -182,17 +205,17 @@ export default function Nearby() {
             </div>
           </div>
           <div className="md:hidden">
-            {view === 'map'
-              ? <div className="space-y-3"><TransitMap center={center} stops={mapStops} activeId={hover} network={lines} vehicles={vehicles} onRoute={goRoute} onSelect={(id) => nav(`/stops/${encodeURIComponent(id)}`)} className="h-[52dvh] w-full overflow-hidden rounded-2xl border border-border" /><p className="text-xs text-muted-foreground">Tap a stop for arrivals, or a line for the route.</p>{legend}</div>
+            {view === 'map' && isMobile
+              ? <div className="space-y-3"><TransitMap center={center} stops={mapStops} activeId={hover} network={lines} vehicles={vehicles} onViewport={onViewport} onRoute={goRoute} onSelect={(id) => nav(`/stops/${encodeURIComponent(id)}`)} className="h-[52dvh] w-full overflow-hidden rounded-2xl border border-border" /><p className="text-xs text-muted-foreground">Tap a stop for arrivals, or a line for the route. The map follows its viewport; the nearby list stays at your search. Bus paths need zoom 12; stops need zoom 13.</p>{legend}</div>
               : results}
           </div>
           <div className="hidden md:block">{results}</div>
         </div>
       </div>
-      <div className="relative hidden md:block">
-        <TransitMap center={center} stops={mapStops} activeId={hover} network={lines} vehicles={vehicles} onRoute={goRoute} onSelect={(id) => nav(`/stops/${encodeURIComponent(id)}`)} className="h-full w-full" />
-        <div className="absolute bottom-8 left-3 max-w-[60%] rounded-xl border border-border bg-background/85 p-3 backdrop-blur">{legend}</div>
-      </div>
+      {!isMobile && <div className="hidden min-h-0 flex-col md:flex">
+        <TransitMap center={center} stops={mapStops} activeId={hover} network={lines} vehicles={vehicles} onViewport={onViewport} onRoute={goRoute} onSelect={(id) => nav(`/stops/${encodeURIComponent(id)}`)} className="min-h-0 w-full flex-1" />
+        <div className="shrink-0 border-t border-border bg-background p-3">{legend}<p className="mt-1 text-xs text-muted-foreground">Map follows the viewport. Nearby list stays at your search. Bus paths: zoom 12+; stops: zoom 13+.</p></div>
+      </div>}
     </div>
   );
 }

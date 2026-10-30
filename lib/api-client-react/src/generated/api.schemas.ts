@@ -117,9 +117,36 @@ export interface Vehicle {
 }
 
 export interface NetworkLine {
+  shapeId: string;
   route: Route;
   shape: number[][];
   vehicles: Vehicle[];
+}
+
+export type MapVehicle = Vehicle & {
+  routeId: string;
+};
+
+export interface MapStop {
+  id: string;
+  name: string;
+  lat: number;
+  lon: number;
+  type: string;
+  routes: Route[];
+}
+
+export interface NetworkResults {
+  lines: NetworkLine[];
+  stops: MapStop[];
+  totalLines: number;
+  totalStops: number;
+  missingGeometry: Route[];
+  truncated: boolean;
+  busDetailZoom: number;
+  stopsZoom: number;
+  generation: string;
+  message: string;
 }
 
 export interface RouteDetail {
@@ -442,12 +469,61 @@ mode?: GetNetworkMode;
 type?: string;
 lat?: number;
 lon?: number;
+/**
+ * @minimum -180
+ * @maximum 180
+ */
+west?: number;
+/**
+ * @minimum -90
+ * @maximum 90
+ */
+south?: number;
+/**
+ * @minimum -180
+ * @maximum 180
+ */
+east?: number;
+/**
+ * @minimum -90
+ * @maximum 90
+ */
+north?: number;
+/**
+ * @minimum 0
+ * @maximum 22
+ */
+zoom?: number;
+agency?: string;
+routeId?: string;
+serviceClass?: GetNetworkServiceClass;
 };
 
 export type GetNetworkMode = typeof GetNetworkMode[keyof typeof GetNetworkMode];
 
 
 export const GetNetworkMode = {
+  demo: 'demo',
+  live: 'live',
+} as const;
+
+export type GetNetworkServiceClass = typeof GetNetworkServiceClass[keyof typeof GetNetworkServiceClass];
+
+
+export const GetNetworkServiceClass = {
+  all: 'all',
+  local: 'local',
+  express: 'express',
+} as const;
+
+export type GetMapVehiclesParams = {
+mode?: GetMapVehiclesMode;
+};
+
+export type GetMapVehiclesMode = typeof GetMapVehiclesMode[keyof typeof GetMapVehiclesMode];
+
+
+export const GetMapVehiclesMode = {
   demo: 'demo',
   live: 'live',
 } as const;

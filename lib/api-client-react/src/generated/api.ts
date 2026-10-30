@@ -29,6 +29,7 @@ import type {
   FeedSource,
   GetAlertsParams,
   GetCatalogParams,
+  GetMapVehiclesParams,
   GetNetworkParams,
   GetRouteParams,
   GetStopParams,
@@ -37,7 +38,8 @@ import type {
   HealthStatus,
   JourneyInput,
   JourneyResults,
-  NetworkLine,
+  MapVehicle,
+  NetworkResults,
   ReportInput,
   Ride,
   RideInput,
@@ -888,9 +890,9 @@ export const getGetNetworkUrl = (params?: GetNetworkParams,) => {
   return stringifiedParams.length > 0 ? `/api/transit/network?${stringifiedParams}` : `/api/transit/network`
 }
 
-export const getNetwork = async (params?: GetNetworkParams, options?: Parameters<typeof customFetch>[1]): Promise<NetworkLine[]> => {
+export const getNetwork = async (params?: GetNetworkParams, options?: Parameters<typeof customFetch>[1]): Promise<NetworkResults> => {
 
-  return customFetch<NetworkLine[]>(getGetNetworkUrl(params),
+  return customFetch<NetworkResults>(getGetNetworkUrl(params),
   {
     ...options,
     method: 'GET'
@@ -963,6 +965,108 @@ export function useGetNetwork<TData = Awaited<ReturnType<typeof getNetwork>>, TE
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetNetworkQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetMapVehiclesUrl = (params?: GetMapVehiclesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/transit/map-vehicles?${stringifiedParams}` : `/api/transit/map-vehicles`
+}
+
+export const getMapVehicles = async (params?: GetMapVehiclesParams, options?: Parameters<typeof customFetch>[1]): Promise<MapVehicle[]> => {
+
+  return customFetch<MapVehicle[]>(getGetMapVehiclesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMapVehiclesQueryKey = (params?: GetMapVehiclesParams,) => {
+    return [
+    `/api/transit/map-vehicles`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetMapVehiclesQueryOptions = <TData = Awaited<ReturnType<typeof getMapVehicles>>, TError = ErrorType<unknown>>(params?: GetMapVehiclesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMapVehicles>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMapVehiclesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMapVehicles>>> = ({ signal }) => getMapVehicles(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMapVehicles>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMapVehiclesQueryResult = NonNullable<Awaited<ReturnType<typeof getMapVehicles>>>
+export type GetMapVehiclesQueryError = ErrorType<unknown>
+
+
+export function useGetMapVehicles<TData = Awaited<ReturnType<typeof getMapVehicles>>, TError = ErrorType<unknown>>(
+ params: undefined |  GetMapVehiclesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMapVehicles>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMapVehicles>>,
+          TError,
+          Awaited<ReturnType<typeof getMapVehicles>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMapVehicles<TData = Awaited<ReturnType<typeof getMapVehicles>>, TError = ErrorType<unknown>>(
+ params?: GetMapVehiclesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMapVehicles>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMapVehicles>>,
+          TError,
+          Awaited<ReturnType<typeof getMapVehicles>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMapVehicles<TData = Awaited<ReturnType<typeof getMapVehicles>>, TError = ErrorType<unknown>>(
+ params?: GetMapVehiclesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMapVehicles>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetMapVehicles<TData = Awaited<ReturnType<typeof getMapVehicles>>, TError = ErrorType<unknown>>(
+ params?: GetMapVehiclesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMapVehicles>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMapVehiclesQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

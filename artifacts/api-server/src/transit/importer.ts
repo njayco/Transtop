@@ -6,6 +6,7 @@ import { db, pool, agencies, stops, routes, trips, stopTimes, calendars, calenda
 import { adapter } from "./adapters";
 import { gtfsSeconds } from "./time";
 import { logger } from "../lib/logger";
+import { invalidateNetwork } from "./network";
 import type { TransitRoute } from "./types";
 import { IMPORT_LOCK, cleanupGenerations, insertStopTimes } from "./generations";
 const tables=[agencies,routes,trips,stopTimes,calendars,calendarExceptions,shapes,stops];
@@ -170,6 +171,7 @@ async function importLocked(agency:string) {
       await tx.delete(feedSnapshots).where(and(eq(feedSnapshots.mode,"live"),eq(feedSnapshots.id,`${agency}:import-error`)));
     });
     published=true;
+    invalidateNetwork();
     logger.info({agency,records:count,stops:stopRows.length,durationMs:Date.now()-started},"GTFS import complete");
   } catch(error) {
     const data={message:error instanceof Error?error.message:"GTFS import failed",at:new Date().toISOString()};

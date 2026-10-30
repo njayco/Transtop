@@ -5,7 +5,9 @@ import { demoAlerts } from "../transit/demo";
 import { liveAlerts } from "../transit/realtime";
 import { contributionLimit, start, authorize, end, sample, report } from "../transit/rides";
 import { GetNetworkQueryParams, GetNetworkResponse } from "@workspace/api-zod";
-import { network } from "../transit/network";
+import { network, mapVehicles } from "../transit/network";
+import { validBounds } from "../transit/map-geometry";
+import { GetMapVehiclesQueryParams, GetMapVehiclesResponse } from "@workspace/api-zod";
 import { GetCatalogQueryParams,GetCatalogResponse,GetTimetableQueryParams,GetTimetableResponse,PlanJourneyBody,PlanJourneyResponse } from "@workspace/api-zod";
 import { catalog,timetable } from "../transit/catalog";
 import { journeyLimit,planJourney,JourneyError } from "../transit/journeys";
@@ -56,7 +58,17 @@ router.get("/transit/sources",async(_req,res):Promise<void>=>{res.json(GetSource
 router.get("/transit/network",async(req,res):Promise<void>=>{
   const p=GetNetworkQueryParams.safeParse(req.query);
   if(!p.success||p.data.lat!=null&&Math.abs(p.data.lat)>90||p.data.lon!=null&&Math.abs(p.data.lon)>180){res.status(400).json({error:"Invalid map request"});return;}
-  res.json(GetNetworkResponse.parse(await network(p.data.mode||"demo",p.data.type,p.data.lat,p.data.lon)));
+  const b=p.data, count=[b.west,b.south,b.east,b.north].filter(v=>v!=null).length;
+  if(count!==0&&(count!==4||!validBounds(b as {west:number;south:number;east:number;north:number}))){
+    res.status(400).json({error:"Supply ordered west, south, east and north map bounds"});return;
+  }
+  if((b.lat==null)!==(b.lon==null)){res.status(400).json({error:"Supply both map center coordinates"});return;}
+  res.json(GetNetworkResponse.parse(await network(b)));
+});
+router.get("/transit/map-vehicles",async(req,res):Promise<void>=>{
+  const p=GetMapVehiclesQueryParams.safeParse(req.query);
+  if(!p.success){res.status(400).json({error:"Invalid data mode"});return;}
+  res.json(GetMapVehiclesResponse.parse(mapVehicles(p.data.mode)));
 });
 router.get("/transit/alerts",async(req,res):Promise<void>=>{
   const p=GetAlertsQueryParams.safeParse(req.query);

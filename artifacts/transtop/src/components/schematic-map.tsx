@@ -89,7 +89,7 @@ export function SchematicMap({ center, stops, activeId, onSelect, shape, vehicle
         <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
           <path d={`${path(MANHATTAN)}Z`} fill="#18181b" stroke="#2a2a2e" strokeWidth={inv} pointerEvents="none" />
           {network?.map((l) => (
-            <g key={l.id} role="button" tabIndex={0} aria-label={`Route ${l.name} details`} onClick={() => onRoute?.(l.id)} onKeyDown={keyAct(() => onRoute?.(l.id))} className="cursor-pointer focus:outline-none">
+            <g key={l.shapeId ?? l.id} role="button" tabIndex={0} aria-label={`Route ${l.name} details`} onClick={() => onRoute?.(l.id)} onKeyDown={keyAct(() => onRoute?.(l.id))} className="cursor-pointer focus:outline-none">
               <path d={path(l.coords)} fill="none" stroke={l.color} strokeOpacity={0.18} strokeWidth={8 * inv} />
               <path d={path(l.coords)} fill="none" stroke={l.color} strokeWidth={2.5 * inv} strokeLinejoin="miter" />
               <path d={path(l.coords)} fill="none" stroke="transparent" strokeWidth={14 * inv} />

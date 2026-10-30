@@ -22,7 +22,8 @@ export function RouteBadge({ name, color, size = 'md', className }: { name: stri
   const short = name.length <= 2;
   const dims = size === 'sm' ? 'h-6 min-w-6 text-[12px]' : size === 'lg' ? 'h-12 min-w-12 text-[22px]' : 'h-8 min-w-8 text-[15px]';
   return (
-    <span aria-label={`Route ${name}`} className={cn('inline-flex shrink-0 items-center justify-center font-extrabold leading-none tracking-tight', short ? 'rounded-full' : 'rounded-md px-1.5', dims, className)}
+    <span aria-label={`Route ${name}`} className={cn('inline-flex shrink-0 items-center justify-center font-extrabold leading-none tracking-tight', short ? 'rounded-full' : 'rounded-md px-1.5', dims,
+      name.length > 12 && 'h-auto min-h-8 max-w-[9rem] whitespace-normal break-words py-1 text-center text-sm leading-tight', className)}
       style={{ background: color, color: textOn(color) }}>{name}</span>
   );
 }

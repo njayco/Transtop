@@ -1,11 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { loadGoogleMaps } from '@/lib/google-maps';
 import { SchematicMap } from './schematic-map';
 import { MODE_COLOR } from './transit';
+import { DARK_ROADMAP } from '@/lib/map-style';
 
-export type MapStop = { id: string; name: string; lat: number; lon: number; type: string; color?: string };
+export type MapStop = { id: string; name: string; lat: number; lon: number; type: string; color?: string; label?: boolean; routes?: {id:string;name:string;color:string}[] };
 export type MapVehicle = { id: string; lat: number; lon: number; source: string; updatedAt?: string; color?: string; routeId?: string; routeName?: string };
-export type MapLine = { id: string; name: string; color: string; coords: number[][] };
+export type MapLine = { id: string; name: string; color: string; coords: number[][]; shapeId?: string; type?: string; agency?: string };
+export type MapBounds = { west: number; south: number; east: number; north: number };
+export type MapViewport = MapBounds & { zoom: number };
 
 export function vehicleKind(source: string): 'official' | 'demo' | 'community' {
   const s = source.toLowerCase();
@@ -33,6 +36,10 @@ type Props = {
   className?: string;
   label?: string;
   googleOnly?: boolean;
+  onViewport?: (viewport: MapViewport) => void;
+  fitBounds?: MapBounds;
+  fitKey?: number;
+  labelStops?: boolean;
 };
 
 // One shared auth-error notification for all map instances (Nearby, stop and route).
@@ -51,38 +58,69 @@ function installAuthHook() {
   };
 }
 
-export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehicles = [], network, onRoute, zoom = 14.5, className, label = 'Transit map', googleOnly = false }: Props) {
+export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehicles = [], network, onRoute, zoom = 14.5, className, label = 'Transit map', googleOnly = false, onViewport, fitBounds, fitKey, labelStops = false }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
   const libraries = useRef<Awaited<ReturnType<typeof loadGoogleMaps>> | null>(null);
   const [ready, setReady] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const callbacks = useRef({ onSelect, onRoute });
-  callbacks.current = { onSelect, onRoute };
-  const initial = useRef({ center, zoom });
+  const [tilesReady, setTilesReady] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const [clock, setClock] = useState(Date.now);
+  useEffect(() => {
+    if (!vehicles.length) return;
+    const id = window.setInterval(() => setClock(Date.now()), 10000);
+    return () => window.clearInterval(id);
+  }, [vehicles.length]);
+  const visibleVehicles = useMemo(() => vehicles.filter(v => {
+    const age = v.updatedAt ? clock - new Date(v.updatedAt).getTime() : Infinity;
+    return vehicleKind(v.source) !== 'official' || Number.isFinite(age) && age <= 60000 && age >= -30000;
+  }), [vehicles, clock]);
+  const failed = failure !== null;
+  const callbacks = useRef({ onSelect, onRoute, onViewport });
+  callbacks.current = { onSelect, onRoute, onViewport };
+  const camera = useRef({ center, zoom });
+  const lastCenter = useRef(center);
+  const lastRegionFit = useRef<string | null>(null);
+  const lastShapeFit = useRef<Props['shape']>(null);
 
   useEffect(() => {
-    if (failed || !el.current) return;
+    if (!el.current) return;
     let disposed = false;
     const listeners: google.maps.MapsEventListener[] = [];
     let resize: ResizeObserver | undefined;
     let loaded = false;
-    const fail = () => { if (!disposed) setFailed(true); };
-    const timer = window.setTimeout(() => { if (!loaded) fail(); }, 20000);
-    window.addEventListener('transtop:maps-auth-failure', fail);
+    let viewportTimer: number | undefined;
+    let timer: number | undefined;
+    const fail = (message: string) => { if (!disposed) setFailure(message); };
+    const authFail = () => fail(`Google rejected map authorization. Enable Maps JavaScript API and billing, and allow ${window.location.origin} in the browser key’s website restrictions. After correcting access, reload this page. Never share your key.`);
+    const offline = () => fail('You are offline. Reconnect to load the Google basemap; schedules already loaded remain available below.');
+    const online = () => { if (!authenticationFailed) { setReady(false); setTilesReady(false); setFailure(null); setAttempt(a => a + 1); } };
+    const awaitTiles = () => {
+      loaded = false;
+      if (!disposed) setTilesReady(false);
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => { if (!loaded) fail('Google map tiles have not arrived. Check your connection, content blocker, Maps JavaScript API authorization and billing, then retry.'); }, 20000);
+    };
+    awaitTiles();
+    window.addEventListener('transtop:maps-auth-failure', authFail);
+    window.addEventListener('offline', offline);
+    window.addEventListener('online', online);
     installAuthHook();
-    if (authenticationFailed) fail();
+    if (authenticationFailed) authFail();
+    else if (!navigator.onLine) offline();
     else void loadGoogleMaps().then((libs) => {
       if (disposed || !el.current) return;
       libraries.current = libs;
       const [{ Map, RenderingType }] = libs;
       // Raster also works without WebGL, unlike the previous MapLibre basemap.
       const m = new Map(el.current, {
-        center: { lat: initial.current.center.lat, lng: initial.current.center.lon },
-        zoom: initial.current.zoom,
-        mapId: (import.meta.env.VITE_GOOGLE_MAPS_MAP_ID as string | undefined) || 'DEMO_MAP_ID',
+        center: { lat: camera.current.center.lat, lng: camera.current.center.lon },
+        zoom: camera.current.zoom,
         renderingType: RenderingType.RASTER,
-        colorScheme: google.maps.ColorScheme.DARK,
+        // Embedded dark styles work on raster without a cloud map ID or WebGL.
+        // Advanced markers require a map ID; use supported classic markers here.
+        styles: DARK_ROADMAP,
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: true,
@@ -90,34 +128,70 @@ export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehi
         gestureHandling: 'cooperative',
       });
       map.current = m;
+      const reportRendering = () => { if (el.current) el.current.dataset.renderingType = m.getRenderingType(); };
+      listeners.push(m.addListener('renderingtype_changed', reportRendering));
+      reportRendering();
+      // Each changed camera needs its own readiness cycle, not just the first load.
+      // Existing overlays can remain visible while newly exposed tiles arrive.
+      const rememberCamera = () => {
+        const c = m.getCenter(), z = m.getZoom();
+        if (c && z != null) camera.current = { center: { lat: c.lat(), lon: c.lng() }, zoom: z };
+      };
+      listeners.push(m.addListener('bounds_changed', () => { rememberCamera(); awaitTiles(); }));
       listeners.push(m.addListener('tilesloaded', () => {
         loaded = true;
         window.clearTimeout(timer);
-        if (!disposed && !authenticationFailed) setReady(true);
+        if (!disposed && !authenticationFailed && navigator.onLine) { setTilesReady(true); setFailure(null); }
+      }));
+      listeners.push(m.addListener('idle', () => {
+        rememberCamera();
+        window.clearTimeout(viewportTimer);
+        viewportTimer = window.setTimeout(() => {
+          const bounds = m.getBounds(), z = m.getZoom();
+          if (disposed || !bounds || z == null) return;
+          const sw = bounds.getSouthWest(), ne = bounds.getNorthEast();
+          callbacks.current.onViewport?.({ west: sw.lng(), south: sw.lat(), east: ne.lng(), north: ne.lat(), zoom: z });
+        }, 350);
       }));
       // Overlays may be mounted before tiles arrive, but loading remains visible.
       if (!authenticationFailed) setReady(true);
       resize = new ResizeObserver(() => google.maps.event.trigger(m, 'resize'));
       resize.observe(el.current);
-    }).catch(fail);
+    }).catch((error: unknown) => fail(error instanceof Error && error.message === 'Google Maps key is not configured'
+      ? 'Google Maps browser configuration is missing. Set VITE_GOOGLE_MAPS_API_KEY securely and restart the preview or rebuild the client. Schedules and lists still work.'
+      : 'Google Maps SDK could not load. Check your connection or content blocker and retry. Schedules and lists still work.'));
     return () => {
       disposed = true;
       window.clearTimeout(timer);
-      window.removeEventListener('transtop:maps-auth-failure', fail);
+      window.clearTimeout(viewportTimer);
+      window.removeEventListener('transtop:maps-auth-failure', authFail);
+      window.removeEventListener('offline', offline);
+      window.removeEventListener('online', online);
       resize?.disconnect();
       listeners.forEach((l) => l.remove());
       if (map.current) google.maps.event.clearInstanceListeners(map.current);
       map.current = null;
     };
-  }, [failed]);
+  }, [attempt]);
+
+  useEffect(() => {
+    if (!map.current || !ready || !fitBounds) return;
+    const key = `${fitBounds.west},${fitBounds.south},${fitBounds.east},${fitBounds.north}|${fitKey ?? ''}`;
+    if (lastRegionFit.current === key) return;
+    lastRegionFit.current = key;
+    map.current.fitBounds({ west: fitBounds.west, east: fitBounds.east, south: fitBounds.south, north: fitBounds.north }, 32);
+  }, [fitBounds, fitKey, ready, attempt]);
 
   useEffect(() => {
     const m = map.current;
     if (!m || !ready || failed) return;
+    if (fitBounds) return;
+    if (lastCenter.current.lat === center.lat && lastCenter.current.lon === center.lon) return;
+    lastCenter.current = center;
     const c = { lat: center.lat, lng: center.lon };
     const reduce = document.documentElement.classList.contains('reduce-motion') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) m.setCenter(c); else m.panTo(c);
-  }, [center.lat, center.lon, ready, failed]);
+  }, [center.lat, center.lon, ready, failed, fitBounds]);
 
   useEffect(() => {
     const m = map.current;
@@ -127,8 +201,9 @@ export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehi
     for (const line of network ?? []) {
       if (line.coords.length < 2) continue;
       const path = line.coords.map(([lng, lat]) => ({ lat, lng }));
-      paths.push(new google.maps.Polyline({ map: m, path, strokeColor: line.color, strokeWeight: 9, strokeOpacity: 0.18, clickable: false, zIndex: 1 }));
-      const visible = new google.maps.Polyline({ map: m, path, strokeColor: line.color, strokeWeight: 3, strokeOpacity: 0.95, zIndex: 2 });
+      paths.push(new google.maps.Polyline({ map: m, path, strokeColor: MODE_COLOR[line.type ?? ''] ?? line.color, strokeWeight: 9, strokeOpacity: 0.4, clickable: false, zIndex: 1 }));
+      const visible = new google.maps.Polyline({ map: m, path, strokeColor: line.color, strokeWeight: line.type === 'rail' ? 5 : 3, strokeOpacity: line.type === 'bus' ? .35 : .95, zIndex: line.type === 'subway' ? 3 : 2,
+        icons: line.type === 'bus' ? [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 2 }, offset: '0', repeat: '14px' }] : undefined });
       paths.push(visible);
       listeners.push(visible.addListener('click', () => callbacks.current.onRoute?.(line.id)));
     }
@@ -146,6 +221,8 @@ export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehi
   // Fit only when route geometry changes, not on each vehicle refresh.
   useEffect(() => {
     if (!map.current || !ready || failed || !shape || shape.coords.length < 2) return;
+    if (lastShapeFit.current === shape) return;
+    lastShapeFit.current = shape;
     const bounds = new google.maps.LatLngBounds();
     shape.coords.forEach(([lng, lat]) => bounds.extend({ lat, lng }));
     map.current.fitBounds(bounds, 48);
@@ -154,29 +231,40 @@ export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehi
   useEffect(() => {
     const m = map.current, libs = libraries.current;
     if (!m || !libs || !ready || failed) return;
-    const [{ InfoWindow }, { AdvancedMarkerElement }] = libs;
+    const [{ InfoWindow }, { Marker }] = libs;
     const popup = new InfoWindow();
-    const markers: google.maps.marker.AdvancedMarkerElement[] = [];
+    const markers: google.maps.Marker[] = [];
     const listeners: google.maps.MapsEventListener[] = [];
-    for (const s of stops) {
+    for (const [index, s] of stops.entries()) {
       const active = s.id === activeId;
       const color = s.color ?? MODE_COLOR[s.type] ?? '#888';
-      const dot = document.createElement('div');
-      dot.style.cssText = `width:${active ? 26 : 17}px;height:${active ? 26 : 17}px;border-radius:50%;background:${color};border:3px solid #111;box-shadow:0 0 0 ${active ? 3 : 1}px #fff;`;
-      const marker = new AdvancedMarkerElement({ map: m, position: { lat: s.lat, lng: s.lon }, title: `${s.name} stop`, zIndex: active ? 100 : 20 });
-      marker.append(dot);
-      listeners.push(marker.addListener('click', () => callbacks.current.onSelect?.(s.id)));
+      const marker = new Marker({ map: m, position: { lat: s.lat, lng: s.lon }, title: `${s.name} stop${s.routes?.length ? ` · ${s.routes.map(r => r.name).join(', ')}` : ''}`,
+        zIndex: active ? 100 : 20, optimized: false,
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: labelStops ? 12 : active ? 11 : 7, fillColor: color, fillOpacity: 1, strokeColor: '#fff', strokeWeight: active ? 3 : 1.5 },
+        label: labelStops ? { text: String(index + 1), color: '#111', fontSize: '11px', fontWeight: '800' } : s.label || active ? { text: s.name, color: '#fff', fontSize: '12px', className: 'map-stop-label' } : undefined });
+      listeners.push(marker.addListener('click', () => {
+        const content = document.createElement('div');
+        content.style.cssText = 'color:#111;font:600 13px Arial,sans-serif;max-width:240px';
+        const name = document.createElement('p'); name.textContent = s.name; content.append(name);
+        if (s.routes?.length) { const lines = document.createElement('p'); lines.textContent = `Lines: ${s.routes.map(r => r.name).join(', ')}`; content.append(lines); }
+        if (callbacks.current.onSelect) {
+          const button = document.createElement('button'); button.type = 'button'; button.textContent = 'Select stop for details';
+          button.style.cssText = 'text-decoration:underline;padding:8px 0'; button.onclick = () => callbacks.current.onSelect?.(s.id); content.append(button);
+        }
+        popup.setContent(content); popup.open({ map: m, anchor: marker });
+        callbacks.current.onSelect?.(s.id);
+      }));
       markers.push(marker);
     }
-    for (const v of vehicles) {
+    for (const v of visibleVehicles) {
       const kind = vehicleKind(v.source), color = v.color ?? '#f4f1ea';
+      const age = v.updatedAt ? Date.now() - new Date(v.updatedAt).getTime() : Infinity;
+      if (kind === 'official' && (!Number.isFinite(age) || age > 60000 || age < -30000)) continue;
       const title = `${v.routeName ? `Route ${v.routeName} vehicle` : 'Vehicle'} · ${sourceText(v.source)} · ${agoText(v.updatedAt)}`;
-      const dot = document.createElement('div');
-      dot.style.cssText = kind === 'community'
-        ? 'width:34px;height:34px;border-radius:50%;border:2px dashed #5cc2f2;background:rgba(92,194,242,.15);'
-        : `width:17px;height:17px;transform:rotate(45deg);background:${color};border:2px solid ${kind === 'demo' ? '#f5b82e' : '#fff'};box-shadow:0 0 8px ${color};`;
-      const marker = new AdvancedMarkerElement({ map: m, position: { lat: v.lat, lng: v.lon }, title, zIndex: 40 });
-      marker.append(dot);
+      const marker = new Marker({ map: m, position: { lat: v.lat, lng: v.lon }, title, zIndex: 40,
+        icon: { path: kind === 'community' ? google.maps.SymbolPath.CIRCLE : 'M 0,-8 8,0 0,8 -8,0 z',
+          scale: kind === 'community' ? 14 : 1, fillColor: color, fillOpacity: kind === 'community' ? .15 : 1,
+          strokeColor: kind === 'demo' ? '#f5b82e' : kind === 'community' ? '#5cc2f2' : '#fff', strokeWeight: 2 } });
       listeners.push(marker.addListener('click', () => {
         const content = document.createElement('div');
         content.style.cssText = 'color:#111;font:600 13px Arial,sans-serif;max-width:240px;';
@@ -199,22 +287,22 @@ export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehi
     return () => {
       popup.close();
       listeners.forEach((l) => l.remove());
-      markers.forEach((marker) => { marker.map = null; });
+      markers.forEach((marker) => marker.setMap(null));
     };
-  }, [stops, vehicles, activeId, ready, failed]);
+  }, [stops, visibleVehicles, activeId, ready, failed, labelStops]);
 
-  if (failed) return (
-    <div className={`relative ${className ?? ''}`}>
-      {!googleOnly && <SchematicMap center={center} stops={stops} activeId={activeId} onSelect={onSelect} shape={shape} vehicles={vehicles} network={network} onRoute={onRoute} className="h-full w-full" label={label} />}
-      <p className="absolute bottom-8 left-3 right-3 rounded-lg border border-white/10 bg-black/90 px-3 py-2 text-xs text-white" role="status">
-        Google Maps could not load. Check connectivity, billing, Maps JavaScript API access and allowed website domains. Stops and routes remain available in this schematic and the list.
-      </p>
-    </div>
-  );
   return (
-    <div className={`relative ${className ?? ''}`} role="region" aria-label={`${label} · Google Maps`} data-testid="google-map">
-      <div ref={el} className="h-full w-full" />
-      {!ready && <div className="absolute inset-0 flex items-center justify-center bg-[#151515] text-sm text-white" role="status">Loading Google Maps…</div>}
+    <div className={`flex flex-col ${className ?? ''}`}>
+      <div className="relative min-h-0 w-full flex-1" role="region" aria-label={`${label} · Google Maps`} data-testid="google-map" data-map-status={failed ? 'error' : tilesReady ? 'tiles-ready' : 'loading'}>
+        <div ref={el} className={failed ? 'invisible h-full w-full' : 'h-full w-full'} />
+        {failed && !googleOnly && <div className="absolute inset-0"><SchematicMap center={center} stops={stops} activeId={activeId} onSelect={onSelect} shape={shape} vehicles={visibleVehicles} network={network} onRoute={onRoute} className="h-full w-full" label={label} /></div>}
+        {!tilesReady && !failed && <div className="pointer-events-none absolute left-3 top-3 rounded-lg bg-[#151515]/95 p-3 text-sm text-white" role="status">Loading Google map tiles…</div>}
+      </div>
+      {failed && <div className="relative z-10 max-h-[60%] shrink-0 overflow-y-auto rounded-lg border border-white/20 bg-black p-3 text-xs text-white" role="alert">
+        <p className="break-words">{failure} {googleOnly ? '' : 'Schematic only — not the Google basemap. Lists and schedules remain available.'}</p>
+        <button type="button" className="mt-2 min-h-11 rounded-lg border border-white/30 px-4 font-bold" onClick={() => { setReady(false); setTilesReady(false); setFailure(null); setAttempt(a => a + 1); }}>Retry Google Maps</button>
+        {authenticationFailed && <button type="button" className="ml-3 min-h-11 underline" onClick={() => window.location.reload()}>Reload after fixing access</button>}
+      </div>}
     </div>
   );
 }

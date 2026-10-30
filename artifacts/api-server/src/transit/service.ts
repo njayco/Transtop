@@ -2,7 +2,7 @@ import { db, pool, stops, routes, feedSnapshots } from "@workspace/db";
 import { and, eq, inArray } from "drizzle-orm";
 import { adapters } from "./adapters";
 import { demoArrivals, demoAlerts } from "./demo";
-import { feedsFor, fresh, liveAlerts, feedStatus } from "./realtime";
+import { feedsFor, fresh, liveAlerts, feedStatus, mapVehicles } from "./realtime";
 import { scheduledArrivals } from "./schedules";
 import { communityArrivals } from "./estimator";
 import { geocodeAddress } from "./geocoder";
@@ -125,10 +125,8 @@ export async function routeDetail(id:string,mode:Mode,direction?:string):Promise
       shape=sh[0]?.data.coordinates||[];
     }else ss=[];
   }
-  if(!shape.length)shape=ss.map(s=>[s.lon,s.lat]);
-  const vehicles=mode==="demo"?[]:feedsFor(agency).filter(f=>fresh(f)).flatMap(f=>f.entities.filter(e=>e.vehicle?.position&&`${agency}:${e.vehicle.trip?.routeId}`===id).map(e=>({
-    id:e.id,lat:e.vehicle.position.latitude,lon:e.vehicle.position.longitude,source:"Live agency data",updatedAt:new Date(Number(e.vehicle.timestamp||f.timestamp)*1000).toISOString(),
-  })));
+  if(!shape.length&&mode==="demo")shape=ss.map(s=>[s.lon,s.lat]);
+  const vehicles=mapVehicles(mode).filter(v=>v.routeId===id);
   return {route,stops:await Promise.all(ss.map(s=>enrich(s,mode))),shape,vehicles,
     alerts:(mode==="demo"?demoAlerts:liveAlerts()).filter(a=>a.routeIds.includes(id)),
     directions};

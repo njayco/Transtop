@@ -122,12 +122,31 @@ paths:
         - {name: type, in: query, schema: {type: string}}
         - {name: lat, in: query, schema: {type: number}}
         - {name: lon, in: query, schema: {type: number}}
+        - {name: west, in: query, schema: {type: number, minimum: -180, maximum: 180}}
+        - {name: south, in: query, schema: {type: number, minimum: -90, maximum: 90}}
+        - {name: east, in: query, schema: {type: number, minimum: -180, maximum: 180}}
+        - {name: north, in: query, schema: {type: number, minimum: -90, maximum: 90}}
+        - {name: zoom, in: query, schema: {type: number, minimum: 0, maximum: 22, default: 10}}
+        - {name: agency, in: query, schema: {type: string}}
+        - {name: routeId, in: query, schema: {type: string}}
+        - {name: serviceClass, in: query, schema: {type: string, enum: [all, local, express]}}
       responses:
         "200":
-          description: Nearby route geometry and agency vehicle positions
+          description: Viewport geometry, catalog stops and explicit coverage limits
           content:
             application/json:
-              schema: {type: array, items: {$ref: "#/components/schemas/NetworkLine"}}
+              schema: {$ref: "#/components/schemas/NetworkResults"}
+  /transit/map-vehicles:
+    get:
+      operationId: getMapVehicles
+      parameters:
+        - {name: mode, in: query, schema: {type: string, enum: [demo, live], default: live}}
+      responses:
+        "200":
+          description: Fresh official vehicle positions only; static geometry is never refreshed here
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: "#/components/schemas/MapVehicle"}}
   /transit/alerts:
     get:
       operationId: getAlerts
@@ -285,11 +304,43 @@ components:
         updatedAt: {type: string}
     NetworkLine:
       type: object
-      required: [route, shape, vehicles]
+      required: [route, shape, vehicles, shapeId]
       properties:
+        shapeId: {type: string}
         route: {$ref: "#/components/schemas/Route"}
         shape: {type: array, items: {type: array, items: {type: number}}}
         vehicles: {type: array, items: {$ref: "#/components/schemas/Vehicle"}}
+    MapVehicle:
+      allOf:
+        - {$ref: "#/components/schemas/Vehicle"}
+        - type: object
+          required: [routeId]
+          properties:
+            routeId: {type: string}
+    MapStop:
+      type: object
+      required: [id, name, lat, lon, type, routes]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        lat: {type: number}
+        lon: {type: number}
+        type: {type: string}
+        routes: {type: array, items: {$ref: "#/components/schemas/Route"}}
+    NetworkResults:
+      type: object
+      required: [lines, stops, totalLines, totalStops, missingGeometry, truncated, busDetailZoom, stopsZoom, generation, message]
+      properties:
+        lines: {type: array, items: {$ref: "#/components/schemas/NetworkLine"}}
+        stops: {type: array, items: {$ref: "#/components/schemas/MapStop"}}
+        totalLines: {type: integer}
+        totalStops: {type: integer}
+        missingGeometry: {type: array, items: {$ref: "#/components/schemas/Route"}}
+        truncated: {type: boolean}
+        busDetailZoom: {type: integer}
+        stopsZoom: {type: integer}
+        generation: {type: string}
+        message: {type: string}
     RouteDetail:
       type: object
       required: [route, stops, shape, vehicles, alerts, directions]

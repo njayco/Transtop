@@ -5,10 +5,39 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { GetNetworkMode } from './getNetworkMode';
+import type { GetNetworkServiceClass } from './getNetworkServiceClass';
 
 export type GetNetworkParams = {
 mode?: GetNetworkMode;
 type?: string;
 lat?: number;
 lon?: number;
+/**
+ * @minimum -180
+ * @maximum 180
+ */
+west?: number;
+/**
+ * @minimum -90
+ * @maximum 90
+ */
+south?: number;
+/**
+ * @minimum -180
+ * @maximum 180
+ */
+east?: number;
+/**
+ * @minimum -90
+ * @maximum 90
+ */
+north?: number;
+/**
+ * @minimum 0
+ * @maximum 22
+ */
+zoom?: number;
+agency?: string;
+routeId?: string;
+serviceClass?: GetNetworkServiceClass;
 };

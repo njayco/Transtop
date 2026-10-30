@@ -431,15 +431,42 @@ export const PlanJourneyResponse = zod.object({
 
 
 export const getNetworkQueryModeDefault = `demo`;
+export const getNetworkQueryWestMin = -180;
+export const getNetworkQueryWestMax = 180;
+
+export const getNetworkQuerySouthMin = -90;
+export const getNetworkQuerySouthMax = 90;
+
+export const getNetworkQueryEastMin = -180;
+export const getNetworkQueryEastMax = 180;
+
+export const getNetworkQueryNorthMin = -90;
+export const getNetworkQueryNorthMax = 90;
+
+export const getNetworkQueryZoomDefault = 10;
+export const getNetworkQueryZoomMin = 0;
+export const getNetworkQueryZoomMax = 22;
+
+
 
 export const GetNetworkQueryParams = zod.object({
   "mode": zod.enum(['demo', 'live']).default(getNetworkQueryModeDefault),
   "type": zod.coerce.string().optional(),
   "lat": zod.coerce.number().optional(),
-  "lon": zod.coerce.number().optional()
+  "lon": zod.coerce.number().optional(),
+  "west": zod.coerce.number().min(getNetworkQueryWestMin).max(getNetworkQueryWestMax).optional(),
+  "south": zod.coerce.number().min(getNetworkQuerySouthMin).max(getNetworkQuerySouthMax).optional(),
+  "east": zod.coerce.number().min(getNetworkQueryEastMin).max(getNetworkQueryEastMax).optional(),
+  "north": zod.coerce.number().min(getNetworkQueryNorthMin).max(getNetworkQueryNorthMax).optional(),
+  "zoom": zod.coerce.number().min(getNetworkQueryZoomMin).max(getNetworkQueryZoomMax).default(getNetworkQueryZoomDefault),
+  "agency": zod.coerce.string().optional(),
+  "routeId": zod.coerce.string().optional(),
+  "serviceClass": zod.enum(['all', 'local', 'express']).optional()
 })
 
-export const GetNetworkResponseItem = zod.object({
+export const GetNetworkResponse = zod.object({
+  "lines": zod.array(zod.object({
+  "shapeId": zod.string(),
   "route": zod.object({
   "id": zod.string(),
   "name": zod.string(),
@@ -458,8 +485,60 @@ export const GetNetworkResponseItem = zod.object({
   "source": zod.string(),
   "updatedAt": zod.string()
 }))
+})),
+  "stops": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "lat": zod.number(),
+  "lon": zod.number(),
+  "type": zod.string(),
+  "routes": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "color": zod.string(),
+  "type": zod.enum(['subway', 'bus', 'rail']),
+  "agency": zod.string(),
+  "agencyId": zod.string().optional(),
+  "serviceClass": zod.enum(['local', 'express']).optional(),
+  "longName": zod.string().optional()
+}))
+})),
+  "totalLines": zod.number().int(),
+  "totalStops": zod.number().int(),
+  "missingGeometry": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "color": zod.string(),
+  "type": zod.enum(['subway', 'bus', 'rail']),
+  "agency": zod.string(),
+  "agencyId": zod.string().optional(),
+  "serviceClass": zod.enum(['local', 'express']).optional(),
+  "longName": zod.string().optional()
+})),
+  "truncated": zod.boolean(),
+  "busDetailZoom": zod.number().int(),
+  "stopsZoom": zod.number().int(),
+  "generation": zod.string(),
+  "message": zod.string()
 })
-export const GetNetworkResponse = zod.array(GetNetworkResponseItem)
+
+
+export const getMapVehiclesQueryModeDefault = `live`;
+
+export const GetMapVehiclesQueryParams = zod.object({
+  "mode": zod.enum(['demo', 'live']).default(getMapVehiclesQueryModeDefault)
+})
+
+export const GetMapVehiclesResponseItem = zod.object({
+  "id": zod.string(),
+  "lat": zod.number(),
+  "lon": zod.number(),
+  "source": zod.string(),
+  "updatedAt": zod.string()
+}).and(zod.object({
+  "routeId": zod.string()
+}))
+export const GetMapVehiclesResponse = zod.array(GetMapVehiclesResponseItem)
 
 
 export const getAlertsQueryModeDefault = `demo`;

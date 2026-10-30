@@ -11,7 +11,7 @@ export function loadGoogleMaps() {
     libraries = Promise.all([
       importLibrary('maps') as Promise<google.maps.MapsLibrary>,
       importLibrary('marker') as Promise<google.maps.MarkerLibrary>,
-    ]);
+    ]).catch((error: unknown) => { libraries = undefined; throw error; });
   }
   return libraries;
 }
