@@ -27,6 +27,18 @@ When adding IBG to the app, keep it a labeled research-reference source isolated
 
 **How to apply:** Preserve historical dates and source attribution; do not shift encoded schedules into today or create moving vehicles. Revalidation is required before any subset becomes a current timetable source.
 
+Research-reference labeling does not make a stop suitable for nearby rider results.
+
+**Why:** The regional audit found a State College airport name attached to a Newark-area coordinate in IBG, far beyond its documented snapping tolerance. Same-name points can also have a correct location elsewhere.
+
+**How to apply:** Quarantine contradictory name/location records for carrier verification; do not silently relocate every same-name stop or call a geographical screen verified coverage.
+
+Peter Pan's website is not an authorized default scraping source.
+
+**Why:** Its general terms reviewed on October 30, 2026 expressly restrict automated extraction and redistribution without consent; the article's license does not resolve those upstream terms.
+
+**How to apply:** Recheck https://peterpanbus.com/general-terms-of-service/ and obtain applicable authorization before a current integration. An official route listing establishes neither departure clocks nor bulk reuse rights.
+
 For printed timetables, omit ambiguous footnotes, continuation destinations, uncertain boarding locations and unverified holiday overrides rather than guessing.
 
 **Why:** Official Martz pages contain special trips, downtown continuation notes, weekday boarding relocations and a Sunday overnight meridiem inconsistency. A generic route pattern would give riders the wrong remaining stops.

@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "KNgW1AN-LhqUAPuqspLkZ"
+uri = "file://docs/intercity-gtfs-audit.html"
+type = "html"
+title = "Intercity GTFS coverage audit"
+description = "Dated source audit, provider readiness findings and import recommendation. Includes downloadable 72-provider matrix and 1,069-trip candidate index."
+logical_id = "8832e8eb-14bf-4562-8763-70b929148385"
+content_hash = "sha256:7dc7f12de9b8a6aef489955bce942fb0577135c2c1c67d613d7e7bbb05473b4b"
+size = 239691
+mtime_ms = 1793400736512
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:4e24d3f9-8f6a-40c6-a710-9544c2914789/8832e8eb-14bf-4562-8763-70b929148385/f7197c17-8dea-472a-bb65-7871691c6b0d"
+storage_version_token = "1793400824173858"
+content_type = "text/html"

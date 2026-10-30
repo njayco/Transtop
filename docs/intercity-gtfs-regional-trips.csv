@@ -1,0 +1,1070 @@
+agency,route_id,trip_id,service_id,regional_stop_ids,origin,destination,ordered_stop_ids
+Pine Hill Trailways,1011,1381,203,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;1808;193;590;1220
+Pine Hill Trailways,1011,1382,2131,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;1808;193;590;1220
+FlixBus-us,1016,971,1899,2011,Niagara Falls USA,New York Midtown (31st St & 8th Ave),825;2744;1020;276;1286;380;845;3439;3240;56;3283;2011
+FlixBus-us,1016,1704,95,2011,New York Midtown (31st St & 8th Ave),Syracuse Bus Station,2011;56;2010
+FlixBus-us,1016,1771,95,2011,Niagara Falls USA,New York Midtown (31st St & 8th Ave),825;2744;1020;1929;2010;643;56;3283;2011
+FlixBus-us,1016,343,95,2011,Syracuse Bus Station,New York Midtown (31st St & 8th Ave),2010;56;2011
+FlixBus-us,1016,1821,95,2011,New York Midtown (31st St & 8th Ave),Niagara Falls USA,2011;3283;56;643;2010;1929;1020;2744;825
+FlixBus-us,1016,2735,95,2011,Niagara Falls USA,New York Midtown (31st St & 8th Ave),825;2744;1020;1929;2010;643;56;2011
+FlixBus-us,1016,893,95,2011,New York Midtown (31st St & 8th Ave),Niagara Falls USA,2011;3283;56;2010;1929;1020;2744;825
+FlixBus-us,1016,2681,95,929;2011,Niagara Falls USA,New York Midtown (31st St & 8th Ave),825;2744;1929;2010;643;56;929;2011
+FlixBus-us,1016,2755,95,929;2011,Niagara Falls USA,New York Midtown (31st St & 8th Ave),825;2744;1929;2010;643;56;929;2011
+FlixBus-us,1016,1182,95,2011;929,New York Midtown (31st St & 8th Ave),Niagara Falls USA,2011;929;56;643;2010;1929;2744;825
+FlixBus-us,1016,3771,95,2011;929,New York Midtown (31st St & 8th Ave),Niagara Falls USA,2011;929;56;643;2010;1929;2744;825
+Fullington Trailways,1017,2139,1253,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,1722,1278,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,274,141,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,3537,1434,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,2418,1624,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,2349,1734,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,2857,1764,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,3581,2031,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,1444,220,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,1944,2226,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,3568,2258,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,1778,2274,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,2191,2312,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,28,241,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,2710,33,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,2744,355,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,1804,376,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,2043,519,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,33,570,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,3420,588,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,2515,746,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,2383,765,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,780,774,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,108,9,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+Fullington Trailways,1017,2952,909,1897,New York (P.A.B.T.),State College (Bus Terminal),1897;2508;1734;1198
+ShortLine Hudson,1031,3107,449,1559;1759;1222;557;2862;2069;824;2183;1813;873;1764,3rd Ave & E 23rd St,Union St & Ward St - Montgomery,1559;1759;1222;557;2862;2069;824;2183;1813;873;1764;1574;1828;1934;2900;12;212;1067;3465
+ShortLine Hudson,1031,3809,449,1559;1759;1222;557;2862;2069;824;2183;1813;873;1764,3rd Ave & E 23rd St,Union St & Ward St - Montgomery,1559;1759;1222;557;2862;2069;824;2183;1813;873;1764;1574;1828;1934;2900;12;212;1067;3465
+ShortLine Hudson,1031,3640,449,1559;1759;1222;557;2862;2069;824;2183;1813;873;1764,3rd Ave & E 23rd St,Union St & Ward St - Montgomery,1559;1759;1222;557;2862;2069;824;2183;1813;873;1764;1574;1828;1934;2900;12;212;1067;3465
+ShortLine Hudson,1031,29,449,1813;873;1764,Broadway & W 167th St,Union St & Ward St - Montgomery,1813;873;1764;1574;1828;1934;2900;12;212;1067;3465
+ShortLine Hudson,1031,1626,449,1399;2731;3336;595;1423;3135;43;181;3114;479;2209;1131;1326;2542;819;1000;1246;3107,Clinton St & Union St - Montgomery,2nd Ave & E 23rd St,3477;672;2425;1292;2900;1422;1828;1574;1399;2731;3336;595;1423;3135;43;181;3114;479;2209;1131;1326;2542;819;1000;1246;3107
+ShortLine Hudson,1031,387,449,1399;2731;3336;595;1423;3135;43;181;3114;479;2209;1131;1326;2542;819;1000;1246;3107,Clinton St & Union St - Montgomery,2nd Ave & E 23rd St,3477;672;2425;1292;2900;1422;1828;1574;1399;2731;3336;595;1423;3135;43;181;3114;479;2209;1131;1326;2542;819;1000;1246;3107
+ShortLine Hudson,1031,1977,449,1399;2731;3336;595;1423;3135;43;181;3114;479;2209;1131;1326;2542;819;1000;1246;3107,Clinton St & Union St - Montgomery,2nd Ave & E 23rd St,3477;672;2425;1292;2900;1422;1828;1574;1399;2731;3336;595;1423;3135;43;181;3114;479;2209;1131;1326;2542;819;1000;1246;3107
+ShortLine Hudson,1031,691,449,1399;2731;3336;595;1423;3135;43;181;3114;479;2209;1131;1326;2542;819;1000;1246;3107,Clinton St & Union St - Montgomery,2nd Ave & E 23rd St,3477;672;2425;1292;2900;1422;1828;1574;1399;2731;3336;595;1423;3135;43;181;3114;479;2209;1131;1326;2542;819;1000;1246;3107
+Pine Hill Trailways,1037,2831,1018,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;590;1220
+Pine Hill Trailways,1037,750,1107,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;590;1220
+Pine Hill Trailways,1037,1548,1245,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;590;1220
+Pine Hill Trailways,1037,605,136,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;590;1220
+Pine Hill Trailways,1037,1789,1412,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;590;1220
+Pine Hill Trailways,1037,1175,1545,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;590;1220
+Pine Hill Trailways,1037,1318,1626,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;590;1220
+Pine Hill Trailways,1037,3583,1973,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;590;1220
+Pine Hill Trailways,1037,2850,26,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;590;1220
+Pine Hill Trailways,1037,3190,49,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;590;1220
+Pine Hill Trailways,1037,3274,49,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;590;1220
+Pine Hill Trailways,1037,3813,619,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;590;1220
+Pine Hill Trailways,1037,444,951,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;590;1220
+FlixBus-us,1044,2174,95,1153,New York City Chinatown (28 Allen St),Virginia Beach (Circle D Food Mart),1153;2445;3377;1472;1140;1705
+FlixBus-us,1044,2145,95,1153;929,New York City Chinatown (28 Allen St),Virginia Beach (Circle D Food Mart),1153;929;2445;3377;1472;1140;1705
+FlixBus-us,1044,1753,95,929;1153,Virginia Beach (Circle D Food Mart),New York City Chinatown (28 Allen St),1705;1140;1472;3377;2445;929;1153
+FlixBus-us,1044,3827,95,929;1153,Virginia Beach (Circle D Food Mart),New York City Chinatown (28 Allen St),1705;1140;1472;3377;2445;929;1153
+Greyhound-us,1046,2144,2144,1891,Boston (South Station),New York Port Authority,35#2671;3349;3097;860;2064;1568;3533;1057;134;1891
+Greyhound-us,1046,2140,528,1891,New York Port Authority,Boston (South Station),1891;134;1057;3533;1568;2064;860;3097;3349;2671
+Greyhound-us,1048,3003,115,929;1891,Norfolk,New York Port Authority,1140;702;2893;1472;3377;130;2176;929;1891
+Greyhound-us,1048,3693,115,1891;929,New York Port Authority,Norfolk,1891;929;2176;130;3377;1472;2893;702;1140
+"Trans-Bridge Lines, Inc.",1050,1462,1491,1906,New York (P.A.B.T.),Allentown Airport (ABE),1906;2468;3063;3561;803
+"Trans-Bridge Lines, Inc.",1052,685,74,1906;749,New York (P.A.B.T.),Allentown Airport (ABE),1906;749;2468;2618;2201;803
+Martz Bus,111,968,1523,2234,Wilkes-Barre,New York (P.A.B.T.),655;3391;1977;2557;541;2234
+Greyhound-us,119,1077,115,1891,New York Port Authority,St Louis Bus Station,1891;443;2176;3072;3574;70;3599;2#1301;2469;1673;1804;3058
+Greyhound-us,119,1481,115,929;1891,St Louis Bus Station,New York Port Authority,3058;1804;1673;2469;3#1301;3599;70;3574;3072;2037;2176;553;443;929;1891
+Greyhound-us,119,2682,115,929;1891,St Louis Bus Station,New York Port Authority,3058;1804;1673;2469;4#1301;3599;70;3574;3072;2037;2176;929;1891
+Greyhound-us,119,3896,115,1891;929,New York Port Authority,St Louis Bus Station,1891;929;2176;3574;2306;70;3599;5#1301;2469;1673;1804;3058
+Greyhound-us,119,801,115,1891,New York Port Authority,St Louis Bus Station,1891;2176;2037;3072;3574;2306;294;70;3599;8#1301;1673;3058
+Greyhound-us,119,3266,115,1891,St Louis Bus Station,New York Port Authority,3058;1673;2469;7#1301;3599;70;294;2306;3574;3072;2037;2176;1891
+Greyhound-us,119,473,1484,1891;929,New York Port Authority,Pittsburgh Intermodal Station,1891;929;41;3072;1270;3574
+Greyhound-us,119,1099,528,929;1891,Pittsburgh Intermodal Station,New York Port Authority,3574;1270;3072;41;929;1891
+Best Bus,123,3789,1964,2273,Penn Station,Manassas,2273;2972;2913;903
+Best Bus,123,3868,1964,2273,Penn Station,Penn Station,2273
+Fullington Trailways,127,1935,1434,3028,Long Island Express,State College (Bus Terminal),3028;1198
+Fullington Trailways,127,1896,774,3028,Long Island Express,State College (Bus Terminal),3028;1198
+Adirondack Trailways,129,1362,2131,1166;2889,Queens Village,Albany (Trailways Bus Terminal),1166;2889;3609;2475;1880;2693;2778;1253;989;367;789;804;1657;123
+"Trans-Bridge Lines, Inc.",133,147,2176,1906,Allentown Airport (ABE),New York (P.A.B.T.),803;2468;1906
+Adirondack Trailways,138,766,2065,1001;3225,New York (P.A.B.T.),Albany (SUNY),1001;3225;789;123;1657
+"Trans-Bridge Lines, Inc.",148,1070,2176,1906,Bethlehem (William Penn Park & Ride),New York (P.A.B.T.),2201;2618;1906
+Concord Coach Lines,156,2819,1688,60,New York City,Concord,60;1267;1984
+Concord Coach Lines,156,369,1688,60,Concord,New York City,1984;1267;60
+Peter Pan Bus Lines,160,3765,1281,75,New York (P.A.B.T.),Boston (South Station),75;1458;1557
+Peter Pan Bus Lines,160,586,1281,75,New York (P.A.B.T.),Boston (South Station),75;1458;1557
+Peter Pan Bus Lines,160,3438,1331,75,New York (P.A.B.T.),Boston (South Station),75;1458;1557
+Peter Pan Bus Lines,160,2485,1440,75,New York (P.A.B.T.),Boston (South Station),75;1458;1557
+Peter Pan Bus Lines,160,390,2175,75,New York (P.A.B.T.),Boston (South Station),75;1458;1557
+Ocean Travel,172,1964,1964,1444,New York,Buffalo,1444;1210
+Ocean Travel,172,2646,1964,1444,Buffalo,New York,1210;1444
+Adirondack Trailways,173,3720,2201,3225;1001,Oneonta,New York (P.A.B.T.),47;1591;2624;2766;2297;2426;850;842;955;3262;1192;1285;1739;3418;1762;3454;789;367;989;1253;2778;1880;3225;1001
+Pine Hill Trailways,175,2473,2112,1220;590,New York (P.A.B.T.),Utica,1220;590;193;1808;2643;2478;979;3292;2679;2634;427;1925;2673;1798;381;870;3176;3343;1750;1624;3048;3242;1539;2888;3162;10;2144;1#3095;667;284;1965;1101;1751;1785;2303;822
+New York Trailways,178,1545,2065,1070;1793,New York (P.A.B.T.),Toronto,1070;1793;393;1587;1853;2206;3098;2107;1698;1770;2792
+New York Trailways,178,24,420,1070;1793,New York (P.A.B.T.),Toronto,1070;1793;393;1587;1853;2206;3098;2107;1698;1770;2792
+ShortLine Hudson,18,1485,449,736;552;1345;3106;324,5th Ave & W 56th St,Exit 14 Park & Ride,736;552;1345;3106;324;2733
+ShortLine Hudson,18,1670,449,736;552;1345;3106;324;2335,5th Ave & W 56th St,Nanuet Hamlets,736;552;1345;3106;324;2733;2335;983
+ShortLine Hudson,18,1873,449,736;552;1345;3106;324;2335,5th Ave & W 56th St,Nanuet Hamlets,736;552;1345;3106;324;2733;2335;983
+ShortLine Hudson,18,528,449,736;552;1345;3106;324;2335,5th Ave & W 56th St,Nanuet Hamlets,736;552;1345;3106;324;2733;2335;983
+ShortLine Hudson,18,2557,449,2184;1378;1031;371;1814;1768;432;1461;3571;1261;1156;797;2335,Trinity Pl & Exchange Alley,Nanuet Hamlets,2184;1378;1031;371;1814;1768;432;1461;3571;1261;1156;797;2335;983
+ShortLine Hudson,18,161,449,736;552;1345;3106;324;2335,5th Ave & W 56th St,Nanuet Hamlets,736;552;1345;3106;324;2733;2335;983
+ShortLine Hudson,18,428,449,2184;1378;1031;371;1814;1768;432;1461;3571;1261;1156;797;2335,Trinity Pl & Exchange Alley,Nanuet Hamlets,2184;1378;1031;371;1814;1768;432;1461;3571;1261;1156;797;2335;983
+ShortLine Hudson,18,3210,449,736;552;1345;3106;324;2335,5th Ave & W 56th St,Nanuet Hamlets,736;552;1345;3106;324;2733;2335;983
+ShortLine Hudson,18,1293,449,1858;818;832,Exit 14 Park & Ride,5th Ave & W 34th St,2733;1858;818;832
+ShortLine Hudson,18,1962,449,1858;818;832,Exit 14 Park & Ride,5th Ave & W 34th St,2733;1858;818;832
+ShortLine Hudson,18,1851,449,1858;818;832,Exit 14 Park & Ride,5th Ave & W 34th St,2733;1858;818;832
+ShortLine Hudson,18,328,449,797;2335;1686;480;2185;2708;946;3191;1312;3190;1541;3581;2462,Nanuet Hamlets,Broadway & Wall St,983;1558;797;2335;1686;480;2185;2708;946;3191;1312;3190;1541;3581;2462
+ShortLine Hudson,18,3361,449,1858;818;832,Exit 14 Park & Ride,5th Ave & W 34th St,2733;1858;818;832
+ShortLine Hudson,18,2874,449,1858;818;832,Exit 14 Park & Ride,5th Ave & W 34th St,2733;1858;818;832
+ShortLine Hudson,18,3393,449,1858;818;832,Exit 14 Park & Ride,5th Ave & W 34th St,2733;1858;818;832
+ShortLine Hudson,18,2313,449,797;1686;480;2185;2708;946;3191;1312;3190;1541;3581;2462,Nanuet Hamlets,Broadway & Wall St,983;1558;797;1686;480;2185;2708;946;3191;1312;3190;1541;3581;2462
+ShortLine Hudson,18,3020,449,2335;1858;818;832,"Rockland Plaza, Rt 59W Bus Shelter (NO COMMUTER PARKING)",5th Ave & W 34th St,2335;2068;1858;818;832
+ShortLine Hudson,18,2104,449,1858;818;832,Exit 14 Park & Ride,5th Ave & W 34th St,2733;1858;818;832
+"Trans-Bridge Lines, Inc.",181,297,1559,1906;749,New York (P.A.B.T.),Bethlehem (Wind Creek Casino),1906;749;2468;2618;2201;803;3026
+"Trans-Bridge Lines, Inc.",188,1558,2176,1906,Allentown Airport (ABE),New York (P.A.B.T.),803;2201;1906
+ShortLine Hudson,19,683,449,2731;3114;2209;3563;1469;3107,Woodbury Common,2nd Ave & E 23rd St,2817;2731;3114;2209;3563;1469;3107
+Greyhound-us,191,771,115,1891;929,New York Port Authority,Pittsburgh Intermodal Station,1891;929;3072;3574
+Greyhound-us,191,775,115,1891,Pittsburgh Intermodal Station,New York Port Authority,3574;3072;1891
+Martz Bus,192,804,1959,2234,Wilkes-Barre,New York (P.A.B.T.),655;1977;2557;1136;2234
+Martz Bus,192,295,2048,2234,Wilkes-Barre,New York (P.A.B.T.),655;1977;2557;1136;2234
+Martz Bus,192,711,558,2234,Wilkes-Barre,New York (P.A.B.T.),655;1977;2557;1136;2234
+Martz Bus,192,3675,949,2234,Wilkes-Barre,New York (P.A.B.T.),655;1977;2557;1136;2234
+"Trans-Bridge Lines, Inc.",20,130,1868,1906,New York (P.A.B.T.),Allentown (Transportation Center),1906;2468;3026;3063;3561;642
+"Trans-Bridge Lines, Inc.",204,2198,1621,1906,Doylestown (SEPTA),New York (P.A.B.T.),524;3310;1294;2348;1787;2911;1906
+"Trans-Bridge Lines, Inc.",204,1226,74,1906,Doylestown (SEPTA),New York (P.A.B.T.),524;3310;1294;2348;1787;2911;1906
+"Trans-Bridge Lines, Inc.",205,1659,2176,749;1906,Allentown (Transportation Center),New York (P.A.B.T.),642;2751;803;2618;2468;749;1906
+Adirondack Trailways,211,772,1893,3225;1001,Albany - Rensselaer (Amtrak),New York (P.A.B.T.),202;123;804;789;3225;1001
+Fullington Trailways,218,1828,123,2930;1897,Williamsport,New York (P.A.B.T.),810;3482;242;2498;944;2413;629;811;3130;722;2647;2930;1897
+Fullington Trailways,218,3138,445,2930;1897,Williamsport,New York (P.A.B.T.),810;3482;242;2498;944;2413;629;811;722;2647;2930;1897
+Martz Bus,219,3131,1523,2234,Stroudsburg (Delaware Water Gap),New York (P.A.B.T.),1136;2234
+Martz Bus,219,3666,1523,2234,Stroudsburg (Delaware Water Gap),New York (P.A.B.T.),1136;2234
+Martz Bus,219,1852,817,2234,Stroudsburg (Delaware Water Gap),New York (P.A.B.T.),1136;2234
+Martz Bus,22,1395,1523,2234,Mount Pocono,New York (P.A.B.T.),2557;1136;2234
+Martz Bus,22,2168,1523,2234,Mount Pocono,New York (P.A.B.T.),2557;1136;2234
+Martz Bus,22,2883,1523,2234,Mount Pocono,New York (P.A.B.T.),2557;1136;2234
+Martz Bus,22,81,1523,2234,Mount Pocono,New York (P.A.B.T.),2557;1136;2234
+Martz Bus,22,94,1523,2234,Mount Pocono,New York (P.A.B.T.),2557;1136;2234
+Martz Bus,22,326,219,2234,Mount Pocono,New York (P.A.B.T.),2557;1136;2234
+Martz Bus,22,987,2194,2234,Mount Pocono,New York (P.A.B.T.),2557;1136;2234
+ShortLine Hudson,221,2793,1377,2870,Port Authority Bus Terminal,Woodbury Common,2870;2817
+ShortLine Hudson,221,3268,1377,1221,Port Authority Bus Terminal,Woodbury Common,1221;2817
+ShortLine Hudson,221,411,1377,2738;1243;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Chester Park Ride,2738;1243;1098;1144;1764;278;3201;221;218;1815;2070;514;3612;2438;3252;215;1904;872;2309;2527;3248;1828;2544
+ShortLine Hudson,221,2505,2206,2870,Port Authority Bus Terminal,Woodbury Common,2870;2817
+ShortLine Hudson,221,1857,2206,437;1764,Port Authority Bus Terminal,Chester Park Ride,437;1764;3612;2438;3252;215;1904;872;2309;2527;3248;1828;2544
+ShortLine Hudson,221,657,2206,686;194;65;693;1399;18;678;230;402,Chester Park Ride,Port Authority Bus Terminal,2544;1828;1574;1087;1622;686;194;65;693;1399;18;678;230;402
+ShortLine Hudson,221,3408,2206,402,Woodbury Common,Port Authority Bus Terminal,2817;402
+ShortLine Hudson,221,1141,449,515,Port Authority Bus Terminal,Central Valley Park and Ride,515;1574
+ShortLine Hudson,221,1219,449,1221,Port Authority Bus Terminal,Woodbury Common,1221;2817
+ShortLine Hudson,221,2552,449,515,Port Authority Bus Terminal,Chester Park Ride,515;1574;1828;2544
+ShortLine Hudson,221,1952,449,2605;1764,Port Authority Bus Terminal,Chester Park Ride,2605;1764;3612;2438;3252;215;1904;872;2309;2527;3248;994;857;2544
+ShortLine Hudson,221,1021,449,2605,Port Authority Bus Terminal,Chester Park Ride,2605;3612;2438;3252;215;1904;872;2309;2527;3248;1828;2544
+ShortLine Hudson,221,1188,449,2605,Port Authority Bus Terminal,Chester Park Ride,2605;514;3612;2438;3252;215;1904;872;2309;2527;3248;1828;2544
+ShortLine Hudson,221,3118,449,437,Port Authority Bus Terminal,Chester Park Ride,437;1828;2544
+ShortLine Hudson,221,1715,449,515,Port Authority Bus Terminal,Chester Park Ride,515;1574;1828;2544
+ShortLine Hudson,221,1199,449,515,Port Authority Bus Terminal,Chester Park Ride,515;1574;1828;2544
+ShortLine Hudson,221,1478,449,515,Port Authority Bus Terminal,Matthew St Park and Ride - Goshen,515;1574;1828;2544;494
+ShortLine Hudson,221,3072,449,437;1243;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,437;1243;1098;1144;1764;278;3201;221;218;2070;514;3612;2438;3252;215;1904;872;1574;1828;2544;494;488
+ShortLine Hudson,221,1440,449,2605,Port Authority Bus Terminal,Monroe Park and Ride,2605;1574;1828
+ShortLine Hudson,221,3497,449,515,Port Authority Bus Terminal,Monroe Park and Ride,515;1574;1828
+ShortLine Hudson,221,759,449,3295,Port Authority Bus Terminal,Monroe Park and Ride,3295;1828
+ShortLine Hudson,221,345,449,402,Chester Park Ride,Port Authority Bus Terminal,2544;1828;1574;402
+ShortLine Hudson,221,1907,449,18;678;230;402,Monroe Park and Ride,Port Authority Bus Terminal,1828;1298;2865;2502;1904;556;3252;3033;2921;18;678;230;402
+ShortLine Hudson,221,960,449,1399;18;678;409;230;402,Monroe Village Park & Ride,Port Authority Bus Terminal,3248;1298;2865;2502;1904;556;3252;3033;2921;1399;18;678;409;230;402
+ShortLine Hudson,221,3855,449,402,Matthew St Park and Ride - Goshen,Port Authority Bus Terminal,494;2544;1828;1574;402
+ShortLine Hudson,221,1636,449,402,Monroe Park and Ride,Port Authority Bus Terminal,1828;1574;402
+ShortLine Hudson,221,2351,449,402,Woodbury Common,Port Authority Bus Terminal,2817;402
+ShortLine Hudson,221,1657,449,1686;480;2185;2708;946;3191;1312;3190;1541;2614;3581;2462,Chester Park Ride,Broadway & Wall St,2544;1828;1574;1686;480;2185;2708;946;3191;1312;3190;1541;2614;3581;2462
+ShortLine Hudson,221,2422,449,402,Monroe Park and Ride,Port Authority Bus Terminal,1828;1574;402
+ShortLine Hudson,221,1012,449,1399;402,Monroe Park and Ride,Port Authority Bus Terminal,1828;1574;1399;402
+ShortLine Hudson,221,1445,449,1399;596;1686;480;2185;2708;946;3191;1312;3190;1541;2614;3581;2462,Central Valley Park and Ride,Broadway & Wall St,1574;1399;596;1686;480;2185;2708;946;3191;1312;3190;1541;2614;3581;2462
+ShortLine Hudson,221,939,449,402,Chester Park Ride,Port Authority Bus Terminal,2544;1828;1574;402
+ShortLine Hudson,221,529,449,402,Woodbury Common,Port Authority Bus Terminal,2817;402
+ShortLine Hudson,221,2725,449,402,Woodbury Common,Port Authority Bus Terminal,2817;402
+ShortLine Hudson,221,3565,449,686;194;65;693;1399;18;678;409;230;402,Chester Park Ride,Port Authority Bus Terminal,2544;1828;3248;1298;2865;2502;1904;556;3252;3033;2921;1772;1087;1622;686;194;65;693;1399;18;678;409;230;402
+ShortLine Hudson,221,2177,449,402,Monroe Park and Ride,Port Authority Bus Terminal,1828;1574;402
+ShortLine Hudson,221,817,449,596;1686;480;2185;2708;3191;1312;3190;3581;2462,Monroe Park and Ride,Broadway & Wall St,1828;1574;596;1686;480;2185;2708;3191;1312;3190;3581;2462
+ShortLine Hudson,221,2329,449,402,Chester Park Ride,Port Authority Bus Terminal,2544;1828;402
+ShortLine Hudson,221,2528,449,402,Chester Park Ride,Port Authority Bus Terminal,2544;1828;1574;402
+ShortLine Hudson,221,3015,449,402,Chester Park Ride,Port Authority Bus Terminal,2544;1828;1574;402
+"Trans-Bridge Lines, Inc.",223,1510,1433,1906,New York (P.A.B.T.),Wescosville (Park-N-Ride),1906;2468;3063;3561
+"Trans-Bridge Lines, Inc.",228,2768,2176,1906,New York (P.A.B.T.),Allentown (Transportation Center),1906;2468;2618;642
+FlixBus-us,230,1999,1899,929,Newark (NJ),Boston (South Station),929;2671
+FlixBus-us,230,2550,1899,929,Boston (South Station),Newark (NJ),17#2671;929
+"Trans-Bridge Lines, Inc.",236,270,2176,1906,Wescosville (Park-N-Ride),New York (P.A.B.T.),3561;3063;1906
+FlixBus-us,238,2200,1899,2011,New York Midtown (31st St & 8th Ave),Boston (South Station),2011;3010;2671
+FlixBus-us,238,2987,1899,2011,Boston (South Station),New York Midtown (31st St & 8th Ave),26#2671;2011
+FlixBus-us,238,2208,1899,2011,New York Midtown (31st St & 8th Ave),Boston (South Station),2011;646;2671
+FlixBus-us,238,1378,1899,2011,Boston (South Station),New York Midtown (31st St & 8th Ave),11#2671;3010;2011
+FlixBus-us,238,3088,95,3164,New York (Hudson Yards),Boston (South Station),3164;646;2671
+FlixBus-us,238,665,95,3164,Boston (South Station),New York (Hudson Yards),15#2671;647;3164
+FlixBus-us,238,2376,95,3164,Boston (South Station),New York (Hudson Yards),5#2671;2589;3164
+FlixBus-us,238,2673,95,2011,New York Midtown (31st St & 8th Ave),Boston (South Station),2011;3010;2671
+FlixBus-us,238,980,95,3164,New York (Hudson Yards),Boston (South Station),3164;1595;2671
+FlixBus-us,238,2052,95,3164,New York (Hudson Yards),Boston (South Station),3164;2589;2671
+FlixBus-us,238,186,95,2011,Boston (South Station),New York Midtown (31st St & 8th Ave),2#2671;3172;2011
+FlixBus-us,238,2824,95,3164,Boston (South Station),New York (Hudson Yards),10#2671;646;3164
+FlixBus-us,238,3289,95,3164,New York (Hudson Yards),Boston (South Station),3164;2671
+FlixBus-us,238,518,95,3164,New York (Hudson Yards),Boston (South Station),3164;2671
+FlixBus-us,238,1570,95,3164,Boston (South Station),New York (Hudson Yards),9#2671;3164
+FlixBus-us,238,1954,95,3164,Boston (South Station),New York (Hudson Yards),7#2671;3164
+FlixBus-us,238,2925,95,3164,Boston (South Station),New York (Hudson Yards),29#2671;3164
+FlixBus-us,238,1884,95,2011,Boston (South Station),New York Midtown (31st St & 8th Ave),43#2671;2011
+FlixBus-us,238,2549,95,2011,Boston (South Station),New York Midtown (31st St & 8th Ave),25#2671;2011
+FlixBus-us,238,2644,95,2011,Boston (South Station),New York Midtown (31st St & 8th Ave),31#2671;2011
+FlixBus-us,238,3245,95,2011,Boston (South Station),New York Midtown (31st St & 8th Ave),53#2671;2011
+FlixBus-us,238,68,95,2011,Boston (South Station),New York Midtown (31st St & 8th Ave),36#2671;2011
+FlixBus-us,238,735,95,2011,New York Midtown (31st St & 8th Ave),Boston (South Station),2011;646;2671
+FlixBus-us,238,2467,95,2011,Boston (South Station),New York Midtown (31st St & 8th Ave),12#2671;646;2011
+FlixBus-us,238,2690,95,2011,New York Midtown (31st St & 8th Ave),Boston (South Station),2011;2671
+FlixBus-us,238,3335,95,2011,New York Midtown (31st St & 8th Ave),Boston (South Station),2011;2671
+FlixBus-us,238,3407,95,2011,New York Midtown (31st St & 8th Ave),Boston (South Station),2011;2671
+FlixBus-us,238,3440,95,2011,New York Midtown (31st St & 8th Ave),Boston (South Station),2011;2671
+FlixBus-us,238,1228,95,2011,Boston (South Station),New York Midtown (31st St & 8th Ave),14#2671;3010;2011
+FlixBus-us,244,32,95,2011,Markham - Cornell Bus GO,New York Midtown (31st St & 8th Ave),4#604;3387;1527;119;825;2744;1020;1929;692;56;3283;2011
+FlixBus-us,244,3779,95,2011;929,New York Midtown (31st St & 8th Ave),Toronto (Union Station Bus Terminal),2011;929;56;2010;1929;1020;2744;825;119;1527
+FlixBus-us,244,2828,95,2011,New York Midtown (31st St & 8th Ave),Markham - Cornell Bus GO,2011;3283;56;692;1929;1020;2744;825;119;1527;3387;1#604
+FlixBus-us,244,617,95,929;2011,Toronto (Union Station Bus Terminal),New York Midtown (31st St & 8th Ave),1527;119;825;2744;1020;1929;2010;56;929;2011
+Greyhound-us,246,1982,115,1891,New York Port Authority,Philadelphia,1891;443;1012;2176
+Greyhound-us,246,1869,115,1891;929,New York Port Authority,Philadelphia (Schuylkill & Walnut),1891;929;553;1#1012
+Greyhound-us,246,1650,115,1891;351,New York Port Authority,Philadelphia (Schuylkill & Walnut),1891;351;443;1012
+Greyhound-us,246,438,115,1891,Washington Union Station,New York Port Authority,3382;2554;130;2176;443;1891
+Greyhound-us,246,3489,115,1891,Philadelphia (Schuylkill & Walnut),New York Port Authority,1012;443;1891
+Greyhound-us,246,3293,115,1891;929,New York Port Authority,Philadelphia (Schuylkill & Walnut),1891;929;1012
+Greyhound-us,246,787,115,1891,Philadelphia,New York Port Authority,2176;130;1891
+Greyhound-us,246,556,115,1891,New York Port Authority,Washington Union Station,1891;443;2176;130;2554;3382
+Greyhound-us,246,2344,115,351;1891,Philadelphia (Schuylkill & Walnut),New York Port Authority,1012;2176;443;351;1891
+Greyhound-us,246,410,115,1891,New York Port Authority,Philadelphia (Schuylkill & Walnut),1891;443;2176;1012
+Greyhound-us,246,819,115,1891,New York Port Authority,Philadelphia (Schuylkill & Walnut),1891;443;2176;1012
+Greyhound-us,246,784,115,929;1891,Philadelphia (Schuylkill & Walnut),New York Port Authority,1012;443;929;1891
+Greyhound-us,246,2026,115,1891,New York Port Authority,Philadelphia (Schuylkill & Walnut),1891;443;1012
+Greyhound-us,246,1223,115,929;1891,Philadelphia (Schuylkill & Walnut),New York Port Authority,1012;2176;443;929;1891
+Greyhound-us,246,3030,115,1891,Philadelphia (Schuylkill & Walnut),New York Port Authority,1012;2176;1891
+Greyhound-us,246,2910,115,1891,New York Port Authority,Philadelphia,1891;2176
+Greyhound-us,246,3240,115,1891,Philadelphia,New York Port Authority,2176;443;1891
+Greyhound-us,246,3029,115,1891,Philadelphia (Schuylkill & Walnut),New York Port Authority,1012;2176;443;1891
+Greyhound-us,246,3596,115,1891,Philadelphia,New York Port Authority,2176;1891
+Pine Hill Trailways,249,1547,1060,1220;590,New York (P.A.B.T.),Oneonta,1220;590;193;2643;2478;979;3292;2679;2634;427;1925;2673;1798;381;870;3176;3343;1750;1624;3048;3242;1539;2888;3162;10;2144;667;284
+Pine Hill Trailways,249,3496,686,1220;590,New York (P.A.B.T.),Oneonta,1220;590;193;2643;2478;979;3292;2679;2634;427;1925;2673;1798;381;870;3176;3343;1750;1624;3048;3242;1539;2888;3162;10;2144;667;284
+Adirondack Trailways,254,1553,2065,3225;1001;4,Montreal,New York (Hudson Yards Trailways),2698;2993;2885;2963;2822;123;202;3225;1001;4
+Pine Hill Trailways,261,2066,1959,590;1220;2368,Kingston,New York (Hudson Yards Trailways),2679;3292;979;2478;2643;193;590;1220;2368
+Pine Hill Trailways,261,1124,2065,590;1220;2368,Kingston,New York (Hudson Yards Trailways),2679;3292;979;2478;2643;193;590;1220;2368
+Pine Hill Trailways,261,419,420,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;590;1220
+Pine Hill Trailways,261,190,938,590;1220;2368,Kingston,New York (Hudson Yards Trailways),2679;3292;979;2478;2643;193;590;1220;2368
+Pine Hill Trailways,261,2602,945,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;590;1220
+"Trans-Bridge Lines, Inc.",262,1306,1559,1906,New York (P.A.B.T.),Allentown (Transportation Center),1906;2468;2618;2201;803;2751;642
+FlixBus-us,263,1138,95,929;2011,Toronto (Union Station Bus Terminal),New York Midtown (31st St & 8th Ave),1527;119;2744;1020;1929;2010;56;929;2011
+FlixBus-us,263,36,95,2011;929,New York Midtown (31st St & 8th Ave),Toronto (Union Station Bus Terminal),2011;929;56;2010;1929;1020;2744;119;1212;1527
+"Trans-Bridge Lines, Inc.",266,2955,1211,3375,New York (Wall Street),Allentown Airport (ABE),3375;3217;2201;803
+"Trans-Bridge Lines, Inc.",266,2701,940,3375,New York (Wall Street),Allentown Airport (ABE),3375;3217;2201;803
+FlixBus-us,267,115,95,1257,Boston (South Station),Queens Jamaica (144th Pl/Archer Ave),54#2671;1257
+FlixBus-us,267,2620,95,1257,Boston (South Station),Queens Jamaica (144th Pl/Archer Ave),19#2671;1257
+FlixBus-us,267,1213,95,3163;1257,Boston (South Station),Queens Jamaica (144th Pl/Archer Ave),42#2671;3163;1257
+FlixBus-us,267,1513,95,3163;1257,Boston (South Station),Queens Jamaica (144th Pl/Archer Ave),20#2671;3163;1257
+FlixBus-us,267,3150,95,3163;1257,Boston (South Station),Queens Jamaica (144th Pl/Archer Ave),47#2671;3163;1257
+FlixBus-us,267,1984,95,1257;3163,Queens Jamaica (144th Pl/Archer Ave),Boston (South Station),1257;3163;2671
+FlixBus-us,267,3322,95,1257;3163,Queens Jamaica (144th Pl/Archer Ave),Boston (South Station),1257;3163;2671
+FlixBus-us,267,2483,95,1257,Queens Jamaica (144th Pl/Archer Ave),Boston (South Station),1257;2671
+FlixBus-us,267,3175,95,1257,Queens Jamaica (144th Pl/Archer Ave),Boston (South Station),1257;2671
+"Trans-Bridge Lines, Inc.",278,2892,2176,749;1906,Allentown (Transportation Center),New York (P.A.B.T.),642;2751;803;2201;2618;2468;749;1906
+"Trans-Bridge Lines, Inc.",284,501,1634,1906;1#3128,Allentown (Transportation Center),New York (Manhattan Cruise Terminal),642;803;2201;2618;2468;1906;1#3128
+"Trans-Bridge Lines, Inc.",284,3121,2125,1906;4#3128,Allentown (Transportation Center),New York (Manhattan Cruise Terminal),642;803;2201;2618;2468;1906;4#3128
+Peter Pan Bus Lines,287,1742,1145,75,Boston (South Station),New York (P.A.B.T.),1557;1458;75
+Peter Pan Bus Lines,287,672,1281,75,Boston (South Station),New York (P.A.B.T.),1557;1458;75
+Peter Pan Bus Lines,287,1592,1331,75,Boston (South Station),New York (P.A.B.T.),1557;1458;75
+Peter Pan Bus Lines,287,544,2039,75,Boston (South Station),New York (P.A.B.T.),1557;1458;75
+Peter Pan Bus Lines,287,805,2080,75,Boston (South Station),New York (P.A.B.T.),1557;1458;75
+Peter Pan Bus Lines,287,848,640,75,Boston (South Station),New York (P.A.B.T.),1557;75
+Martz Bus,290,1031,1469,2234,New York (P.A.B.T.),Mount Pocono,2234;1136;541;2557
+Martz Bus,290,447,1469,2234,New York (P.A.B.T.),Mount Pocono,2234;1136;541;2557
+Martz Bus,290,3563,1854,2234,New York (P.A.B.T.),Mount Pocono,2234;1136;541;2557
+Martz Bus,290,2795,2167,2234,New York (P.A.B.T.),Mount Pocono,2234;1136;541;2557
+Martz Bus,290,3534,2167,2234,New York (P.A.B.T.),Mount Pocono,2234;1136;541;2557
+Peter Pan Bus Lines,291,2128,1402,75,South Hadley,New York (P.A.B.T.),42;3132;213;2969;1482;75
+Peter Pan Bus Lines,291,2211,1402,75,South Hadley,New York (P.A.B.T.),42;3132;213;2969;1482;75
+Peter Pan Bus Lines,291,143,2105,75,South Hadley,New York (P.A.B.T.),42;3132;213;2969;1482;75
+Peter Pan Bus Lines,291,2294,2105,75,South Hadley,New York (P.A.B.T.),42;3132;213;2969;1482;75
+Peter Pan Bus Lines,291,3422,567,75,South Hadley,New York (P.A.B.T.),42;3132;213;2969;1482;75
+Peter Pan Bus Lines,291,3530,567,75,South Hadley,New York (P.A.B.T.),42;3132;213;2969;1482;75
+Peter Pan Bus Lines,291,219,731,75,South Hadley,New York (P.A.B.T.),42;3132;213;2969;1482;75
+Peter Pan Bus Lines,291,2658,731,75,South Hadley,New York (P.A.B.T.),42;3132;213;2969;1482;75
+Peter Pan Bus Lines,291,1348,962,75,South Hadley,New York (P.A.B.T.),42;3132;213;2969;1482;75
+Peter Pan Bus Lines,291,1781,962,75,South Hadley,New York (P.A.B.T.),42;3132;213;2969;1482;75
+"Trans-Bridge Lines, Inc.",297,1537,393,1906;749,New York (P.A.B.T.),Wescosville (Park-N-Ride),1906;749;2468;2618;2201;3063;2751;803;642;3561
+Adirondack Trailways,298,1875,2184,1001;3225,New York (P.A.B.T.),Oneonta,1001;3225;1880;2778;1253;989;367;789;3454;1762;3418;1739;1285;1192;3262;955;842;850;2426;2297;2766;2624;1591;47
+Fullington Trailways,300,3836,1434,1897,New York (P.A.B.T.),Pittsburgh,1897;2508;1198;566
+New York Trailways,302,2061,2065,1793;1070,Toronto,New York (P.A.B.T.),2792;1770;1698;2107;3098;2206;1853;1587;315;393;1793;1070
+New York Trailways,302,2001,420,1793;1070,Toronto,New York (P.A.B.T.),2792;1770;1698;2107;3098;2206;1853;1587;315;393;1793;1070
+ShortLine Hudson,303,868,2206,280;1764,Port Authority Bus Terminal,Main St - Honesdale,280;1764;2817;2719;488;2479;3055;2956;1921;703;3045;2215;1648;2116;1094;1850
+ShortLine Hudson,303,3613,2206,1399;402,Main St - Honesdale,Port Authority Bus Terminal,1850;2363;3005;429;549;1821;703;2709;2507;3055;2479;488;1167;1828;1399;402
+ShortLine Hudson,303,2132,449,280,Port Authority Bus Terminal,"Sunoco Station, 54 Main Ave",280;1828;2479;3055;2956;1921;703;3045;2215;1648
+ShortLine Hudson,303,3370,449,280,Port Authority Bus Terminal,"Sunoco Station, 54 Main Ave",280;2719;488;2479;3055;2956;1921;703;3045;2215;1648
+ShortLine Hudson,303,467,449,280,Port Authority Bus Terminal,Main St - Honesdale,280;1828;2479;3055;2956;1921;703;3045;2215;1648;2116;1094;1850
+ShortLine Hudson,303,3148,449,1399;402;1686;480;2185;2708;946;3191;1312;3190;1541;2614;3581;2462,"Sunoco Station, 54 Main Ave",Broadway & Wall St,429;549;1821;703;2709;2507;3055;2479;1399;402;1686;480;2185;2708;946;3191;1312;3190;1541;2614;3581;2462
+ShortLine Hudson,303,2742,449,402;1686;480;2185;2708;946;3191;1312;3190;1541;2614;3581;2462,"Sunoco Station, 54 Main Ave",Broadway & Wall St,429;549;1821;703;2709;2507;3055;2479;402;1686;480;2185;2708;946;3191;1312;3190;1541;2614;3581;2462
+ShortLine Hudson,303,1698,449,1399;402,Main St - Honesdale,Port Authority Bus Terminal,1850;2363;3005;429;549;1821;703;2709;2507;3055;2479;488;1167;1399;402
+"Trans-Bridge Lines, Inc.",304,421,531,749;1906,Allentown (Transportation Center),New York (P.A.B.T.),642;2751;803;2201;749;1906
+New York Trailways,307,2392,420,1070,Buffalo,New York (P.A.B.T.),2107;2206;1853;1587;315;393;1070
+New York Trailways,307,3705,709,1070,Buffalo,New York (P.A.B.T.),2107;2206;1853;1587;315;393;1070
+FlixBus-us,31,3900,1540,2011,Ithaca,Washington Union Station,692;56;3283;2011;3382
+FlixBus-us,31,620,450,2011,Ithaca,Washington Union Station,1#692;3283;2011;3382
+"Trans-Bridge Lines, Inc.",311,844,1824,1906,Wescosville (Park-N-Ride),New York (P.A.B.T.),3561;3063;2468;1906
+"Trans-Bridge Lines, Inc.",311,959,2290,1906,Wescosville (Park-N-Ride),New York (P.A.B.T.),3561;3063;2468;1906
+FlixBus-us,316,613,95,883,Brooklyn (3 Av/38th St),Washington Union Station,883;2539;3382
+FlixBus-us,316,1777,95,883,Washington Union Station,Brooklyn (3 Av/38th St),3382;2539;883
+Greyhound-us,317,2909,115,1891,Atlantic City (Resorts),New York Port Authority,933;2166;1891
+Greyhound-us,317,267,115,1891,Atlantic City (Resorts),New York Port Authority,933;1973;2166;1891
+Greyhound-us,317,485,115,1891,New York Port Authority,Atlantic City (Resorts),1891;2166;1973;933
+Greyhound-us,317,485_2,115,1891,New York Port Authority,Atlantic City (Resorts),1891;2166;1973;933
+Greyhound-us,317,3661,115,1891,New York Port Authority,Atlantic City (Resorts),1891;2166;933
+FlixBus-us,321,3577,1685,2011;1153,Richmond (E Grace St & Crane St),New York City Chinatown (28 Allen St),467;1606;2554;2408;2011;1153
+FlixBus-us,321,2946,1899,1153;2011,New York City Chinatown (28 Allen St),Richmond (E Grace St & Crane St),1153;2011;2554;1606;467
+FlixBus-us,321,1619,95,2011,Richmond (E Grace St & Crane St),New York Midtown (31st St & 8th Ave),467;3572;3382;2408;2011
+FlixBus-us,321,1269,95,2011,New York Midtown (31st St & 8th Ave),Richmond (E Grace St & Crane St),2011;899;2554;3382;3572;467
+FlixBus-us,321,2769,95,2011,Richmond (E Grace St & Crane St),New York Midtown (31st St & 8th Ave),467;1831;1606;2408;2011
+FlixBus-us,321,1976,95,2011,New York Midtown (31st St & 8th Ave),Richmond (Main St Station Plaza),2011;899;1606;1831;2952
+FlixBus-us,321,577,95,929;2011;3568,Richmond (E Grace St & Crane St),White Plains Bus Station,467;3382;929;2011;3568
+FlixBus-us,321,1096,95,2011;3568,Richmond (E Grace St & Crane St),White Plains Bus Station,467;3382;2011;3568
+FlixBus-us,321,1915,95,3568;2011;929,White Plains Bus Station,Richmond (Main St Station Plaza),3568;2011;929;3481;3382;1831;2952
+FlixBus-us,321,2059,95,2011,Richmond (Main St Station Plaza),New York Midtown (31st St & 8th Ave),2952;1831;3382;582;2445;2011
+FlixBus-us,321,2098,95,3568;2011,White Plains Bus Station,Richmond (E Grace St & Crane St),3568;2011;2445;2554;3382;467
+FlixBus-us,321,2006,95,2011,New York Midtown (31st St & 8th Ave),Richmond (Main St Station Plaza),2011;2445;582;3382;2952
+"Trans-Bridge Lines, Inc.",327,670,1211,1906,New York (P.A.B.T.),Allentown (Transportation Center),1906;3217;2468;2618;2201;803;2751;642
+FlixBus-us,34,3166,95,929;3164,Philadelphia,Boston (South Station),2445;929;3164;3010;1057;2589;2671
+FlixBus-us,34,1344,95,3164;929,Boston (South Station),Philadelphia,45#2671;2589;1057;3010;3164;929;2445
+"Trans-Bridge Lines, Inc.",342,3757,2176,1906;749,New York (P.A.B.T.),Allentown (Transportation Center),1906;749;2468;2618;2201;3026;803;642
+Pine Hill Trailways,344,2551,1422,2368;1220;590,New York (Hudson Yards Trailways),Kingston,2368;1220;590;193;2643;2478;979;3292;2679
+Pine Hill Trailways,344,1514,1961,2368;1220;590,New York (Hudson Yards Trailways),Kingston,2368;1220;590;193;2643;2478;979;3292;2679
+Pine Hill Trailways,344,1550,2179,1220;590,New York (P.A.B.T.),Kingston,1220;590;193;2643;2478;979;3292;2679
+Adirondack Trailways,346,975,2065,3225;1001,Montreal,New York (P.A.B.T.),2698;2993;2885;123;202;3225;1001
+FlixBus-us,347,1339,95,2011,Providence (Canal St & Smith St),New York Midtown (31st St & 8th Ave),3172;3010;2011
+FlixBus-us,347,1126,95,2011,New York Midtown (31st St & 8th Ave),Providence (Canal St & Smith St),2011;3010;3172
+Martz Bus,348,1897,1854,2234,New York (P.A.B.T.),Mount Pocono,2234;1826;1136;541;2557
+Martz Bus,348,3688,1854,2234,New York (P.A.B.T.),Mount Pocono,2234;1826;1136;541;2557
+Ocean Travel,354,1645,1964,1444,New York,Binghamton,1444;1#394
+Ocean Travel,354,71,1964,1444,Binghamton,New York,2#394;1444
+Martz Bus,358,1087,1523,2234,Wilkes-Barre,New York (P.A.B.T.),655;3391;1977;541;2234
+Best Bus,359,3398,1405,2273,Penn Station,Dewey Beach,2273;163
+Best Bus,359,1637,53,2273,Penn Station,Penn Station,2273
+Best Bus,359,1726,964,2273,Penn Station,Dewey Beach,2273;163
+Peter Pan Bus Lines,36,2826,1281,75,New York (P.A.B.T.),Boston (South Station),75;1557
+Peter Pan Bus Lines,36,2617,224,75,New York (P.A.B.T.),Boston (South Station),75;1557
+Peter Pan Bus Lines,36,553,224,75,New York (P.A.B.T.),Boston (South Station),75;1557
+Peter Pan Bus Lines,36,459,422,75,New York (P.A.B.T.),Boston (South Station),75;1557
+Peter Pan Bus Lines,36,1946,696,75,New York (P.A.B.T.),Boston (South Station),75;1557
+Fullington Trailways,360,1351,858,1897,New York (P.A.B.T.),Pittsburgh,1897;1198;566
+Peter Pan Bus Lines,361,2137,755,75,Silver Spring,New York (P.A.B.T.),474;3029;75
+"Trans-Bridge Lines, Inc.",362,238,1559,1906;749,New York (P.A.B.T.),Allentown (Transportation Center),1906;749;2468;2618;2201;803;2751;642
+"Trans-Bridge Lines, Inc.",370,3465,2176,1906,Allentown Airport (ABE),New York (P.A.B.T.),803;2201;2468;1906
+Ocean Travel,371,1575,1964,1444,New York,Liverpool,1444;1549
+Ocean Travel,371,389,1964,1444,Liverpool,New York,1549;1444
+Greyhound-us,372,2443,115,1891,New York Port Authority,White River Junction Bus Station,1891;1046;134;1803;646;1057;3389;1568;3427;1911;3017;1502
+Greyhound-us,372,2259,115,1891,White River Junction Bus Station,New York Port Authority,1502;3017;1911;3427;1568;3389;1057;646;1803;134;1046;1891
+FlixBus-us,377,2015,95,2011;1851,New York Midtown (31st St & 8th Ave),Montreal (Gare d'autocars de Montreal),2011;1851;20;2255;2787;890
+FlixBus-us,377,940,95,398;2011,Montreal (Gare d'autocars de Montreal),New York Midtown (31st St & 8th Ave),890;2787;2255;20;398;2011
+"Trans-Bridge Lines, Inc.",380,2087,1892,1906,New York (P.A.B.T.),Hellertown (Park-N-Ride),1906;2468;3026;3063
+FlixBus-us,383,2614,95,2011,Niagara Falls USA,New York Midtown (31st St & 8th Ave),825;2744;1929;2010;643;56;3283;2011
+FlixBus-us,383,2564,95,2011;929,New York Midtown (31st St & 8th Ave),Niagara Falls USA,2011;929;3283;2010;1929;1020;2744;825
+FlixBus-us,383,818,95,2011,New York Midtown (31st St & 8th Ave),Niagara Falls USA,2011;3283;56;643;2010;1929;2744;825
+FlixBus-us,383,3507,95,929;2011,Niagara Falls USA,New York Midtown (31st St & 8th Ave),825;2744;1020;1929;2010;3283;929;2011
+Greyhound-us,385,2203,115,1891,New York Port Authority,Boston (South Station),1891;134;646;1057;1010;2671
+Greyhound-us,385,2025,115,995;3568;1891,Boston (South Station),New York Port Authority,16#2671;1057;646;995;3568;1891
+Greyhound-us,385,2674,115,1891;3568;995,New York Port Authority,Boston (South Station),1891;3568;995;134;646;1057;1010;2671
+Greyhound-us,385,1624,115,1891,New York Port Authority,Boston (South Station),1891;134;646;1010;2671
+Greyhound-us,385,1868,115,1891,Boston (South Station),New York Port Authority,30#2671;1057;646;1891
+Peter Pan Bus Lines,393,677,1822,75,New York (P.A.B.T.),Washington,75;725;1618
+Peter Pan Bus Lines,393,3418,1864,75,New York (P.A.B.T.),Washington,75;725;1618
+Peter Pan Bus Lines,393,2498,1930,75,New York (P.A.B.T.),Washington,75;725;1618
+Peter Pan Bus Lines,393,2415,1953,75,New York (P.A.B.T.),Washington,75;725;1618
+Peter Pan Bus Lines,393,2616,1953,75,New York (P.A.B.T.),Washington,75;725;1618
+Peter Pan Bus Lines,393,749,1953,75,New York (P.A.B.T.),Washington,75;725;1618
+Peter Pan Bus Lines,393,1546,2116,75,New York (P.A.B.T.),Washington,75;725;1618
+Peter Pan Bus Lines,393,194,2116,75,New York (P.A.B.T.),Washington,75;725;1618
+Peter Pan Bus Lines,393,2167,2116,75,New York (P.A.B.T.),Washington,75;725;1618
+Peter Pan Bus Lines,393,3086,2116,75,New York (P.A.B.T.),Washington,75;725;1618
+Peter Pan Bus Lines,393,3260,2116,75,New York (P.A.B.T.),Washington,75;725;1618
+Peter Pan Bus Lines,393,3617,2116,75,New York (P.A.B.T.),Washington,75;725;1618
+Peter Pan Bus Lines,393,3831,2116,75,New York (P.A.B.T.),Washington,75;725;1618
+Peter Pan Bus Lines,393,728,2116,75,New York (P.A.B.T.),Washington,75;725;1618
+Peter Pan Bus Lines,393,800,2116,75,New York (P.A.B.T.),Washington,75;725;1618
+Peter Pan Bus Lines,393,3006,318,75,New York (P.A.B.T.),Washington,75;725;1618
+Peter Pan Bus Lines,393,667,318,75,New York (P.A.B.T.),Washington,75;725;1618
+Peter Pan (BZ),396,448,498,1514,Williamstown,New York (P.A.B.T.),153;309;1565;1914;37;498;1514
+"Trans-Bridge Lines, Inc.",397,1598,74,1906,New York (P.A.B.T.),Allentown (Transportation Center),1906;2751;3063;3561;642
+New York Trailways,405,671,1613,1070,New York (P.A.B.T.),Buffalo,1070;393;315;1587;1853;2206;3098;2107
+FlixBus-us,414,2281,815,2011,State College Regional Airport,New York Midtown (31st St & 8th Ave),2382;2011
+FlixBus-us,414,316,815,2011;929;1#2382,New York Midtown (31st St & 8th Ave),State College Regional Airport,2011;929;1#2382
+FlixBus-us,414,3795,95,1153;2011;929,New York City Chinatown (28 Allen St),Chicago Bus Station,1153;2011;929;41;3072;2382;3574;1877;275;1596;446;1733;1388;1605
+FlixBus-us,414,562,95,929;2011;1153,Chicago Bus Station,New York City Chinatown (28 Allen St),1605;1388;1733;446;1596;275;1877;3574;2382;3072;41;929;2011;1153
+FlixBus-us,421,1927,1383,2011,Ithaca,New York Midtown (31st St & 8th Ave),692;56;2011
+FlixBus-us,421,1718,388,2011;929,New York Midtown (31st St & 8th Ave),Ithaca,2011;929;56;692
+FlixBus-us,421,3723,95,2011,New York Midtown (31st St & 8th Ave),Ithaca,2011;56;692
+FlixBus-us,421,3349,95,2011,Ithaca,New York Midtown (31st St & 8th Ave),692;56;2011
+Greyhound-us,422,3488,115,1891,"Albany Bus Terminal, NY",New York Port Authority,20;1891
+Greyhound-us,422,2108,115,1891,New York Port Authority,"Albany Bus Terminal, NY",1891;20
+ShortLine Hudson,426,3331,1377,2021;1764,Port Authority Bus Terminal,Binghamton ShortLine Terminal,2021;1764;3246;3360
+ShortLine Hudson,426,1604,1377,2021;1764,Port Authority Bus Terminal,Binghamton ShortLine Terminal,2021;1764;3246;3360
+ShortLine Hudson,426,1354,1377,2021;1764,Port Authority Bus Terminal,Binghamton ShortLine Terminal,2021;1764;3246;3360
+ShortLine Hudson,426,886,1377,2738;1243;1098;1764;278;3201;221;218,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,2738;1243;1098;1764;278;3201;221;218;2070;514;3612;2438;3252;215;1904;872;2309;2527;3248;1828;994;2544;1915;494;2719;488
+ShortLine Hudson,426,2509,1377,2738;1243;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,2738;1243;1098;1144;1764;278;3201;221;218;1815;2070;514;3612;2438;3252;215;1904;872;2309;2527;3248;1828;994;2544;1915;494;488
+ShortLine Hudson,426,2230,1377,1399;402,Binghamton ShortLine Terminal,Port Authority Bus Terminal,3360;3246;657;1399;402
+ShortLine Hudson,426,2213,1377,1399;402,Binghamton ShortLine Terminal,Port Authority Bus Terminal,3360;3246;1399;402
+ShortLine Hudson,426,1853,1377,1399;402,Binghamton ShortLine Terminal,Port Authority Bus Terminal,3360;3246;1399;402
+ShortLine Hudson,426,1532,1377,402,Monticello ShortLine Terminal,Port Authority Bus Terminal,3246;2817;402
+ShortLine Hudson,426,2512,1377,1399;402,Railroad Ave - Middletown Terminal,Port Authority Bus Terminal,488;1167;915;1915;494;2544;2062;1828;3248;1298;2865;2502;1904;556;3252;3033;2921;1087;1399;402
+ShortLine Hudson,426,1419,1377,686;194;65;693;1399;18;678;230;402,Railroad Ave - Middletown Terminal,Port Authority Bus Terminal,488;1167;1915;494;2544;2062;1828;3248;1298;2865;2502;1904;556;3252;3033;2921;1087;1622;686;194;65;693;1399;18;678;230;402
+ShortLine Hudson,426,554,1377,686;194;65;693;1399;18;678;230;402,Railroad Ave - Middletown Terminal,Port Authority Bus Terminal,488;1167;1915;494;2062;1828;3248;1298;2865;2502;1904;556;3252;3033;2921;1772;1087;1622;686;194;65;693;1399;18;678;230;402
+ShortLine Hudson,426,1691,2206,2738;1243;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,2738;1243;1098;1144;1764;278;3201;221;218;1815;2070;3612;2438;3252;215;1904;872;2309;2527;1828;994;2544;1915;494;2719;488
+ShortLine Hudson,426,2480,2206,437,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,437;1828;1915;494;2719;488
+ShortLine Hudson,426,1387,2206,437,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,437;3612;2438;3252;215;1904;872;2309;2527;3248;1828;994;2544;1915;494;2719;488
+ShortLine Hudson,426,1036,2206,402,Railroad Ave - Middletown Terminal,Port Authority Bus Terminal,488;494;1828;402
+ShortLine Hudson,426,561,2206,686;194;65;693;1399;678;230;402,Railroad Ave - Middletown Terminal,Port Authority Bus Terminal,488;1167;494;2544;1828;3248;1298;2865;2502;1904;556;3252;3033;2921;1772;1087;1622;686;194;65;693;1399;678;230;402
+ShortLine Hudson,426,1627,449,515,Port Authority Bus Terminal,Circleville Park and Ride,515;1574;1828;2544;2719;488;3432
+ShortLine Hudson,426,3636,449,2184;1378;1031;371;1814;1768;432;166,Trinity Pl & Exchange Alley,Circleville Park and Ride,2184;1378;1031;371;1814;1768;432;166;1574;1828;2544;2379;488;3432
+ShortLine Hudson,426,162,449,2184;1378;1031;371;1814;1768;432;166,Trinity Pl & Exchange Alley,Circleville Park and Ride,2184;1378;1031;371;1814;1768;432;166;1574;1828;2544;2379;488;3432
+ShortLine Hudson,426,2741,449,2605,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,2605;2070;3612;2438;3252;215;1904;872;2309;2527;3248;1828;994;2544;1915;494;2719;488
+ShortLine Hudson,426,2916,449,515,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,515;1828;1915;494;2719;488
+ShortLine Hudson,426,1739,449,2605,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,2605;3612;2438;3252;215;1904;872;2309;2527;3248;1915;494;2719;488
+ShortLine Hudson,426,2337,449,437;1764,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,437;1764;3612;2438;3252;215;1904;872;2309;2527;3248;1828;2544;1915;494;2719;488
+ShortLine Hudson,426,2332,449,1221;1764,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,1221;1764;1574;2817;1828;2544;494;488
+ShortLine Hudson,426,3079,449,437,Port Authority Bus Terminal,Exit 122 Park and Ride,437;1828;2544;2379
+ShortLine Hudson,426,3657,449,437,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,437;1828;488
+ShortLine Hudson,426,3867,449,2738;1243;1098;1764;278;3201;221;218,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,2738;1243;1098;1764;278;3201;221;218;2070;514;3612;2438;3252;215;1904;872;2309;2527;3248;1828;994;2544;1915;494;2719;488
+ShortLine Hudson,426,555,449,2738;1243;516;1098;1144;1764;278;3201;221,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,2738;1243;516;1098;1144;1764;278;3201;221;1815;2070;3612;2438;3252;215;872;2309;2527;3248;1828;994;2544;1915;494;2719;488
+ShortLine Hudson,426,2232,449,515;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,515;1098;1144;1764;278;3201;221;218;1815;2070;1574;1828;2544;494;488
+ShortLine Hudson,426,1557,449,437,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,437;1828;488
+ShortLine Hudson,426,1692,449,2738;1243;1098;1764;278;3201;221;218,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,2738;1243;1098;1764;278;3201;221;218;2070;514;3612;2438;3252;215;1904;872;2309;2527;3248;1828;994;2544;1915;494;2719;488
+ShortLine Hudson,426,2115,449,1221,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,1221;2379;488
+ShortLine Hudson,426,892,449,515;1764,Port Authority Bus Terminal,Monticello ShortLine Terminal,515;1764;1574;1828;2544;1915;494;2379;488;3432;657;3246
+ShortLine Hudson,426,207,449,2021;1764,Port Authority Bus Terminal,Monticello ShortLine Terminal,2021;1764;2719;488;657;3246
+ShortLine Hudson,426,744,449,2021,Port Authority Bus Terminal,Monticello ShortLine Terminal,2021;2379;3432;657;3246
+ShortLine Hudson,426,1871,449,3295,Port Authority Bus Terminal,Monticello ShortLine Terminal,3295;1828;2544;494;2379;488;3432;657;3246
+ShortLine Hudson,426,2527,449,402,Monticello ShortLine Terminal,Port Authority Bus Terminal,3246;657;488;494;1828;402
+ShortLine Hudson,426,1844,449,402,Monticello ShortLine Terminal,Port Authority Bus Terminal,3246;657;494;2544;1828;1574;402
+ShortLine Hudson,426,1806,449,18;402,Railroad Ave - Middletown Terminal,Port Authority Bus Terminal,488;1167;494;1828;18;402
+ShortLine Hudson,426,3508,449,1399;18;678;409;230;402,Railroad Ave - Middletown Terminal,Port Authority Bus Terminal,488;1167;1915;494;2062;3248;1298;2865;2502;1904;556;3252;3033;2921;1399;18;678;409;230;402
+ShortLine Hudson,426,1007,449,402,Railroad Ave - Middletown Terminal,Port Authority Bus Terminal,488;494;2544;1828;402
+ShortLine Hudson,426,2160,449,402,Circleville Park and Ride,Port Authority Bus Terminal,3432;488;1167;494;1828;402
+ShortLine Hudson,426,651,449,1399;402,Railroad Ave - Middletown Terminal,Port Authority Bus Terminal,488;1828;1399;402
+ShortLine Hudson,426,1818,449,402;1686;480;2185;2708;3191;1312;3190;3581;2462,Railroad Ave - Middletown Terminal,Broadway & Wall St,488;1828;1574;402;1686;480;2185;2708;3191;1312;3190;3581;2462
+ShortLine Hudson,426,256,449,194;65;693;1399;18;678;409;230;402,Exit 122 Park and Ride,Port Authority Bus Terminal,2379;1574;194;65;693;1399;18;678;409;230;402
+ShortLine Hudson,426,831,449,402,Railroad Ave - Middletown Terminal,Port Authority Bus Terminal,488;494;1828;402
+ShortLine Hudson,426,684,449,1399;402,Monroe Park and Ride,Port Authority Bus Terminal,1828;3248;1298;1399;402
+ShortLine Hudson,426,3549,716,402,Railroad Ave - Middletown Terminal,Port Authority Bus Terminal,488;1167;1915;494;2544;1828;402
+Martz Bus,431,2798,2194,2234,Wilkes-Barre,New York (P.A.B.T.),655;3391;1977;2557;1136;2234
+Martz Bus,431,3306,2194,2234,Wilkes-Barre,New York (P.A.B.T.),655;3391;1977;2557;1136;2234
+Martz Bus,432,480,1359,3218;1664,LIRR Syosset,Lewisburg,3218;1664;3459
+Martz Bus,432,666,1434,3218;1664,LIRR Syosset,Lewisburg,3218;1664;3459
+Martz Bus,432,2967,2269,3218;1664,LIRR Syosset,Lewisburg,3218;1664;3459
+Martz Bus,432,1396,268,3218;1664,LIRR Syosset,Lewisburg,3218;1664;3459
+"Trans-Bridge Lines, Inc.",437,2943,2176,1906,New York (P.A.B.T.),Wescosville (Park-N-Ride),1906;2201;3063;3561
+FlixBus-us,444,3510,95,2011,New York Midtown (31st St & 8th Ave),Boston (South Station),2011;647;2671
+FlixBus-us,444,3494,95,2011,Boston (South Station),New York Midtown (31st St & 8th Ave),33#2671;647;2011
+Martz Bus,445,2247,1919,1664;3218,Lewisburg,LIRR Syosset,3459;1664;3218
+Martz Bus,445,1148,201,1664;3218,Lewisburg,LIRR Syosset,3459;1664;3218
+Martz Bus,445,3128,310,1664;3218,Lewisburg,LIRR Syosset,3459;1664;3218
+Martz Bus,445,3865,376,1664;3218,Lewisburg,LIRR Syosset,3459;1664;3218
+Pine Hill Trailways,446,989,1080,1220;590,New York (P.A.B.T.),Phoenicia,1220;590;193;2643;2478;979;3292;2679;2634;427;1925;2673;1798;381;870;3176;3343
+Pine Hill Trailways,446,3729,1418,1220;590,New York (P.A.B.T.),Phoenicia,1220;590;193;1808;2643;2478;979;3292;2679;2634;427;1925;2673;1798;381;870;3176;3343
+Pine Hill Trailways,446,2685,2097,1220;590,New York (P.A.B.T.),Phoenicia,1220;590;193;1808;2643;2478;979;3292;2679;2634;427;1925;2673;1798;381;870;3176;3343
+Pine Hill Trailways,447,3236,1009,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;1808;193;590;1220
+Pine Hill Trailways,447,1010,2052,590;1220;2368,Kingston,New York (Hudson Yards Trailways),2679;3292;979;2478;2643;1808;193;590;1220;2368
+Pine Hill Trailways,451,3538,1265,590;1220,Utica,New York (P.A.B.T.),822;2303;1785;1751;1101;1965;284;667;2144;10;3162;2888;1539;3242;3048;1624;1750;3343;3176;870;381;1798;2673;1925;427;2634;2679;3292;979;2478;2643;193;590;1220
+Superior Tours,452,1904,92,88,New York City,Pikesville,88;1142;3577;485
+Superior Tours,452,2441,92,88,Pikesville,New York City,485;3577;1142;88
+Adirondack Trailways,458,628,2065,1001;3225,New York (P.A.B.T.),Albany (Trailways Bus Terminal),1001;3225;1880;2778;1253;989;367;789;804;123
+"Trans-Bridge Lines, Inc.",464,2863,2090,1906,Clinton (Park & Ride),New York (P.A.B.T.),2468;1906
+Greyhound-us,47,2653,115,1891;1655;2570,New York Port Authority,Hempstead Bus Station,1891;1655;2570
+Greyhound-us,47,3451,115,2570;1655;1891,Hempstead Bus Station,New York Port Authority,2570;1655;1891
+"Trans-Bridge Lines, Inc.",472,40,2176,1906;749,New York (P.A.B.T.),Bethlehem (Transp Ctr),1906;749;2468;2618;2201;803;2751
+"Trans-Bridge Lines, Inc.",472,3375,74,1906;749,New York (P.A.B.T.),Bethlehem (Transp Ctr),1906;749;2468;2618;2201;803;2751
+FlixBus-us,487,1161,95,1153,Orlando Bus Station,New York City Chinatown (28 Allen St),3366;2140;3554;1480;1441;2015;711;3419;1754;2952;3382;2554;1153
+FlixBus-us,487,1908,95,1153,New York City Chinatown (28 Allen St),Orlando Bus Station,1153;2554;3382;2952;1754;3419;711;2015;1441;1480;3554;2140;3366
+"Trans-Bridge Lines, Inc.",493,2149,2176,1906,New York (P.A.B.T.),Allentown Airport (ABE),1906;2468;2201;803
+FlixBus-us,495,2590,450,1775,Boston (South Station),New York City Chinatown (Bowery & Canal St),52#2671;1775
+FlixBus-us,495,2325,450,1775,New York City Chinatown (Bowery & Canal St),Boston (South Station),1775;2671
+FlixBus-us,495,1038,95,1775,Boston (South Station),New York City Chinatown (Bowery & Canal St),21#2671;1775
+FlixBus-us,495,43,95,1775,Boston (South Station),New York City Chinatown (Bowery & Canal St),28#2671;1775
+FlixBus-us,495,488,95,1775,New York City Chinatown (Bowery & Canal St),Boston (South Station),1775;2671
+FlixBus-us,495,1106,95,1775,Boston (South Station),New York City Chinatown (Bowery & Canal St),27#2671;621;1775
+FlixBus-us,495,1919,95,1775,Boston (South Station),New York City Chinatown (Bowery & Canal St),38#2671;621;1775
+FlixBus-us,495,3692,95,1775,Boston (South Station),New York City Chinatown (Bowery & Canal St),40#2671;621;1775
+FlixBus-us,495,362,95,1775,New York City Chinatown (Bowery & Canal St),Boston (South Station),1775;621;2671
+Peter Pan Bus Lines,503,142,2116,1924;75,Washington,New York (P.A.B.T.),1618;474;3029;725;1026;898;1924;75
+Peter Pan Bus Lines,503,178,2116,1924;75,Washington,New York (P.A.B.T.),1618;474;3029;725;1026;898;1924;75
+Peter Pan Bus Lines,503,1993,2116,1924;75,Washington,New York (P.A.B.T.),1618;474;3029;725;1026;898;1924;75
+Peter Pan Bus Lines,503,3144,2116,1924;75,Washington,New York (P.A.B.T.),1618;474;3029;725;1026;898;1924;75
+New York Trailways,514,2903,420,1070;1793,New York (P.A.B.T.),Buffalo,1070;1793;393;315;1587;1853;2206;2107
+FlixBus-us,518,2787,464,2011;929,New York Midtown (31st St & 8th Ave),Toronto (Union Station Bus Terminal),2011;929;119;1527
+FlixBus-us,518,3449,95,2011,New York Midtown (31st St & 8th Ave),Scarborough Centre,2011;1212;1036;1527;3387
+FlixBus-us,518,1846,95,2011,Scarborough Centre,New York Midtown (31st St & 8th Ave),3387;1527;1036;1212;2011
+ShortLine Hudson,528,2631,1305,2870,Port Authority Bus Terminal,Storm King Art Center,2870;2817;878
+ShortLine Hudson,528,2833,1305,402,Storm King Art Center,Port Authority Bus Terminal,878;2817;402
+ShortLine Hudson,528,3620,1377,1221,Port Authority Bus Terminal,Woodbury Common,1221;2817
+ShortLine Hudson,528,3261,1377,402,Woodbury Common,Port Authority Bus Terminal,2817;402
+ShortLine Hudson,528,1916,1377,2334;1764,Port Authority Bus Terminal,Newburgh ShortLine Transportation Center,2334;1764;1574;2817;1279;1466;2473;1090;2856;442
+ShortLine Hudson,528,3016,1377,2334;1764,Port Authority Bus Terminal,Newburgh ShortLine Transportation Center,2334;1764;1574;2477;1279;1466;2473;1090;2856;442
+ShortLine Hudson,528,306,2206,2738;1243;1098;1144;1764;278;3201;221;218;2005,Port Authority Bus Terminal,Ramapo College - Bill Bradley Center,2738;1243;1098;1144;1764;278;3201;221;218;1815;2070;2005
+ShortLine Hudson,528,1320,2206,2738;1243;1098;1144;1764;278;3201;221;218;2005,Port Authority Bus Terminal,Ramapo College - Bill Bradley Center,2738;1243;1098;1144;1764;278;3201;221;218;1815;2070;2005
+ShortLine Hudson,528,3781,2206,2738;1243;1098;1144;1764;278;3201;221;218;2005,Port Authority Bus Terminal,Ramapo College - Bill Bradley Center,2738;1243;1098;1144;1764;278;3201;221;218;1815;2070;2005
+ShortLine Hudson,528,1998,2206,2738;1243;1098;1764;278;3201;221;218;2005,Port Authority Bus Terminal,Ramapo College - Bill Bradley Center,2738;1243;1098;1764;278;3201;221;218;1815;2070;2005
+ShortLine Hudson,528,1824,2206,2738;1243;1098;1144;1764;278;3201;221;2005,Port Authority Bus Terminal,Ramapo College - Bill Bradley Center,2738;1243;1098;1144;1764;278;3201;221;1815;2070;2005
+ShortLine Hudson,528,808,2206,1399;402,Newburgh ShortLine Transportation Center,Port Authority Bus Terminal,442;1920;3168;1627;1466;673;2817;1399;402
+ShortLine Hudson,528,1937,2206,1399;402,Newburgh ShortLine Transportation Center,Port Authority Bus Terminal,442;1920;3168;1627;1466;673;2817;1574;1399;402
+ShortLine Hudson,528,3712,2206,1399;402,Newburgh ShortLine Transportation Center,Port Authority Bus Terminal,442;1920;3168;1627;1466;673;2817;1399;402
+ShortLine Hudson,528,2410,2206,1399;402,Newburgh ShortLine Transportation Center,Port Authority Bus Terminal,442;1920;3168;1627;1466;673;2817;1399;402
+ShortLine Hudson,528,2440,2206,1399;402,Newburgh ShortLine Transportation Center,Port Authority Bus Terminal,442;1920;3168;1627;1466;673;2817;1574;1399;402
+ShortLine Hudson,528,631,2206,402,Woodbury Common,Port Authority Bus Terminal,2817;402
+ShortLine Hudson,528,2302,2206,686;194;65;693;1399;18;678;409;230;402,West Point Visitors Center,Port Authority Bus Terminal,768;1982;2863;1771;542;235;1223;2767;52;412;1071;1087;1622;686;194;65;693;1399;18;678;409;230;402
+ShortLine Hudson,528,2886,2206,402,Woodbury Common,Port Authority Bus Terminal,2817;402
+ShortLine Hudson,528,2386,2206,2005;686;194;65;693;1399;18;678;230;402,Ramapo College - Bill Bradley Center,Port Authority Bus Terminal,2005;1087;1622;686;194;65;693;1399;18;678;230;402
+ShortLine Hudson,528,3749,2206,2005;686;194;65;693;1399;18;678;230;402,Ramapo College - Bill Bradley Center,Port Authority Bus Terminal,2005;1087;1622;686;194;65;693;1399;18;678;230;402
+ShortLine Hudson,528,2764,2206,2005;686;194;65;693;1399;18;678;230;402,Ramapo College - Bill Bradley Center,Port Authority Bus Terminal,2005;1087;1622;686;194;65;693;1399;18;678;230;402
+ShortLine Hudson,528,3787,2206,2334;1764,Port Authority Bus Terminal,Newburgh ShortLine Transportation Center,2334;1764;1574;2817;1279;1466;2473;1090;2856;442
+ShortLine Hudson,528,3859,2206,2334;1764,Port Authority Bus Terminal,Newburgh ShortLine Transportation Center,2334;1764;1574;2817;1279;1466;2473;1090;2856;442
+ShortLine Hudson,528,2807,2206,2334;1243;1098;1144;1764;278;3201;221,Port Authority Bus Terminal,Newburgh ShortLine Transportation Center,2334;1243;1098;1144;1764;278;3201;221;1815;2070;3612;2438;3252;215;872;1574;2817;1279;1466;2473;1090;2856;442
+ShortLine Hudson,528,339,2206,2334;1243;516;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,West Point Visitors Center,2334;1243;516;1098;1144;1764;278;3201;221;218;1815;2070;1905;1760;2435;2767;1223;1086;1990;1771;1874;3153;768
+ShortLine Hudson,528,90,441,402,Woodbury Common,Port Authority Bus Terminal,2817;402
+ShortLine Hudson,528,2262,449,1221,Port Authority Bus Terminal,Woodbury Common,1221;2817
+ShortLine Hudson,528,2611,449,2870,Port Authority Bus Terminal,Woodbury Common,2870;2817
+ShortLine Hudson,528,3224,449,1221,Port Authority Bus Terminal,Woodbury Common,1221;2817
+ShortLine Hudson,528,1312,449,2738;1243;516;1098;1144;1764;278;3201;221;218;2005,Port Authority Bus Terminal,Ramapo College - Bill Bradley Center,2738;1243;516;1098;1144;1764;278;3201;221;218;1815;2070;2005
+ShortLine Hudson,528,2661,449,2738;1243;516;1098;1144;1764;278;3201;221;218;2005,Port Authority Bus Terminal,Ramapo College - Bill Bradley Center,2738;1243;516;1098;1144;1764;278;3201;221;218;1815;2070;2005
+ShortLine Hudson,528,2832,449,2738;1243;516;1098;1144;1764;278;3201;221;218;2005,Port Authority Bus Terminal,Ramapo College - Bill Bradley Center,2738;1243;516;1098;1144;1764;278;3201;221;218;1815;2070;2005
+ShortLine Hudson,528,1169,449,2738;1243;1098;1764;278;3201;221;218;2005,Port Authority Bus Terminal,Ramapo College - Bill Bradley Center,2738;1243;1098;1764;278;3201;221;218;1815;2070;2005
+ShortLine Hudson,528,1449,449,2738;1243;1098;1144;1764;278;3201;221;218;2005,Port Authority Bus Terminal,Ramapo College - Bill Bradley Center,2738;1243;1098;1144;1764;278;3201;221;218;1815;2070;2005
+ShortLine Hudson,528,460,449,2738;1243;1098;1144;1764;278;3201;221;218;2005,Port Authority Bus Terminal,Ramapo College - Bill Bradley Center,2738;1243;1098;1144;1764;278;3201;221;218;1815;2070;2005
+ShortLine Hudson,528,2343,449,2738;1243;1098;1144;1764;278;3201;221;218;2005,Port Authority Bus Terminal,Ramapo College - Bill Bradley Center,2738;1243;1098;1144;1764;278;3201;221;218;1815;2070;2005
+ShortLine Hudson,528,2639,449,402,Woodbury Common,Port Authority Bus Terminal,2817;402
+ShortLine Hudson,528,3125,449,402,Woodbury Common,Port Authority Bus Terminal,2817;402
+ShortLine Hudson,528,2307,449,402,Woodbury Common,Port Authority Bus Terminal,2817;402
+ShortLine Hudson,528,2151,449,2398;2657;1700;832;1567,Newburgh ShortLine Transportation Center,5th Ave & W 23rd St,442;2398;2657;1700;832;1567
+ShortLine Hudson,528,867,449,1399;402;1686;480;2185;2708;946;3191;1312;3190;1541;2614;3581;2462,Newburgh ShortLine Transportation Center,Broadway & Wall St,442;1574;1399;402;1686;480;2185;2708;946;3191;1312;3190;1541;2614;3581;2462
+ShortLine Hudson,528,2964,449,402,Newburgh ShortLine Transportation Center,Port Authority Bus Terminal,442;1920;3168;1627;1466;673;1574;402
+ShortLine Hudson,528,1500,449,18;678;409;230;402,Newburgh ShortLine Transportation Center,Port Authority Bus Terminal,442;1920;3168;1627;1466;673;1574;18;678;409;230;402
+ShortLine Hudson,528,2767,449,402,Newburgh ShortLine Transportation Center,Port Authority Bus Terminal,442;1920;3168;1627;1466;673;1574;402
+ShortLine Hudson,528,2610,449,402,Woodbury Common,Port Authority Bus Terminal,2817;402
+ShortLine Hudson,528,1102,449,402,Woodbury Common,Port Authority Bus Terminal,2817;402
+ShortLine Hudson,528,2352,449,402,Newburgh ShortLine Transportation Center,Port Authority Bus Terminal,442;1920;3168;1627;1466;673;1574;402
+ShortLine Hudson,528,3092,449,1399;402,Newburgh ShortLine Transportation Center,Port Authority Bus Terminal,442;1920;3168;1627;1466;673;1574;1399;402
+ShortLine Hudson,528,2960,449,402,Central Valley Park and Ride,Port Authority Bus Terminal,1574;402
+ShortLine Hudson,528,96,449,402,Newburgh ShortLine Transportation Center,Port Authority Bus Terminal,442;1920;3168;1627;1466;673;1574;402
+ShortLine Hudson,528,2663,449,686;194;65;693;1399;18;678;230;402,West Point Thayer Gate,Port Authority Bus Terminal,1765;1982;2863;1771;542;235;1223;2767;52;412;1071;1087;1622;686;194;65;693;1399;18;678;230;402
+ShortLine Hudson,528,3515,449,402,Newburgh ShortLine Transportation Center,Port Authority Bus Terminal,442;1920;3168;1627;1466;673;2817;1574;402
+ShortLine Hudson,528,1034,449,686;194;65;693;1399;18;678;230;402,Orange Ave - Suffern,Port Authority Bus Terminal,1087;1622;686;194;65;693;1399;18;678;230;402
+ShortLine Hudson,528,1048,449,686;194;65;693;1399;18;678;409;230;402,Orange Ave - Suffern,Port Authority Bus Terminal,1087;1622;686;194;65;693;1399;18;678;409;230;402
+ShortLine Hudson,528,1225,449,686;194;65;693;1399;18;678;409;230;402,Orange Ave - Suffern,Port Authority Bus Terminal,1087;1622;686;194;65;693;1399;18;678;409;230;402
+ShortLine Hudson,528,8,449,686;194;65;693;1399;18;678;409;230;402,Orange Ave - Suffern,Port Authority Bus Terminal,1087;1622;686;194;65;693;1399;18;678;409;230;402
+ShortLine Hudson,528,392,449,686;194;65;693;1399;18;678;409;230;402,Orange Ave - Suffern,Port Authority Bus Terminal,1087;1622;686;194;65;693;1399;18;678;409;230;402
+ShortLine Hudson,528,1365,449,686;194;65;693;1399;18;678;409;230;402,Orange Ave - Suffern,Port Authority Bus Terminal,1087;1622;686;194;65;693;1399;18;678;409;230;402
+ShortLine Hudson,528,3094,449,686;194;65;693;1399;18;678;409;230;402,Orange Ave - Suffern,Port Authority Bus Terminal,1087;1622;686;194;65;693;1399;18;678;409;230;402
+ShortLine Hudson,528,785,449,686;194;65;693;1399;18;678;409;230;402,Orange Ave - Suffern,Port Authority Bus Terminal,1087;1622;686;194;65;693;1399;18;678;409;230;402
+ShortLine Hudson,528,3064,449,2005;686;194;65;693;1399;18;678;409;230;402,Ramapo College - Bill Bradley Center,Port Authority Bus Terminal,2005;1087;1622;686;194;65;693;1399;18;678;409;230;402
+ShortLine Hudson,528,947,449,2005;686;194;65;693;1399;18;678;409;230;402,Ramapo College - Bill Bradley Center,Port Authority Bus Terminal,2005;1087;1622;686;194;65;693;1399;18;678;409;230;402
+ShortLine Hudson,528,1703,449,1399;18;678;409;230;402,Ridgewood Park and Ride South,Port Authority Bus Terminal,1399;18;678;409;230;402
+ShortLine Hudson,528,75,449,1399;18;678;230;402,Ridgewood Park and Ride South,Port Authority Bus Terminal,1399;18;678;230;402
+ShortLine Hudson,528,679,449,2005;686;194;65;693;1399;18;678;230;402,Ramapo College - Bill Bradley Center,Port Authority Bus Terminal,2005;1087;1622;686;194;65;693;1399;18;678;230;402
+ShortLine Hudson,528,342,449,1399;18;678;230;402,Ridgewood Park and Ride South,Port Authority Bus Terminal,1399;18;678;230;402
+ShortLine Hudson,528,1002,449,194;65;693;1399;18;678;230;402,Rt 17 & Lake St,Port Authority Bus Terminal,194;65;693;1399;18;678;230;402
+ShortLine Hudson,528,1151,449,2334;1764,Port Authority Bus Terminal,Newburgh ShortLine Transportation Center,2334;1764;1574;2817;1279;1466;2473;1090;2856;442
+ShortLine Hudson,528,126,449,2334;1764,Port Authority Bus Terminal,Newburgh ShortLine Transportation Center,2334;1764;1574;2477;1279;1466;2473;1090;2856;442
+ShortLine Hudson,528,2784,449,2334;1764,Port Authority Bus Terminal,Newburgh ShortLine Transportation Center,2334;1764;1574;2477;1279;1466;2473;1090;2856;442
+ShortLine Hudson,528,3752,449,2334;1764,Port Authority Bus Terminal,Newburgh ShortLine Transportation Center,2334;1764;1574;2817;1279;1466;2473;1090;2856;442
+ShortLine Hudson,528,822,449,2334,Port Authority Bus Terminal,Newburgh ShortLine Transportation Center,2334;1574;2817;1279;1466;2473;1090;2856;442
+ShortLine Hudson,528,880,449,2334;1764,Port Authority Bus Terminal,Newburgh ShortLine Transportation Center,2334;1764;1574;2817;1279;1466;2473;1090;2856;442
+ShortLine Hudson,528,3531,449,2334;1764,Port Authority Bus Terminal,Newburgh ShortLine Transportation Center,2334;1764;1574;2477;1279;1466;2473;1090;2856;442
+ShortLine Hudson,528,378,449,2334,Port Authority Bus Terminal,Newburgh ShortLine Transportation Center,2334;442
+ShortLine Hudson,528,3073,449,2738;301;1243;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Newburgh ShortLine Transportation Center,2738;301;1243;1098;1144;1764;278;3201;221;218;1815;2070;1760;2435;2767;1223;1086;1990;1771;1874;3153;768;1765;2652;1306;2750;2856;442
+ShortLine Hudson,528,993,449,2738;301;1243;516;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Orange Ave - Suffern,2738;301;1243;516;1098;1144;1764;278;3201;221;218;1815;2070
+ShortLine Hudson,528,1069,449,2738;1243;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Orange Ave - Suffern,2738;1243;1098;1144;1764;278;3201;221;218;1815;2070
+ShortLine Hudson,528,3362,449,2738;1243;516;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Orange Ave - Suffern,2738;1243;516;1098;1144;1764;278;3201;221;218;1815;2070
+ShortLine Hudson,528,2533,449,2738;1243;516;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Orange Ave - Suffern,2738;1243;516;1098;1144;1764;278;3201;221;218;1815;2070
+ShortLine Hudson,528,3898,449,2738;1243;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Orange Ave - Suffern,2738;1243;1098;1144;1764;278;3201;221;218;1815;2070
+ShortLine Hudson,528,2276,449,2738;1243;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Orange Ave - Suffern,2738;1243;1098;1144;1764;278;3201;221;218;1815;2070
+ShortLine Hudson,528,1720,449,2738;1243;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Orange Ave - Suffern,2738;1243;1098;1144;1764;278;3201;221;218;1815;2070
+ShortLine Hudson,528,2421,449,2738;1243;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Orange Ave - Suffern,2738;1243;1098;1144;1764;278;3201;221;218;1815;2070
+ShortLine Hudson,528,3635,449,2738;1243;516;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Orange Ave - Suffern,2738;1243;516;1098;1144;1764;278;3201;221;218;1815;2070
+ShortLine Hudson,528,218,449,2738;1243;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Orange Ave - Suffern,2738;1243;1098;1144;1764;278;3201;221;218;1815;2070
+ShortLine Hudson,528,595,449,2738;1243;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Orange Ave - Suffern,2738;1243;1098;1144;1764;278;3201;221;218;1815;2070
+ShortLine Hudson,528,3302,51,402,Woodbury Common,Port Authority Bus Terminal,2817;402
+ShortLine Hudson,528,2642,768,2870,Port Authority Bus Terminal,Woodbury Common,2870;2817
+ShortLine Hudson,528,2974,768,402,Woodbury Common,Port Authority Bus Terminal,2817;402
+"Trans-Bridge Lines, Inc.",529,3676,2176,1906,New York (P.A.B.T.),Allentown (Transportation Center),1906;2468;2618;2201;642
+Peter Pan Bus Lines,534,497,1281,75,Springfield,New York (P.A.B.T.),963;1482;75
+Peter Pan Bus Lines,534,2839,1331,75,Springfield,New York (P.A.B.T.),963;1482;75
+Peter Pan Bus Lines,534,3916,1336,75,Springfield,New York (P.A.B.T.),963;1482;75
+Peter Pan Bus Lines,534,866,767,75,Springfield,New York (P.A.B.T.),963;1482;75
+ShortLine Hudson,540,520,449,1221;2578;1467;2399;714;159;3177;2970;2562;2517;2281;3121;1337;1575;3083;585;282;1346;720;2706;2120;1230;2628;2216;2186;279;2006,Port Authority Bus Terminal,Rt 202 & Darlington Ave,1221;2578;1467;2399;714;159;3177;2970;2562;2517;2281;3121;1337;1575;3083;585;282;1346;720;2706;2120;1230;2628;2216;2186;279;2006
+ShortLine Hudson,540,2632,449,1221;2578;1467;2399;714;159;3177;2970;2562;2517;2281;3121;1337;1575;3083;585;282;1346;720;2706;2120;1230;2628;2216;2186;279;2006;2005,Port Authority Bus Terminal,Ramapo College - Bill Bradley Center,1221;2578;1467;2399;714;159;3177;2970;2562;2517;2281;3121;1337;1575;3083;585;282;1346;720;2706;2120;1230;2628;2216;2186;279;2006;2005
+ShortLine Hudson,540,2249,449,1221;2578;1467;2399;714;159;3177;2970;2562;2517;2281;3121;1337;1575;3083;585;282;1346;720;2706;2120;1230;2628;2216;2186;279;2006;2005,Port Authority Bus Terminal,Ramapo College - Bill Bradley Center,1221;2578;1467;2399;714;159;3177;2970;2562;2517;2281;3121;1337;1575;3083;585;282;1346;720;2706;2120;1230;2628;2216;2186;279;2006;2005
+ShortLine Hudson,540,836,449,1221;2578;1467;2399;714;159;3177;2970;2562;2517;2281;3121;1337;1575;3083;585;282;1346;720;2706;2120;1230;2628;2216;2186;279;2006;2005,Port Authority Bus Terminal,Ramapo College - Bill Bradley Center,1221;2578;1467;2399;714;159;3177;2970;2562;2517;2281;3121;1337;1575;3083;585;282;1346;720;2706;2120;1230;2628;2216;2186;279;2006;2005
+ShortLine Hudson,540,807,449,1221;2578;1467;2399;714;159;3177;2970;2562;2517;2281;3121;1337;1575;3083;585;282;1346;720;2706;2120;1230;2628;2216;2186;279;2006;2005,Port Authority Bus Terminal,Ramapo College - Bill Bradley Center,1221;2578;1467;2399;714;159;3177;2970;2562;2517;2281;3121;1337;1575;3083;585;282;1346;720;2706;2120;1230;2628;2216;2186;279;2006;2005
+ShortLine Hudson,540,2649,449,1221;2578;1467;2399;714;159;3177;2970;2562;2517;2281;3121;1337;1575;3083;585;282;1346;720;2706;2120;1230;2628;2216;2186;279;2006;2005,Port Authority Bus Terminal,Ramapo College - Bill Bradley Center,1221;2578;1467;2399;714;159;3177;2970;2562;2517;2281;3121;1337;1575;3083;585;282;1346;720;2706;2120;1230;2628;2216;2186;279;2006;2005
+ShortLine Hudson,540,3908,449,2005;348;1403;1157;3508;1291;1230;1240;1114;2361;19;282;1338;2623;2121;3137;3180;2264;791;2268;2199;1372;2929;1761;2532;2648;3034;402,Ramapo College - Bill Bradley Center,Port Authority Bus Terminal,2005;348;1403;1157;3508;1291;1230;1240;1114;2361;19;282;1338;2623;2121;3137;3180;2264;791;2268;2199;1372;2929;1761;2532;2648;3034;402
+ShortLine Hudson,540,3039,449,2005;348;1403;1157;3508;1291;1230;1240;1114;2361;19;282;1338;2623;2121;3137;3180;2264;791;2268;2199;1372;2929;1761;2532;2648;3034;402;2132;236;3066,Ramapo College - Bill Bradley Center,E 42nd St and 2nd Ave,2005;348;1403;1157;3508;1291;1230;1240;1114;2361;19;282;1338;2623;2121;3137;3180;2264;791;2268;2199;1372;2929;1761;2532;2648;3034;402;2132;236;3066
+ShortLine Hudson,540,3673,449,2005;348;1403;1157;3508;1291;1230;1240;1114;2361;19;282;1338;2623;2121;3137;3180;2264;791;2268;2199;1372;2929;1761;2532;2648;3034;402;2132;236;3066,Ramapo College - Bill Bradley Center,E 42nd St and 2nd Ave,2005;348;1403;1157;3508;1291;1230;1240;1114;2361;19;282;1338;2623;2121;3137;3180;2264;791;2268;2199;1372;2929;1761;2532;2648;3034;402;2132;236;3066
+ShortLine Hudson,540,510,449,2005;348;1403;1157;3508;1291;1230;1240;1114;2361;19;282;1338;2623;2121;3137;3180;2264;791;2268;2199;1372;2929;1761;2532;2648;3034;402;2132;236;3066,Ramapo College - Bill Bradley Center,E 42nd St and 2nd Ave,2005;348;1403;1157;3508;1291;1230;1240;1114;2361;19;282;1338;2623;2121;3137;3180;2264;791;2268;2199;1372;2929;1761;2532;2648;3034;402;2132;236;3066
+ShortLine Hudson,540,2306,449,2005;348;1403;1157;3508;1291;1230;1240;1114;2361;19;282;1338;2623;2121;3137;3180;2264;791;2268;2199;1372;2929;1761;2532;2648;3034;402,Ramapo College - Bill Bradley Center,Port Authority Bus Terminal,2005;348;1403;1157;3508;1291;1230;1240;1114;2361;19;282;1338;2623;2121;3137;3180;2264;791;2268;2199;1372;2929;1761;2532;2648;3034;402
+ShortLine Hudson,540,1101,449,2005;348;1403;1157;3508;1291;1230;1240;1114;2361;19;282;1338;2623;2121;3137;3180;2264;791;2268;2199;1372;2929;1761;2532;2648;3034;402,Ramapo College - Bill Bradley Center,Port Authority Bus Terminal,2005;348;1403;1157;3508;1291;1230;1240;1114;2361;19;282;1338;2623;2121;3137;3180;2264;791;2268;2199;1372;2929;1761;2532;2648;3034;402
+"Trans-Bridge Lines, Inc.",542,974,2176,1906,New York (P.A.B.T.),Allentown Airport (ABE),1906;2618;2201;803
+Martz Bus,551,2246,1523,2234,New York (P.A.B.T.),Wilkes-Barre,2234;1136;541;2557;1977;3391;655
+Martz Bus,551,2737,1523,2234,New York (P.A.B.T.),Wilkes-Barre,2234;1136;541;2557;1977;3391;655
+Martz Bus,551,3202,1523,2234,New York (P.A.B.T.),Wilkes-Barre,2234;1136;541;2557;1977;3391;655
+Martz Bus,551,977,1523,2234,New York (P.A.B.T.),Wilkes-Barre,2234;1136;541;2557;1977;3391;655
+Martz Bus,551,2114,1639,2234,New York (P.A.B.T.),Wilkes-Barre,2234;1136;541;2557;1977;3391;655
+Martz Bus,551,2751,1854,2234,New York (P.A.B.T.),Wilkes-Barre,2234;1136;541;2557;1977;3391;655
+Martz Bus,551,217,1959,2234,New York (P.A.B.T.),Wilkes-Barre,2234;1136;541;2557;1977;3391;655
+Martz Bus,551,3584,2167,2234,New York (P.A.B.T.),Wilkes-Barre,2234;1136;541;2557;1977;3391;655
+Martz Bus,551,116,484,2234,New York (P.A.B.T.),Wilkes-Barre,2234;1136;541;2557;1977;3391;655
+"Trans-Bridge Lines, Inc.",554,2837,1211,1906,New York (P.A.B.T.),Allentown (Transportation Center),1906;3217;2468;3063;3561;642
+"Trans-Bridge Lines, Inc.",559,3316,74,749;1906,Wescosville (Park-N-Ride),New York (P.A.B.T.),3561;642;803;2468;749;1906
+Adirondack Trailways,560,887,1288,3225;1001,Oneonta (SUNY),New York (P.A.B.T.),3275;47;1591;2624;2766;2297;2426;850;842;955;3262;1192;1285;1739;3418;1762;3454;789;367;989;1253;2778;2693;1880;3225;1001
+Peter Pan (BZ),577,3147,498,1514,New York (P.A.B.T.),Williamstown,1514;498;37;1914;1565;309;153
+Pine Hill Trailways,58,1787,1245,1220;590,New York (P.A.B.T.),Kingston,1220;590;193;1808;2643;2478;979;3292;2679
+Adirondack Trailways,580,2929,1630,1001;3225,New York (P.A.B.T.),Albany (Trailways Bus Terminal),1001;3225;1880;2778;1253;989;367;789;123
+Adirondack Trailways,580,2730,556,1001;3225,New York (P.A.B.T.),Albany (Trailways Bus Terminal),1001;3225;1880;2778;1253;989;367;789;123
+FlixBus-us,581,1827,1481,2011,New York Midtown (31st St & 8th Ave),Pittsburgh Intermodal Station,2011;2554;3382;3574
+FlixBus-us,581,3277,1481,2011,Pittsburgh Intermodal Station,New York Midtown (31st St & 8th Ave),3574;3382;2554;2011
+"Trans-Bridge Lines, Inc.",585,792,74,1906,Wescosville (Park-N-Ride),New York (P.A.B.T.),3561;642;3026;3063;2468;1906
+"Trans-Bridge Lines, Inc.",59,2978,2176,1906,Easton (Bus Terminal),New York (P.A.B.T.),2618;2468;1906
+FlixBus-us,591,3002,1899,2011;929,New York Midtown (31st St & 8th Ave),Virginia Beach (Circle D Food Mart),2011;929;2445;3481;3382;1831;2952;2838;1140;1705
+FlixBus-us,591,583,1899,929;2011,Norfolk,New York Midtown (31st St & 8th Ave),1140;2838;2952;1831;3382;3481;2445;929;2011
+Martz Bus,594,3920,1877,2234,New York (P.A.B.T.),Wilkes-Barre,2234;1136;2557;1977;3391;655
+Martz Bus,594,1367,1959,2234,New York (P.A.B.T.),Wilkes-Barre,2234;1136;2557;1977;3391;655
+Martz Bus,594,3178,1959,2234,New York (P.A.B.T.),Wilkes-Barre,2234;1136;2557;1977;3391;655
+Martz Bus,594,1589,219,2234,New York (P.A.B.T.),Wilkes-Barre,2234;1136;2557;1977;3391;655
+Martz Bus,594,2911,219,2234,New York (P.A.B.T.),Wilkes-Barre,2234;1136;2557;1977;3391;655
+Martz Bus,594,821,219,2234,New York (P.A.B.T.),Wilkes-Barre,2234;1136;2557;1977;3391;655
+Martz Bus,594,1231,2194,2234,New York (P.A.B.T.),Wilkes-Barre,2234;1136;2557;1977;3391;655
+Martz Bus,594,3372,558,2234,New York (P.A.B.T.),Wilkes-Barre,2234;1136;2557;1977;3391;655
+"Trans-Bridge Lines, Inc.",597,1211,2176,1906,New York (P.A.B.T.),Allentown Airport (ABE),1906;2201;803
+Adirondack Trailways,598,2111,2065,1001;3225,New York (P.A.B.T.),Montreal,1001;3225;123;2822;2963;2885;2993;2698
+Adirondack Trailways,598,2729,2127,1001;3225,New York (P.A.B.T.),Montreal,1001;3225;123;2822;2963;2885;2993;2698
+"Trans-Bridge Lines, Inc.",60,2743,2090,1906,Bethlehem (Transp Ctr),New York (P.A.B.T.),2751;2201;2468;1906
+Pine Hill Trailways,600,2086,48,1220;590,New York (P.A.B.T.),Oneonta (SUNY),1220;590;193;2643;2478;979;3292;2679;2634;427;1925;2673;1798;381;870;3176;3343;1750;1624;3048;3242;1539;2888;3162;10;2144;2#3095;667;284;3388
+Fullington Trailways,605,3008,1253,3028,State College (Bus Terminal),Long Island Express,1198;3028
+Fullington Trailways,605,3562,376,3028,State College (Bus Terminal),Long Island Express,1198;3028
+Pine Hill Trailways,609,2554,1033,1220;590,New York (P.A.B.T.),Kingston,1220;590;193;2643;2478;979;3292;2679
+Pine Hill Trailways,609,2905,1110,1220;590,New York (P.A.B.T.),Kingston,1220;590;193;2643;2478;979;3292;2679
+Pine Hill Trailways,609,581,1110,1220;590,New York (P.A.B.T.),Kingston,1220;590;193;2643;2478;979;3292;2679
+Pine Hill Trailways,609,2267,1412,1220;590,New York (P.A.B.T.),Kingston,1220;590;193;2643;2478;979;3292;2679
+Pine Hill Trailways,609,1684,2021,1220;590,New York (P.A.B.T.),Kingston,1220;590;193;2643;2478;979;3292;2679
+Pine Hill Trailways,609,948,48,1220;590,New York (P.A.B.T.),Kingston,1220;590;193;2643;2478;979;3292;2679
+Pine Hill Trailways,609,3459,530,1220;590,New York (P.A.B.T.),Kingston,1220;590;193;2643;2478;979;3292;2679
+Pine Hill Trailways,609,3740,610,1220;590,New York (P.A.B.T.),Kingston,1220;590;193;2643;2478;979;3292;2679
+Pine Hill Trailways,609,851,610,1220;590,New York (P.A.B.T.),Kingston,1220;590;193;2643;2478;979;3292;2679
+Pine Hill Trailways,609,149,923,1220;590,New York (P.A.B.T.),Kingston,1220;590;193;2643;2478;979;3292;2679
+Greyhound-us,61,3453,115,929;1891,Charlotte Bus Station,New York Port Authority,2883;3419;2952;3382;929;1891
+Greyhound-us,61,2666,115,1891;929,New York Port Authority,Charlotte Bus Station,1891;929;2554;3382;2952;3419;2883
+Greyhound-us,612,1697,115,1891;1851,New York Port Authority,Montreal (Gare d'autocars de Montreal),1891;1851;20;1620;117;2787;3211;890
+Greyhound-us,612,3248,115,1891;1851,New York Port Authority,Montreal (Gare d'autocars de Montreal),1891;1851;20;1620;117;2787;3211;890
+Greyhound-us,612,2794,115,1891,Montreal (Gare d'autocars de Montreal),New York Port Authority,890;3211;20;1891
+Greyhound-us,612,2225,115,1891,New York Port Authority,Montreal (Gare d'autocars de Montreal),1891;20;1620;2787;3211;890
+Greyhound-us,612,260,115,1891,Montreal (Gare d'autocars de Montreal),New York Port Authority,890;3211;2787;117;1620;20;1891
+Greyhound-us,612,1332,115,398;1891,Montreal (Gare d'autocars de Montreal),New York Port Authority,890;3211;2787;1620;20;398;1891
+Greyhound-us,612,1432,1484,1891,New York Port Authority,Montreal (Gare d'autocars de Montreal),1891;20;3211;890
+Greyhound-us,612,165,528,1891,Montreal (Gare d'autocars de Montreal),New York Port Authority,890;3211;2787;1620;20;1891
+"Trans-Bridge Lines, Inc.",614,144,1211,3375,Allentown Airport (ABE),New York (Wall Street),803;2201;3217;3375
+"Trans-Bridge Lines, Inc.",614,3134,1584,3375,Allentown Airport (ABE),New York (Wall Street),803;2201;3217;3375
+Fullington Trailways,616,3482,1434,1897,New York (P.A.B.T.),Pittsburgh,1897;2508;1734;1198;566
+"Trans-Bridge Lines, Inc.",623,1941,2176,1906,Allentown (Transportation Center),New York (P.A.B.T.),642;2201;1906
+"Trans-Bridge Lines, Inc.",638,1538,2176,1906,Allentown (Transportation Center),New York (P.A.B.T.),642;803;2201;2618;2468;1906
+"Trans-Bridge Lines, Inc.",638,2447,810,1906,Allentown (Transportation Center),New York (P.A.B.T.),642;803;2201;2618;2468;1906
+"Trans-Bridge Lines, Inc.",639,1970,1634,3#3128;1906;749,New York (Manhattan Cruise Terminal),Allentown (Transportation Center),3#3128;1906;749;2468;2618;2201;803;2751;3063;3561;642
+"Trans-Bridge Lines, Inc.",642,1628,2090,1906,New York (P.A.B.T.),Quakertown,1906;2911;1787;2348;1294;3310;524;936
+"Trans-Bridge Lines, Inc.",642,3317,531,1906,New York (P.A.B.T.),Quakertown,1906;2911;1787;2348;1294;3310;524;936
+"Trans-Bridge Lines, Inc.",65,2523,286,1906,New York (P.A.B.T.),Easton (Bus Terminal),1906;3217;2468;2618
+Peter Pan (BZ),651,15,498,1514,New York (P.A.B.T.),Providence (Bus Terminal),1514;2118;154;2585
+Peter Pan (BZ),651,3495,498,1514,New York (P.A.B.T.),Providence (Bus Terminal),1514;2118;154;2585
+Peter Pan (BZ),651,110,537,1514,New York (P.A.B.T.),Providence (Bus Terminal),1514;2118;154;2585
+Peter Pan (BZ),651,1137,537,1514,New York (P.A.B.T.),Providence (Bus Terminal),1514;2118;154;2585
+Peter Pan (BZ),651,1494,537,1514,New York (P.A.B.T.),Providence (Bus Terminal),1514;2118;154;2585
+Peter Pan (BZ),651,2072,537,1514,New York (P.A.B.T.),Providence (Bus Terminal),1514;2118;154;2585
+Peter Pan (BZ),651,3373,537,1514,New York (P.A.B.T.),Providence (Bus Terminal),1514;2118;154;2585
+Peter Pan Bus Lines,652,2407,1864,75,Philadelphia (Schuylkill & Walnut - Peter Pan),New York (P.A.B.T.),898;1026;75
+Peter Pan Bus Lines,652,3612,1864,75,Philadelphia (Schuylkill & Walnut - Peter Pan),New York (P.A.B.T.),898;1026;75
+Peter Pan Bus Lines,652,1701,1953,75,Philadelphia (Schuylkill & Walnut - Peter Pan),New York (P.A.B.T.),898;1026;75
+Peter Pan Bus Lines,652,27,1953,75,Philadelphia (Schuylkill & Walnut - Peter Pan),New York (P.A.B.T.),898;1026;75
+Peter Pan Bus Lines,652,3319,1953,75,Philadelphia (Schuylkill & Walnut - Peter Pan),New York (P.A.B.T.),898;1026;75
+Peter Pan Bus Lines,652,626,1953,75,Philadelphia (Schuylkill & Walnut - Peter Pan),New York (P.A.B.T.),898;1026;75
+Peter Pan Bus Lines,652,776,1953,75,Philadelphia (Schuylkill & Walnut - Peter Pan),New York (P.A.B.T.),898;1026;75
+Peter Pan Bus Lines,652,909,1953,75,Philadelphia (Schuylkill & Walnut - Peter Pan),New York (P.A.B.T.),898;1026;75
+Peter Pan Bus Lines,652,1802,2116,75,Philadelphia (Schuylkill & Walnut - Peter Pan),New York (P.A.B.T.),898;1026;75
+Peter Pan Bus Lines,652,2002,2116,75,Philadelphia (Schuylkill & Walnut - Peter Pan),New York (P.A.B.T.),898;1026;75
+Peter Pan Bus Lines,652,2064,2116,75,Philadelphia (Schuylkill & Walnut - Peter Pan),New York (P.A.B.T.),898;1026;75
+Peter Pan Bus Lines,652,2127,2116,75,Philadelphia (Schuylkill & Walnut - Peter Pan),New York (P.A.B.T.),898;1026;75
+Peter Pan Bus Lines,652,254,2116,75,Philadelphia (Schuylkill & Walnut - Peter Pan),New York (P.A.B.T.),898;1026;75
+Peter Pan Bus Lines,652,3333,2116,75,Philadelphia (Schuylkill & Walnut - Peter Pan),New York (P.A.B.T.),898;1026;75
+Peter Pan Bus Lines,652,3437,2116,75,Philadelphia (Schuylkill & Walnut - Peter Pan),New York (P.A.B.T.),898;1026;75
+Peter Pan Bus Lines,652,876,2116,75,Philadelphia (Schuylkill & Walnut - Peter Pan),New York (P.A.B.T.),898;1026;75
+Pine Hill Trailways,667,2935,26,2368;1220;590,New York (Hudson Yards Trailways),Kingston,2368;1220;590;3100;193;2643;2478;979;3292;2679
+Pine Hill Trailways,667,1112,555,1220;590,New York (P.A.B.T.),Kingston,1220;590;3100;193;2643;2478;979;3292;2679
+Adirondack Trailways,669,2183,6,1001;3225,New York (P.A.B.T.),Syracuse,1001;3225;1658;1158;1232;2847
+Peter Pan (BZ),673,1067,498,1514,Providence (Bus Terminal),New York (P.A.B.T.),2585;154;2118;1514
+Peter Pan (BZ),673,3117,498,1514,Providence (Bus Terminal),New York (P.A.B.T.),2585;154;2118;1514
+Peter Pan (BZ),673,1866,537,1514,Providence (Bus Terminal),New York (P.A.B.T.),2585;154;2118;1514
+Peter Pan (BZ),673,1898,537,1514,Providence (Bus Terminal),New York (P.A.B.T.),2585;154;2118;1514
+Peter Pan (BZ),673,2045,537,1514,Providence (Bus Terminal),New York (P.A.B.T.),2585;154;2118;1514
+Peter Pan (BZ),673,2866,537,1514,Providence (Bus Terminal),New York (P.A.B.T.),2585;154;2118;1514
+Peter Pan (BZ),673,3417,537,1514,Providence (Bus Terminal),New York (P.A.B.T.),2585;154;2118;1514
+Fullington Trailways,676,3416,1253,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,252,1278,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,3081,141,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,314,1434,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,2288,1624,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,3541,1734,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,1090,1764,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,3516,2031,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,2861,220,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,1990,2226,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,930,2258,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,2412,2274,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,169,2312,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,2400,241,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,1109,33,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,740,355,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,224,376,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,3050,519,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,2370,570,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,3123,588,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,869,746,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,1108,765,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,1773,774,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,1699,9,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Fullington Trailways,676,3179,909,1897,State College (Bus Terminal),New York (P.A.B.T.),1198;1734;2508;1897
+Adirondack Trailways,680,393,2131,2889;1166,Albany (Airport),Queens Village,894;1657;123;804;789;367;989;1253;2778;2693;1880;2475;3609;2889;1166
+Fullington Trailways,681,571,858,1897,Pittsburgh,New York (P.A.B.T.),566;1198;1897
+Peter Pan Bus Lines,683,2456,1281,75,New York (P.A.B.T.),Boston (South Station),75;1482;1458;1557
+Peter Pan Bus Lines,683,3841,1281,75,New York (P.A.B.T.),Boston (South Station),75;1482;1458;1557
+Peter Pan Bus Lines,683,1210,185,75,New York (P.A.B.T.),Boston (South Station),75;1557
+Peter Pan Bus Lines,683,3648,422,75,New York (P.A.B.T.),Boston (South Station),75;1482;1458;1557
+Peter Pan Bus Lines,683,1700,427,75,New York (P.A.B.T.),Boston (South Station),75;1482;1458;1557
+Peter Pan Bus Lines,683,972,872,75,New York (P.A.B.T.),Boston (South Station),75;1482;1458;1557
+Adirondack Trailways,690,1120,1626,4;1001;3225,New York (Hudson Yards Trailways),Albany (SUNY),4;1001;3225;1880;2778;1253;989;367;789;123;1657
+Greyhound-us,692,59,115,1891,New York Port Authority,Atlanta Bus Station,1891;2176;2554;3382;2952;3419;2935;906;3021;2883;2342;3051;1974;2353;2210
+Greyhound-us,692,416,115,1891,New York Port Authority,Atlanta Bus Station,1891;3382;2952;3419;2883;3051;2210
+Greyhound-us,692,1599,115,929;1891,Atlanta Bus Station,New York Port Authority,2210;3051;2883;3021;3419;2952;3382;2554;929;1891
+Greyhound-us,692,639,115,929;1891,Raleigh Bus Station,New York Port Authority,3419;2952;3382;929;1891
+Greyhound-us,692,395,115,1891,Atlanta Bus Station,New York Port Authority,2210;2342;2883;2258;3021;906;2935;3419;670;764;2768;2952;3382;2554;1891
+Greyhound-us,692,1110,115,1891,New York Port Authority,Atlanta Bus Station,1891;2554;3382;3361;605;1963;2952;3419;2935;906;3021;2258;2883;1974;2210
+Greyhound-us,692,1058,115,1891,Atlanta Bus Station,New York Port Authority,2210;3051;2883;3419;2952;3382;2554;1891
+Greyhound-us,692,72,115,1891;929,New York Port Authority,Raleigh Bus Station,1891;929;2554;3382;2952;764;670;3419
+Greyhound-us,692,3433,115,1891;929,New York Port Authority,Atlanta Bus Station,1891;929;2554;3382;2952;2768;3419;2935;906;2883;2342;2210
+Greyhound-us,692,2565,115,1891,Atlanta Bus Station,New York Port Authority,2210;1974;2883;3419;2768;2952;3382;2554;2176;1891
+"Trans-Bridge Lines, Inc.",697,247,499,1906,New York (P.A.B.T.),Allentown Airport (ABE),1906;2468;2618;2201;803
+"Trans-Bridge Lines, Inc.",697,1580,531,1906,New York (P.A.B.T.),Allentown Airport (ABE),1906;2468;2618;2201;803
+"Trans-Bridge Lines, Inc.",697,853,74,1906,New York (P.A.B.T.),Allentown Airport (ABE),1906;2468;2618;2201;803
+"Trans-Bridge Lines, Inc.",697,720,810,1906,New York (P.A.B.T.),Allentown Airport (ABE),1906;2468;2618;2201;803
+Academy Bus,7,1215,1007,680,Manhattan (Go Bus),Manassas (Go Bus),680;1163;455;2871
+Academy Bus,7,783,1007,680,Manhattan (Go Bus),Manassas (Go Bus),680;1163;455;2871
+Academy Bus,7,2749,1997,680,Manhattan (Go Bus),Manassas (Go Bus),680;1163;455;2871
+Academy Bus,7,547,1997,680,Manhattan (Go Bus),Manassas (Go Bus),680;1163;455;2871
+Greyhound-us,70,1283,115,929;1597,Philadelphia (Schuylkill & Walnut),Boston (South Station),1012;929;1597;1010;2671
+Greyhound-us,70,931,115,929;1597,Washington Union Station,Boston (South Station),3382;2554;929;1597;1010;2671
+Greyhound-us,70,2618,115,1597;929,Boston (South Station),Philadelphia (Schuylkill & Walnut),34#2671;646;1597;929;1012
+Greyhound-us,70,1521,115,929;1597,Philadelphia (Schuylkill & Walnut),Boston (South Station),1012;2176;929;1597;646;2671
+Greyhound-us,70,2100,115,929;1597,Philadelphia (Schuylkill & Walnut),Boston (South Station),1012;2176;929;1597;646;2671
+Greyhound-us,70,2085,115,1597;929,Boston (South Station),Philadelphia (Schuylkill & Walnut),39#2671;646;1597;929;2176;1012
+Greyhound-us,70,833,115,1597;929,Boston (South Station),Washington Union Station,48#2671;1010;1597;929;2554;3382
+Greyhound-us,70,1709,115,1597;929,Boston (South Station),Philadelphia (Schuylkill & Walnut),13#2671;1010;1597;929;1012
+New York Trailways,703,2008,420,1070,New York (P.A.B.T.),Syracuse,1070;393;315;1587
+New York Trailways,703,864,709,1070,New York (P.A.B.T.),Syracuse,1070;393;315;1587
+Concord Coach Lines,714,2374,1964,60,New York City,Portland,60;1304
+Concord Coach Lines,714,1797,1964,60,Portland,New York City,1304;60
+FlixBus-us,715,3358,1899,1153,Washington Union Station,New York City Chinatown (28 Allen St),3382;2554;1153
+FlixBus-us,715,1535,1899,1153;2011,New York City Chinatown (28 Allen St),Washington Union Station,1153;2011;3382
+FlixBus-us,715,976,413,2011,Bethesda,New York Midtown (31st St & 8th Ave),1606;2554;2011
+FlixBus-us,715,2034,95,3164,Washington Union Station,New York (Hudson Yards),3382;2539;3164
+FlixBus-us,715,5,95,3164,New York (Hudson Yards),Bethesda,3164;2554;1606
+FlixBus-us,715,3778,95,2011,New York Midtown (31st St & 8th Ave),Washington Union Station,2011;3382
+FlixBus-us,715,636,95,3164,New York (Hudson Yards),Washington Union Station,3164;3382
+FlixBus-us,715,3409,95,2011,New York Midtown (31st St & 8th Ave),Washington DC (Dupont Circle),2011;2554;3382;2096
+FlixBus-us,715,1967,95,2011,New York Midtown (31st St & 8th Ave),Washington Union Station,2011;2445;3382
+FlixBus-us,715,356,95,2011,New York Midtown (31st St & 8th Ave),Washington Union Station,2011;2445;3382
+FlixBus-us,715,487,95,3164;929,New York (Hudson Yards),Washington Union Station,3164;929;3382
+FlixBus-us,715,1516,95,3164,New York (Hudson Yards),Washington Union Station,3164;2539;3382
+FlixBus-us,715,1708,95,2011,New York Midtown (31st St & 8th Ave),Bethesda,2011;2554;1606
+FlixBus-us,715,2584,95,929,Newark (NJ),Washington Union Station,929;2445;3382
+FlixBus-us,715,1072,95,2011,Washington Union Station,New York Midtown (31st St & 8th Ave),3382;2445;2011
+FlixBus-us,715,794,95,2011,Washington Union Station,New York Midtown (31st St & 8th Ave),3382;2445;2011
+FlixBus-us,715,2931,95,929;2011,Washington Union Station,New York Midtown (31st St & 8th Ave),3382;929;2011
+FlixBus-us,715,1409,95,3164,Bethesda,New York (Hudson Yards),1606;2554;3164
+FlixBus-us,715,3442,95,2011,Washington Union Station,New York Midtown (31st St & 8th Ave),3382;2554;2011
+FlixBus-us,715,38,95,2011,Washington Union Station,New York Midtown (31st St & 8th Ave),3382;2554;2011
+FlixBus-us,715,1729,95,2011,New York Midtown (31st St & 8th Ave),Washington Union Station,2011;2554;3382
+FlixBus-us,715,3895,95,2011,New York Midtown (31st St & 8th Ave),Washington Union Station,2011;2554;3382
+FlixBus-us,715,523,95,2011,New York Midtown (31st St & 8th Ave),Washington Union Station,2011;2554;3382
+FlixBus-us,715,3674,95,929,Washington Union Station,Newark (NJ),3382;2554;2445;929
+FlixBus-us,715,531,95,929,Washington Union Station,Newark (NJ),3382;2554;2445;929
+FlixBus-us,715,3777,95,929,Newark (NJ),Washington Union Station,929;2539;3382
+FlixBus-us,715,2178,95,2011,Washington Union Station,New York Midtown (31st St & 8th Ave),3382;2011
+FlixBus-us,715,2118,95,3164,Arlington (Rosslyn),New York (Hudson Yards),1831;3382;2554;3164
+Martz Bus,717,3052,218,2234,Mount Pocono,New York (P.A.B.T.),2557;1136;1826;2234
+Adirondack Trailways,721,271,6,1001;3225,New York (P.A.B.T.),Binghamton,1001;3225;1658;1158
+Peter Pan Bus Lines,732,1025,1281,75,New York (P.A.B.T.),Boston (South Station),75;1482;1557
+Peter Pan Bus Lines,732,1556,1281,75,New York (P.A.B.T.),Boston (South Station),75;1482;1557
+Peter Pan Bus Lines,732,2890,1281,75,New York (P.A.B.T.),Boston (South Station),75;1482;1557
+Peter Pan Bus Lines,732,3631,1281,75,New York (P.A.B.T.),Boston (South Station),75;1482;1557
+Peter Pan Bus Lines,732,2210,1361,75,New York (P.A.B.T.),Boston (South Station),75;1482;1557
+Peter Pan Bus Lines,732,741,1694,75,New York (P.A.B.T.),Boston (South Station),75;1482;1557
+Peter Pan Bus Lines,732,3187,1960,75,New York (P.A.B.T.),Boston (South Station),75;1482;1557
+Peter Pan Bus Lines,732,3329,2027,75,New York (P.A.B.T.),Boston (South Station),75;1482;1557
+Peter Pan Bus Lines,732,61,2039,75,New York (P.A.B.T.),Boston (South Station),75;1482;1557
+Peter Pan Bus Lines,732,1410,224,75,New York (P.A.B.T.),Boston (South Station),75;1482;1557
+Peter Pan Bus Lines,732,427,422,75,New York (P.A.B.T.),Boston (South Station),75;1482;1557
+Peter Pan Bus Lines,732,1578,422,75,New York (P.A.B.T.),Boston (South Station),75;1482;1557
+Peter Pan Bus Lines,732,355,427,75,New York (P.A.B.T.),Boston (South Station),75;1482;1557
+Peter Pan Bus Lines,732,978,427,75,New York (P.A.B.T.),Boston (South Station),75;1482;1557
+Peter Pan Bus Lines,732,1780,794,75,New York (P.A.B.T.),Boston (South Station),75;1482;1557
+Peter Pan Bus Lines,732,121,831,75,New York (P.A.B.T.),Boston (South Station),75;1482;1557
+New York Trailways,736,1139,420,1070,Toronto,New York (P.A.B.T.),2792;1770;1698;2107;3098;2206;1853;1587;393;1070
+Martz Bus,74,2035,2167,2234,Mount Pocono,New York (P.A.B.T.),2557;541;2234
+Pine Hill Trailways,744,3725,244,590;1220,Utica,New York (P.A.B.T.),822;2303;1785;1751;1101;1965;284;667;2144;10;3162;2888;1539;3242;3048;1624;1750;3343;3176;870;381;1798;2673;1925;427;2634;2679;3292;979;2478;2643;1808;193;590;1220
+"Trans-Bridge Lines, Inc.",746,716,531,749;1906,Bethlehem (Wind Creek Casino),New York (P.A.B.T.),3026;2618;2468;749;1906
+FlixBus-us,748,1035,1383,2011;929,New York Midtown (31st St & 8th Ave),Binghamton,2011;929;56
+"Trans-Bridge Lines, Inc.",752,648,924,1906,Quakertown,New York (P.A.B.T.),936;524;3310;1294;2348;1787;2911;1906
+"Trans-Bridge Lines, Inc.",753,2252,74,749;1906,Bethlehem (William Penn Park & Ride),New York (P.A.B.T.),2201;2618;2468;749;1906
+"Trans-Bridge Lines, Inc.",757,1490,1210,2#3128;1906;749,New York (Manhattan Cruise Terminal),Wescosville (Park-N-Ride),2#3128;1906;749;2468;2618;2201;3063;2751;803;642;3561
+Greyhound-us,758,44,115,929;1891,Detroit Bus Station,New York Port Authority,2134;676;3574;3072;41;929;1891
+Greyhound-us,758,1881,115,1891;929,New York Port Authority,Detroit Bus Station,1891;929;41;3072;3574;676;1861;2285;2271;2134
+Martz Bus,761,2889,1523,2234,New York (P.A.B.T.),Marshalls Creek,2234;1826;1136;541;86
+Peter Pan Bus Lines,768,1517,1072,75,New York (P.A.B.T.),South Hadley,75;1482;2969;213;3132;42
+Peter Pan Bus Lines,768,1576,1072,75,New York (P.A.B.T.),South Hadley,75;1482;2969;213;3132;42
+Peter Pan Bus Lines,768,1006,163,75,New York (P.A.B.T.),South Hadley,75;1482;2969;213;3132;42
+Peter Pan Bus Lines,768,2759,163,75,New York (P.A.B.T.),South Hadley,75;1482;2969;213;3132;42
+Peter Pan Bus Lines,768,3214,1936,75,New York (P.A.B.T.),South Hadley,75;1482;2969;213;3132;42
+Peter Pan Bus Lines,768,922,1936,75,New York (P.A.B.T.),South Hadley,75;1482;2969;213;3132;42
+Peter Pan Bus Lines,768,1849,202,75,New York (P.A.B.T.),South Hadley,75;1482;2969;213;3132;42
+Peter Pan Bus Lines,768,3255,202,75,New York (P.A.B.T.),South Hadley,75;1482;2969;213;3132;42
+Peter Pan Bus Lines,768,258,222,75,New York (P.A.B.T.),South Hadley,75;1482;2969;213;3132;42
+Peter Pan Bus Lines,768,3259,222,75,New York (P.A.B.T.),South Hadley,75;1482;2969;213;3132;42
+Peter Pan Bus Lines,768,2123,933,75,New York (P.A.B.T.),South Hadley,75;1482;2969;213;3132;42
+Peter Pan Bus Lines,768,558,933,75,New York (P.A.B.T.),South Hadley,75;1482;2969;213;3132;42
+Peter Pan Bus Lines,769,1469,1281,75,Boston (South Station),New York (P.A.B.T.),1557;1458;1482;75
+Peter Pan Bus Lines,769,946,1281,75,Boston (South Station),New York (P.A.B.T.),1557;1458;1482;75
+Peter Pan Bus Lines,769,1399,1331,75,Boston (South Station),New York (P.A.B.T.),1557;1458;75
+Peter Pan Bus Lines,769,3217,791,75,Boston (South Station),New York (P.A.B.T.),1557;1458;1482;75
+Peter Pan Bus Lines,769,609,791,75,Boston (South Station),New York (P.A.B.T.),1557;1458;1482;75
+Adirondack Trailways,77,381,709,1001;3225,New York (P.A.B.T.),Albany (SUNY),1001;3225;2475;789;123;202;1657
+FlixBus-us,772,3021,95,929;2011,Richmond (Main St Station Plaza),Brookline,2952;3382;2554;2445;929;2011;1057;647
+FlixBus-us,772,2782,95,2011;929,Boston (South Station),Richmond (E Grace St & Crane St),24#2671;1057;2011;929;2445;2554;3382;467
+FlixBus-us,772,3506,95,2011,Henrico (Parham Rd Park & Ride),Boston (South Station),2269;3382;2554;2445;2011;3010;647;2671
+FlixBus-us,772,3884,95,2011,Brookline,Henrico (Parham Rd Park & Ride),647;3010;2011;2445;2554;3382;2269
+Adirondack Trailways,775,3303,2052,3225;1001,Albany (SUNY),New York (P.A.B.T.),1657;123;789;3225;1001
+FlixBus-us,780,1492,95,2011;1153,Atlanta Bus Station,New York City Chinatown (28 Allen St),2210;3051;1258;2883;906;2935;1754;2952;3382;2554;2011;1153
+FlixBus-us,780,1588,95,1153,Atlanta Bus Station,New York City Chinatown (28 Allen St),5#2210;6#1971;2#3073;711;3419;1754;2952;3382;2554;1153
+FlixBus-us,780,832,95,929;2011,Atlanta Bus Station,New York Midtown (31st St & 8th Ave),2210;2883;906;864;2305;1754;2952;3382;929;2011
+FlixBus-us,780,3360,95,1153;2011,New York City Chinatown (28 Allen St),Atlanta Bus Station,1153;2011;2554;3382;2952;1754;2305;2935;906;2883;2342;3051;2210
+FlixBus-us,780,898,95,2011;929,New York Midtown (31st St & 8th Ave),Atlanta Bus Station,2011;929;3382;2952;1754;3419;2935;906;2883;2210
+FlixBus-us,780,2806,95,1153,New York City Chinatown (28 Allen St),Atlanta Bus Station,1153;2554;3382;2952;1754;2935;906;2883;1258;3051;2210
+FlixBus-us,780,2377,95,1153,New York City Chinatown (28 Allen St),Atlanta Bus Station,1153;2554;3382;2952;668;1754;3419;711;1#3073;2#1971;2#2210
+FlixBus-us,780,2838,95,1153,Atlanta Bus Station,New York City Chinatown (28 Allen St),2210;3051;1258;2883;906;2935;3419;1754;668;2952;3382;2554;1153
+Peter Pan Bus Lines,785,3000,2116,75,Baltimore,New York (P.A.B.T.),3029;725;75
+Peter Pan Bus Lines,785,2942,762,75,Baltimore,New York (P.A.B.T.),3029;725;75
+Peter Pan Bus Lines,790,1665,110,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,1324,1281,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,1591,1281,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,2110,1281,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,397,1281,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,276,1332,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,1912,1694,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,372,185,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,440,1855,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,1565,2039,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,3043,2039,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,3397,2182,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,920,422,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,789,422,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,2636,427,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,2830,427,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,2849,427,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,332,427,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,3656,640,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,1369,762,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+Peter Pan Bus Lines,790,1032,969,75,Boston (South Station),New York (P.A.B.T.),1557;1482;75
+New York Trailways,793,2209,420,1070,New York (P.A.B.T.),Toronto,1070;393;297;269;1853;2206;3098;2107;1698;1770;2792
+Martz Bus,796,2484,817,2234,Marshalls Creek,New York (P.A.B.T.),86;541;1136;2234
+FlixBus-us,799,6,464,2011;929,New York Midtown (31st St & 8th Ave),Reading (BARTA Transportation Center),2011;929;1945;41;3449
+FlixBus-us,799,3136,95,929;2011,Reading (BARTA Transportation Center),New York Midtown (31st St & 8th Ave),3449;2445;929;2011
+FlixBus-us,799,400,95,2011,New York Midtown (31st St & 8th Ave),Reading (BARTA Transportation Center),2011;2445;3449
+FlixBus-us,799,47,95,2011,New York Midtown (31st St & 8th Ave),Reading (BARTA Transportation Center),2011;1945;41;3449
+FlixBus-us,799,1374,95,2011,Reading (BARTA Transportation Center),New York Midtown (31st St & 8th Ave),3449;41;1945;2011
+Academy Bus,8,1751,1007,680,Manhattan (Go Bus),Cambridge (Go Bus),680;2895;11
+Academy Bus,8,223,1684,680,Manhattan (Go Bus),Cambridge (Go Bus),680;2895;11
+Academy Bus,8,1017,1997,680,Manhattan (Go Bus),Cambridge (Go Bus),680;2895;11
+"Trans-Bridge Lines, Inc.",803,1265,74,1906;749,New York (P.A.B.T.),Allentown (Transportation Center),1906;749;2468;2618;2201;803;2751;3063;3561;642
+Greyhound-us,806,3844,115,1891;929,New York Port Authority,Syracuse Bus Station,1891;929;56;2010
+Greyhound-us,806,363,115,1891,Syracuse Bus Station,New York Port Authority,2010;56;1891
+Greyhound-us,806,769,115,1891,New York Port Authority,Syracuse Bus Station,1891;56;2010
+Greyhound-us,806,2802,115,1891,New York Port Authority,Buffalo,1891;56;2010;1929;276;2744
+Greyhound-us,806,1520,115,1891,Buffalo,New York Port Authority,2744;1929;2010;1891
+Adirondack Trailways,807,1301,6,3225;1001,Syracuse,New York (P.A.B.T.),2847;1158;1658;3225;1001
+"Trans-Bridge Lines, Inc.",810,1795,2176,1906,Allentown Airport (ABE),New York (P.A.B.T.),803;2201;2618;2468;1906
+Greyhound-us,813,3511,115,1891,Baltimore Downtown Bus Station,New York Port Authority,2554;2176;2166;1973;933;1891
+Greyhound-us,813,2272,115,1891,New York Port Authority,Philadelphia (Schuylkill & Walnut),1891;933;2166;1012
+Greyhound-us,813,2109,115,1891,New York Port Authority,Baltimore Downtown Bus Station,1891;933;1973;2166;2176;2554
+Greyhound-us,813,3911,115,1891,Philadelphia (Schuylkill & Walnut),New York Port Authority,1012;2166;933;1891
+Adirondack Trailways,816,2152,1492,3225;1001,Albany - Rensselaer (Amtrak),New York (P.A.B.T.),202;123;789;3225;1001
+Greyhound-us,829,282,115,929;1891,Washington Union Station,New York Port Authority,3382;2794;2554;929;1891
+Greyhound-us,829,3764,115,1891;929,New York Port Authority,Washington Union Station,1891;929;443;130;2554;3382
+Greyhound-us,829,2430,115,1891,Washington Union Station,New York Port Authority,3382;2554;1891
+Greyhound-us,829,2923,115,1891,Washington Union Station,New York Port Authority,3382;1852;2554;130;1891
+Greyhound-us,829,2226,115,1891,New York Port Authority,Washington Union Station,1891;130;2794;3382
+Greyhound-us,829,2654,115,1891;929,New York Port Authority,Washington Union Station,1891;929;2554;3382
+Greyhound-us,829,2762,115,929;1891,Washington Union Station,New York Port Authority,3382;1852;2554;443;929;1891
+Greyhound-us,829,286,115,1891,New York Port Authority,Washington Union Station,1891;2554;3382
+Academy Bus,83,3658,1007,680,Manassas (Go Bus),Manhattan (Go Bus),2871;455;1163;680
+Academy Bus,83,3168,1684,680,Manassas (Go Bus),Manhattan (Go Bus),2871;455;1163;680
+Academy Bus,83,906,1997,680,Manassas (Go Bus),Manhattan (Go Bus),2871;455;1163;680
+"Trans-Bridge Lines, Inc.",841,3773,74,1906,Wescosville (Park-N-Ride),New York (P.A.B.T.),3561;3063;2201;1906
+Best Bus,843,2369,1964,2273,Penn Station,Dupont Circle,2273;2972;397
+Best Bus,843,2237,1964,2273,Dupont Circle,Penn Station,397;2972;2273
+Peter Pan Bus Lines,845,2694,1221,75,Boston (South Station),New York (P.A.B.T.),1557;75
+Peter Pan Bus Lines,845,2357,1544,75,Boston (South Station),New York (P.A.B.T.),1557;75
+Peter Pan Bus Lines,845,62,1822,75,Boston (South Station),New York (P.A.B.T.),1557;75
+Peter Pan Bus Lines,845,407,1972,75,Boston (South Station),New York (P.A.B.T.),1557;75
+Peter Pan Bus Lines,846,1274,2116,75,Washington,New York (P.A.B.T.),1618;3029;725;898;75
+FlixBus-us,85,3151,95,2011;1851,New York Midtown (31st St & 8th Ave),Montreal (Gare d'autocars de Montreal),2011;1851;20;2255;890
+FlixBus-us,85,986,95,398;2011,Montreal (Gare d'autocars de Montreal),New York Midtown (31st St & 8th Ave),890;2255;20;398;2011
+Fullington Trailways,854,281,123,1897;2930,New York (P.A.B.T.),Williamsport,1897;2930;2647;722;3130;811;629;2413;944;2498;242;3482;810
+Fullington Trailways,854,1583,445,1897;2930,New York (P.A.B.T.),Williamsport,1897;2930;2647;722;811;629;2413;944;2498;242;3482;810
+Ocean Travel,858,1574,1964,1444,New York,Rochester,1444;3350
+Ocean Travel,858,2934,1964,1444,Rochester,New York,3350;1444
+Adirondack Trailways,862,2323,2065,3225;1001,Albany (SUNY),New York (P.A.B.T.),1657;123;3225;1001
+"Trans-Bridge Lines, Inc.",868,3461,1559,749;1906,Allentown (Transportation Center),New York (P.A.B.T.),642;2751;803;3026;2201;2618;2468;749;1906
+"Trans-Bridge Lines, Inc.",868,2547,499,749;1906,Allentown (Transportation Center),New York (P.A.B.T.),642;2751;803;3026;2201;2618;2468;749;1906
+New York Trailways,87,2734,2065,1793;1070,Toronto,New York (P.A.B.T.),2792;1698;2107;2206;1853;1587;1793;1070
+New York Trailways,87,3838,420,1793;1070,Toronto,New York (P.A.B.T.),2792;1698;2107;2206;1853;1587;1793;1070
+Adirondack Trailways,871,1045,1630,3225;1001,Albany (Trailways Bus Terminal),New York (P.A.B.T.),123;789;367;989;1253;2778;1880;3225;1001
+Adirondack Trailways,875,2487,1776,4;1001;3225,New York (Hudson Yards Trailways),Albany (Trailways Bus Terminal),4;1001;3225;1880;2778;1253;989;367;789;123
+"Trans-Bridge Lines, Inc.",879,3586,801,1906,Allentown Airport (ABE),New York (P.A.B.T.),803;2201;2618;1906
+Peter Pan Bus Lines,885,1342,1864,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,2507,1953,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,2773,1953,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,3058,1953,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,1688,2116,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,1758,2116,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,2583,2116,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,2785,2116,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,420,2116,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,634,2116,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,973,2116,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,2148,2121,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,1068,2270,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,3124,2270,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,344,2338,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,1855,318,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,2384,318,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,921,421,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,927,715,75,Washington,New York (P.A.B.T.),1618;725;75
+Peter Pan Bus Lines,885,3215,755,75,Washington,New York (P.A.B.T.),1618;725;75
+"Trans-Bridge Lines, Inc.",886,1418,1559,1906,New York (P.A.B.T.),Bethlehem (Transp Ctr),1906;2201;803;2751
+Adirondack Trailways,887,1651,665,1001;3225,New York (P.A.B.T.),Albany (SUNY),1001;3225;1880;2778;1253;989;367;789;123;1657
+Peter Pan Bus Lines,890,309,2116,75;1924,New York (P.A.B.T.),Washington,75;1924;1026;898;725;3029;474;1618
+Peter Pan Bus Lines,890,3282,2116,75;1924,New York (P.A.B.T.),Washington,75;1924;1026;898;725;3029;474;1618
+Peter Pan Bus Lines,890,3315,2116,75;1924,New York (P.A.B.T.),Washington,75;1924;1026;898;725;3029;474;1618
+Peter Pan Bus Lines,890,3643,2116,75;1924,New York (P.A.B.T.),Washington,75;1924;1026;898;725;3029;474;1618
+ShortLine Hudson,891,680,2206,437;1764,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,437;1764;2544;1915;494;2719;488
+ShortLine Hudson,891,1568,2206,437;1764,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,437;1764;514;3612;2438;3252;215;872;2309;2527;3248;1828;2544;1915;494;2719;488
+ShortLine Hudson,891,2623,449,437;1764,Port Authority Bus Terminal,Rt 209 & 42nd St - Kerhonkson,437;1764;2544;1915;494;2719;488;2951;715;2685;1052;2090;611;2676;1873;2983;836;2670;3071
+ShortLine Hudson,891,492,449,2738;1243;1098;1144;1764;278;3201;221;218,Port Authority Bus Terminal,Railroad Ave - Middletown Terminal,2738;1243;1098;1144;1764;278;3201;221;218;1815;2070;3612;2438;3252;215;872;2309;2527;3248;1828;994;2544;1915;494;2719;488
+ShortLine Hudson,891,2543,449,1399;402,Rt 209 & 42nd St - Kerhonkson,Port Authority Bus Terminal,3071;1626;3237;2983;2676;64;2490;2432;3116;1685;94;488;1399;402
+"Trans-Bridge Lines, Inc.",895,3652,179,1906,New York (P.A.B.T.),Lahaska,1906;2911;1787;2348;1294;3310
+Adirondack Trailways,896,798,6,3225;1001,Binghamton,New York (P.A.B.T.),1158;1658;3225;1001
+FlixBus-us,900,3281,450,2011;929,Providence (Canal St & Smith St),Washington Union Station,3172;2011;929;3382
+Martz Bus,907,283,218,2234,Marshalls Creek,New York (P.A.B.T.),86;541;1136;1826;2234
+"Trans-Bridge Lines, Inc.",909,3184,2176,1906,Allentown (Transportation Center),New York (P.A.B.T.),642;2618;2468;1906
+"Trans-Bridge Lines, Inc.",910,814,74,749;1906,Bethlehem (Transp Ctr),New York (P.A.B.T.),2751;803;2201;2618;749;1906
+Peter Pan Bus Lines,912,2601,1953,75,New York (P.A.B.T.),Washington,75;3029;1618
+Greyhound-us,924,3557,115,1891,Boston (South Station),New York Port Authority,18#2671;1010;1057;646;134;1891
+Greyhound-us,924,799,115,1891,New York Port Authority,Boston (South Station),1891;134;646;1057;1010;2671
+Greyhound-us,924,2042,115,1891,Boston (South Station),New York Port Authority,22#2671;646;1891
+Greyhound-us,924,2089,115,1891,Boston (South Station),New York Port Authority,50#2671;646;1891
+Greyhound-us,924,334,115,1891,Boston (South Station),New York Port Authority,49#2671;646;1891
+Greyhound-us,924,3885,115,1891,Boston (South Station),New York Port Authority,8#2671;646;1891
+Greyhound-us,924,511,115,1891,Boston (South Station),New York Port Authority,6#2671;646;1891
+Greyhound-us,924,924,115,1891,Boston (South Station),New York Port Authority,51#2671;646;1891
+Greyhound-us,924,1291,115,1891,New York Port Authority,Boston (South Station),1891;646;2671
+Greyhound-us,924,308,115,1891,New York Port Authority,Boston (South Station),1891;646;2671
+Greyhound-us,924,401,115,1891,New York Port Authority,Boston (South Station),1891;646;2671
+Greyhound-us,924,48,115,1891,New York Port Authority,Boston (South Station),1891;646;2671
+Greyhound-us,924,770,115,1891,New York Port Authority,Boston (South Station),1891;646;2671
+Greyhound-us,924,3704,115,1891,Boston (South Station),New York Port Authority,1#2671;3172;1891
+Greyhound-us,924,1248,115,1891,Boston (South Station),New York Port Authority,32#2671;1010;646;1891
+Greyhound-us,924,669,115,1891,New York Port Authority,Boston (South Station),1891;3172;2671
+"Trans-Bridge Lines, Inc.",928,275,2176,1906,Allentown (Transportation Center),New York (P.A.B.T.),642;2751;2618;2468;1906
+FlixBus-us,929,3122,450,2011,Atlanta Bus Station,New York Midtown (31st St & 8th Ave),2210;3254;3022;2935;2269;3382;2011
+FlixBus-us,929,3824,450,2011,New York Midtown (31st St & 8th Ave),Atlanta Bus Station,2011;3382;2269;2935;3022;3254;2210
+Peter Pan Bus Lines,932,1008,537,75,Washington,New York (P.A.B.T.),1618;3029;75
+Peter Pan Bus Lines,938,2604,2116,75,New York (P.A.B.T.),Washington,75;725;3029;1618
+Peter Pan Bus Lines,938,3195,2116,75,New York (P.A.B.T.),Washington,75;725;3029;1618
+Peter Pan Bus Lines,938,621,2116,75,New York (P.A.B.T.),Washington,75;725;3029;1618
+Peter Pan Bus Lines,938,1504,318,75,New York (P.A.B.T.),Washington,75;725;3029;1618
+Peter Pan Bus Lines,938,1060,537,75,New York (P.A.B.T.),Washington,75;725;3029;1618
+Peter Pan Bus Lines,938,1623,537,75,New York (P.A.B.T.),Washington,75;725;3029;1618
+Peter Pan Bus Lines,938,434,537,75,New York (P.A.B.T.),Washington,75;725;3029;1618
+Peter Pan Bus Lines,938,477,537,75,New York (P.A.B.T.),Washington,75;725;3029;1618
+Peter Pan Bus Lines,938,707,537,75,New York (P.A.B.T.),Washington,75;725;3029;1618
+FlixBus-us,941,663,95,929;2011,Cherry Hill,New York Midtown (31st St & 8th Ave),1959;2445;41;1945;929;2011
+FlixBus-us,941,681,95,2011,New York Midtown (31st St & 8th Ave),Philadelphia,2011;1945;41;2445
+FlixBus-us,941,1089,95,2011;929,New York Midtown (31st St & 8th Ave),Cherry Hill,2011;929;1945;41;2445;1959
+FlixBus-us,941,2394,95,2011,Malvern,New York Midtown (31st St & 8th Ave),3610;2445;41;1945;2011
+"Trans-Bridge Lines, Inc.",945,592,647,1906,New York (P.A.B.T.),Allentown (Transportation Center),1906;2468;2618;2201;803;2751;3063;3561;642
+Greyhound-us,946,890,115,1891,Toronto (Union Station Bus Terminal),New York Port Authority,1527;2744;2010;56;378;1891
+Greyhound-us,946,3739,115,929;1891,Toronto (Union Station Bus Terminal),New York Port Authority,1527;2744;276;1929;2010;2780;56;929;1891
+Greyhound-us,946,2834,115,1891,New York Port Authority,Toronto (Union Station Bus Terminal),1891;56;2010;1929;2744;1527
+Greyhound-us,946,3829,115,1891;929,New York Port Authority,Toronto (Union Station Bus Terminal),1891;929;56;2780;2010;1929;276;2744;1527
+Greyhound-us,946,353,115,1891,New York Port Authority,Toronto (Union Station Bus Terminal),1891;378;56;2780;2010;1929;276;2744;1527
+Greyhound-us,946,170,115,1891,Toronto (Union Station Bus Terminal),New York Port Authority,1527;2744;276;1929;2010;2780;56;1891
+Peter Pan Bus Lines,95,105,1281,75,New York (P.A.B.T.),Springfield,75;1482;963
+Peter Pan Bus Lines,95,226,1281,75,New York (P.A.B.T.),Springfield,75;1482;963
+Peter Pan Bus Lines,95,2756,1331,75,New York (P.A.B.T.),Springfield,75;1482;963
+Peter Pan Bus Lines,95,1683,1440,75,New York (P.A.B.T.),Springfield,75;1482;963
+Peter Pan Bus Lines,95,3359,224,75,New York (P.A.B.T.),Springfield,75;1482;963
+FlixBus-us,954,2844,450,2011,Philadelphia,New York Midtown (31st St & 8th Ave),2445;2011
+FlixBus-us,954,2429,450,2011,New York Midtown (31st St & 8th Ave),Philadelphia (Schuylkill & Walnut),2011;1959;2#1012
+FlixBus-us,954,3239,95,2011,Malvern,New York Midtown (31st St & 8th Ave),3610;1012;2011
+FlixBus-us,954,2461,95,2011,New York Midtown (31st St & 8th Ave),Philadelphia,2011;1959;2445
+FlixBus-us,954,3443,95,2011,New York Midtown (31st St & 8th Ave),Philadelphia,2011;2445
+FlixBus-us,954,405,95,2011,Philadelphia,New York Midtown (31st St & 8th Ave),2445;2011
+FlixBus-us,954,1030,95,2011,New York Midtown (31st St & 8th Ave),Malvern,2011;2445;3610
+New York Trailways,956,3234,2065,1793;1070,Rochester,New York (P.A.B.T.),1853;269;297;393;1793;1070
+New York Trailways,956,1154,420,1793;1070,Rochester,New York (P.A.B.T.),1853;269;297;393;1793;1070
+Pine Hill Trailways,957,3275,1604,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;3100;590;1220
+Pine Hill Trailways,957,1957,1776,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;3100;590;1220
+Pine Hill Trailways,957,1174,1880,590;1220,Kingston,New York (P.A.B.T.),2679;3292;979;2478;2643;193;3100;590;1220
+Martz Bus,961,1372,817,2234,Wilkes-Barre,New York (P.A.B.T.),655;3391;541;2234
+Academy Bus,963,2003,1007,680,Cambridge (Go Bus),Manhattan (Go Bus),11;2895;680
+Academy Bus,963,3860,1684,680,Cambridge (Go Bus),Manhattan (Go Bus),11;2895;680
+Academy Bus,963,1288,1997,680,Cambridge (Go Bus),Manhattan (Go Bus),11;2895;680
+"Trans-Bridge Lines, Inc.",97,661,1824,1906,New York (P.A.B.T.),Wescosville (Park-N-Ride),1906;2468;2618;3063;3561
+Best Bus,977,745,1964,2273,Springfield,Penn Station,2516;397;2972;2273
+Best Bus,977,548,1964,2273,Penn Station,Springfield,2273;2972;397;2516
+Martz Bus,981,3893,1523,2234,New York (P.A.B.T.),Marshalls Creek,2234;1826;1136;86
+Peter Pan Bus Lines,983,2223,2116,75,Washington,New York (P.A.B.T.),1618;3029;725;75
+Peter Pan Bus Lines,983,2559,2270,75,Washington,New York (P.A.B.T.),1618;3029;725;75
+Peter Pan Bus Lines,983,3090,537,75,Washington,New York (P.A.B.T.),1618;3029;725;75
+Peter Pan Bus Lines,983,330,537,75,Washington,New York (P.A.B.T.),1618;3029;725;75
+Peter Pan Bus Lines,983,3874,537,75,Washington,New York (P.A.B.T.),1618;3029;725;75
+Peter Pan Bus Lines,983,579,537,75,Washington,New York (P.A.B.T.),1618;3029;725;75
+"Trans-Bridge Lines, Inc.",987,2314,74,1906,New York (P.A.B.T.),Doylestown (SEPTA),1906;2911;1787;2348;1294;3310;524
+"Trans-Bridge Lines, Inc.",988,3167,1892,1906,Allentown Airport (ABE),New York (P.A.B.T.),803;2618;2468;1906
+"Trans-Bridge Lines, Inc.",989,266,74,749;1906,Allentown (Transportation Center),New York (P.A.B.T.),642;803;2618;2468;749;1906
+C&J Bus Lines,992,394,1239,1234,New York City,Dover,1234;1448;1651;423
+C&J Bus Lines,992,3109,1578,1234,Dover,New York City,423;1651;1448;1234
+C&J Bus Lines,992,1594,1939,1234,Dover,New York City,423;1651;1448;1234
+C&J Bus Lines,992,1171,2177,1234,New York City,Dover,1234;1448;1651;423
+C&J Bus Lines,992,1227,2319,1234,Dover,New York City,423;1651;1448;1234
+C&J Bus Lines,992,2470,780,1234,New York City,Dover,1234;1448;1651;423
+Peter Pan Bus Lines,997,2228,1864,75,New York (P.A.B.T.),Philadelphia (Schuylkill & Walnut - Peter Pan),75;1026;898
+Peter Pan Bus Lines,997,3106,1864,75,New York (P.A.B.T.),Philadelphia (Schuylkill & Walnut - Peter Pan),75;1026;898
+Peter Pan Bus Lines,997,899,1864,75,New York (P.A.B.T.),Philadelphia (Schuylkill & Walnut - Peter Pan),75;1026;898
+Peter Pan Bus Lines,997,103,1953,75,New York (P.A.B.T.),Philadelphia (Schuylkill & Walnut - Peter Pan),75;1026;898
+Peter Pan Bus Lines,997,1118,1953,75,New York (P.A.B.T.),Philadelphia (Schuylkill & Walnut - Peter Pan),75;1026;898
+Peter Pan Bus Lines,997,213,1953,75,New York (P.A.B.T.),Philadelphia (Schuylkill & Walnut - Peter Pan),75;1026;898
+Peter Pan Bus Lines,997,3218,1953,75,New York (P.A.B.T.),Philadelphia (Schuylkill & Walnut - Peter Pan),75;1026;898
+Peter Pan Bus Lines,997,988,1953,75,New York (P.A.B.T.),Philadelphia (Schuylkill & Walnut - Peter Pan),75;1026;898
+Peter Pan Bus Lines,997,1149,2116,75,New York (P.A.B.T.),Philadelphia (Schuylkill & Walnut - Peter Pan),75;1026;898
+Peter Pan Bus Lines,997,1467,2116,75,New York (P.A.B.T.),Philadelphia (Schuylkill & Walnut - Peter Pan),75;1026;898
+Peter Pan Bus Lines,997,1801,2116,75,New York (P.A.B.T.),Philadelphia (Schuylkill & Walnut - Peter Pan),75;1026;898
+Peter Pan Bus Lines,997,2463,2116,75,New York (P.A.B.T.),Philadelphia (Schuylkill & Walnut - Peter Pan),75;1026;898
+Peter Pan Bus Lines,997,676,2116,75,New York (P.A.B.T.),Philadelphia (Schuylkill & Walnut - Peter Pan),75;1026;898
+Peter Pan Bus Lines,997,732,2116,75,New York (P.A.B.T.),Philadelphia (Schuylkill & Walnut - Peter Pan),75;1026;898
+Peter Pan Bus Lines,997,742,2116,75,New York (P.A.B.T.),Philadelphia (Schuylkill & Walnut - Peter Pan),75;1026;898
+Peter Pan Bus Lines,997,984,2116,75,New York (P.A.B.T.),Philadelphia (Schuylkill & Walnut - Peter Pan),75;1026;898
+Adirondack Trailways,998,689,2065,3225;1001,Albany (SUNY),New York (P.A.B.T.),1657;123;789;2475;3225;1001
