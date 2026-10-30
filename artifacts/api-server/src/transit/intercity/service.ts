@@ -6,6 +6,8 @@ import { distance, type Arrival, type TransitRoute, type TransitStop } from "../
 import { ZONE } from "../time";
 import { MARTZ_URL, providerInventory } from "./providers";
 import { parseMartz, holidayDate, printedInstant, type MartzDataset } from "./martz";
+import { documentCatalog,documentIntercityDepartures,nearbyDocumentProviders,documentServiceStatus,documentArrivals,documentRoute,documentTimetable,isDocumentId } from "./uploaded-service";
+import { WALL_CLOSURE,VERIFIED_AT } from "./uploaded-data";
 
 const DATA_ID = "intercity:martz", ERROR_ID = "intercity:martz:error";
 const MAX_AGE = 72 * 3600000;
@@ -78,7 +80,14 @@ export function refreshIntercity() {
 }
 export async function intercityProviders() {
   const data=await dataset();
-  return providerInventory.map(p=>p.id!=="martz"?p:{...p,
+  return providerInventory.map(p=>p.id==="transbridge"?{...p,status:"imported · Wall Street only",updatedAt:VERIFIED_AT,
+    access:"User-supplied published Wall Street timetable and explicit holiday closure notice.",
+    description:"Four published Wall Street runs, including Monday–Thursday restrictions. "+WALL_CLOSURE+" Other Trans-Bridge corridors are not yet imported."}:
+    p.id==="nj-transit"?{...p,status:"imported · local routes 890/891 only",updatedAt:VERIFIED_AT,
+      access:"User-supplied NJ TRANSIT T1890 brochure; no developer credentials or private feeds used.",
+      terminalService:"These local NJ/PA routes do not serve Port Authority.",
+      description:"Weekday 890/891 timetables, published fares, lift-equipped and flex-service information. Other NJ TRANSIT routes are not imported; full-feed access remains separate."}:
+    p.id!=="martz"?p:{...p,
     status:usable(data)?"imported · partial timetable":data?"stale · times withheld":"link-only",
     updatedAt:data?.fetchedAt,lastError,
     access:"Public factual timetable rows; robots allow public paths; ticket terms reviewed. No booking data scraped.",
@@ -91,7 +100,8 @@ function routeFor(t:MartzDataset["trips"][number]):TransitRoute {
 }
 export async function intercityCatalog() {
   const data=await dataset();
-  if(!usable(data))return {routes:[] as TransitRoute[],stops:[] as TransitStop[]};
+  const documents=documentCatalog();
+  if(!usable(data))return documents;
   const routes=data!.trips.map(routeFor);
   const stops:TransitStop[]=Object.entries(boardingPoints).flatMap(([code,p])=>{
     const serving=data!.trips.filter(t=>t.points.some(v=>v.code===code)).map(routeFor);
@@ -101,9 +111,9 @@ export async function intercityCatalog() {
       neighborhood:p.address,
     }];
   });
-  return {routes,stops};
+  return {routes:[...routes,...documents.routes],stops:[...stops,...documents.stops]};
 }
-export async function intercityDepartures(p:{lat:number;lon:number;provider?:string;date:string;from?:string}) {
+async function martzDepartures(p:{lat:number;lon:number;provider?:string;date:string;from?:string}) {
   const data=await dataset(),allProviders=await intercityProviders();
   const today=DateTime.now().setZone(ZONE).startOf("day"),date=DateTime.fromISO(p.date,{zone:ZONE});
   const from=p.from||"00:00";
@@ -148,7 +158,22 @@ export async function intercityDepartures(p:{lat:number;lon:number;provider?:str
   return {...base,departures:departures.sort((a,b)=>Date.parse(a.time)-Date.parse(b.time)).slice(0,100),
     message:`Published Martz timetable · America/New_York · within 3 km. Partial coverage: special/ambiguous trips and unverified holidays are omitted. Other carriers remain linked in Settings; missing times do not mean no service.`};
 }
+export async function intercityDepartures(p:{lat:number;lon:number;provider?:string;date:string;from?:string}) {
+  const original=await martzDepartures(p),all=await intercityProviders();
+  const extraIds=nearbyDocumentProviders(p.lat,p.lon);
+  const providers=all.filter(v=>extraIds.includes(v.id)||original.providers.some(s=>s.id===v.id));
+  const documents=documentIntercityDepartures(p);
+  const departures=[...(p.provider&&p.provider!=="martz"?[]:original.departures),...documents]
+    .sort((a,b)=>Date.parse(a.time)-Date.parse(b.time)).slice(0,100);
+  const transbridgeHere=extraIds.includes("transbridge")||providers.some(v=>v.id==="transbridge");
+  const notice=transbridgeHere?documentServiceStatus("transbridge",p.date):"";
+  const message=p.provider==="transbridge"||extraIds.length>0&&original.providers.length===0?
+    (notice||"Trans-Bridge Wall Street timetable only. Other corridors, including Port Authority services, are not yet imported. Drop-off-only and unpublished times are not boardable departures."):
+    original.message+(transbridgeHere?` Trans-Bridge: ${notice||"Wall Street service is imported; other corridors remain unavailable."}`:"");
+  return {...original,providers,departures,message,updatedAt:documents.length||p.provider==="transbridge"?VERIFIED_AT:original.updatedAt};
+}
 export async function intercityArrivals(stop:TransitStop,now=Date.now()):Promise<Arrival[]> {
+  if(isDocumentId(stop.id))return documentArrivals(stop,now);
   const d=DateTime.fromMillis(now,{zone:ZONE});
   const result=await intercityDepartures({lat:stop.lat,lon:stop.lon,date:d.toISODate()!,from:d.toFormat("HH:mm")});
   return result.departures.filter(t=>t.stopId===stop.id&&Date.parse(t.time)<=now+2*3600000).map(t=>({
@@ -158,13 +183,15 @@ export async function intercityArrivals(stop:TransitStop,now=Date.now()):Promise
   }));
 }
 export async function intercityRoute(id:string) {
+  if(isDocumentId(id))return documentRoute(id);
   const data=await dataset(),catalog=await intercityCatalog();
   const trip=data?.trips.find(t=>t.id===id),route=catalog.routes.find(r=>r.id===id);
   if(!trip||!route)return;
   return {route,stops:trip.points.flatMap(p=>catalog.stops.filter(s=>s.id===`martz:${p.code}`)),shape:[],vehicles:[],alerts:[],
     directions:[boardingPoints[trip.points.at(-1)!.code].name]};
 }
-export async function intercityTimetable(p:{stopId?:string;routeId?:string;date:string;from?:string;offset?:number;limit?:number}) {
+export async function intercityTimetable(p:{stopId?:string;routeId?:string;direction?:string;date:string;from?:string;offset?:number;limit?:number}) {
+  if(isDocumentId(p.stopId)||isDocumentId(p.routeId))return documentTimetable(p);
   const code=p.stopId?.slice("martz:".length),data=await dataset();
   const trip=data?.trips.find(t=>t.id===p.routeId);
   const point=boardingPoints[code||trip?.points[0].code||"NY"];

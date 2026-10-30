@@ -84,6 +84,8 @@ export interface Route {
   agencyId?: string;
   serviceClass?: RouteServiceClass;
   longName?: string;
+  scheduleNotes?: string[];
+  sourceUrl?: string;
 }
 
 export type ArrivalSource = typeof ArrivalSource[keyof typeof ArrivalSource];
@@ -207,6 +209,7 @@ export interface RouteDetail {
   vehicles: Vehicle[];
   alerts: Alert[];
   directions: string[];
+  timetableStops?: IntercityTripStop[];
 }
 
 export interface FeedSource {

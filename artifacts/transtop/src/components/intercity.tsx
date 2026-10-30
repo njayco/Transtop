@@ -23,6 +23,14 @@ export function providerStatus(s: string) {
   return { k: 'other', l: s, c: 'text-muted-foreground', dot: 'bg-muted-foreground' };
 }
 
+/** Provider id from an agency id or an id prefix such as "transbridge:..." or "martz-...". */
+export function providerFor(agencyId: string | undefined, id: string) {
+  const raw = (agencyId || id.split(/[:_-]/)[0] || '').toLowerCase();
+  if (raw.includes('transbridge') || raw.includes('trans-bridge')) return 'transbridge';
+  if (raw.includes('martz')) return 'martz';
+  return raw;
+}
+
 function DepartureRow({ d, index }: { d: IntercityDeparture; index: number }) {
   const [open, setOpen] = useState(false);
   const rest = [...d.stops].sort((a, b) => a.sequence - b.sequence);
@@ -36,6 +44,7 @@ function DepartureRow({ d, index }: { d: IntercityDeparture; index: number }) {
         <div className="min-w-0 flex-1">
           <p className="break-words font-bold leading-tight">to {d.destination}</p>
           <p className="break-words text-sm text-muted-foreground">{d.providerName} · from {d.stopName}</p>
+          {d.providerId === 'transbridge' && d.tripId && <p className="text-xs font-semibold text-foreground/80" data-testid={`text-intercity-trip-${d.id}`}>Run {d.tripId.split(':').pop()}</p>}
           <span className="mt-1.5 inline-flex rounded-full border border-[hsl(var(--scheduled)/.4)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--scheduled))]">Scheduled · provider timetable</span>
         </div>
         <ChevronDown className={cn('mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-transform', open && 'rotate-180')} aria-hidden />
@@ -129,7 +138,7 @@ export function IntercityModule({ center, provider, onProvider, compact, routeId
       {q.isError && <div className="rounded-2xl border border-[hsl(var(--bad)/.35)] bg-card p-4 text-sm" role="alert">Intercity departures unavailable. <button onClick={() => q.refetch()} className="font-semibold underline" data-testid="button-intercity-retry">Try again</button></div>}
       {q.data?.message && <p className="rounded-xl border border-border bg-card/60 px-3 py-2 text-sm text-muted-foreground" role="status">{q.data.message}</p>}
       {q.data && deps.length === 0 && !compact && (
-        <div className="flex items-center gap-3 rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground"><RouteIcon className="h-6 w-6 shrink-0" />No imported intercity departures near here for this date and time. Intercity results only cover boarding points within 3 km.</div>
+        <div className="flex items-center gap-3 rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground"><RouteIcon className="h-6 w-6 shrink-0" /><span data-testid="text-intercity-empty">{provider ? `No ${candidates.find((p) => p.id === provider)?.name ?? provider} departures are scheduled for ${date} from ${from || 'start of day'}. This provider is still covered; there is simply no service in this window.` : 'No imported intercity departures near here for this date and time. Intercity results only cover boarding points within 3 km.'}</span></div>
       )}
       {shown.length > 0 && <ol className="space-y-2">{shown.map((d, i) => <DepartureRow key={d.id} d={d} index={i} />)}</ol>}
       {compact && deps.length > shown.length && <p className="text-xs text-muted-foreground">{deps.length - shown.length} more. Choose {INTERCITY_LABEL} above to see all.</p>}

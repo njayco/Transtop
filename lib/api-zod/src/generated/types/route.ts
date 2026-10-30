@@ -16,4 +16,6 @@ export interface Route {
   agencyId?: string;
   serviceClass?: RouteServiceClass;
   longName?: string;
+  scheduleNotes?: string[];
+  sourceUrl?: string;
 }

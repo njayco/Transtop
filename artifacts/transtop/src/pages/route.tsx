@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams, useSearch } from 'wouter';
-import { ArrowLeft, ArrowRight, ArrowUpDown, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpDown, ExternalLink, X } from 'lucide-react';
 import { getGetNetworkQueryKey, getGetRouteQueryKey, useGetNetwork, useGetRoute, type GetNetworkParams } from '@workspace/api-client-react';
 import { LiveIndicator } from '@/components/shell';
 import { AlertRow, Countdown, ErrorState, FavButton, MODE_NAME, RouteBadge, SkeletonCards, SourceLabel } from '@/components/transit';
 import { TransitMap } from '@/components/transit-map';
 import { TimetablePanel } from '@/components/timetable';
-import { IntercityModule } from '@/components/intercity';
+import { IntercityModule, providerFor } from '@/components/intercity';
 import { honest, usePrefs } from '@/lib/prefs';
 import { ago } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -74,6 +74,17 @@ export default function RoutePage() {
           <div className="mt-6 grid gap-6 md:grid-cols-[1fr_1.1fr]">
             <div className="space-y-4">
               {dirs.length > 0 && <p className="text-xs text-muted-foreground" data-testid="text-patterns">{dirs.length} service pattern{dirs.length > 1 ? 's' : ''} from the published schedule. Stops shown for {activeDir}.</p>}
+              {((d.route.scheduleNotes?.length ?? 0) > 0 || d.route.sourceUrl) && (
+                <section aria-labelledby="h-published-schedule" className="rounded-2xl border border-card-border bg-card p-4 text-sm" data-testid="section-published-schedule">
+                  <h2 id="h-published-schedule" className="font-bold">Published schedule information</h2>
+                  {(d.route.scheduleNotes?.length ?? 0) > 0 && (
+                    <ul className="mt-2 list-disc space-y-1.5 pl-5 text-muted-foreground">
+                      {d.route.scheduleNotes!.map((n, i) => <li key={i} className="break-words" data-testid={`text-schedule-note-${i}`}>{n}</li>)}
+                    </ul>
+                  )}
+                  {d.route.sourceUrl && <a href={d.route.sourceUrl} target="_blank" rel="noreferrer" data-testid="link-route-source" className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-xs font-semibold underline underline-offset-2 hover:text-foreground">Official schedule source<ExternalLink className="h-3 w-3" aria-hidden /><span className="sr-only">(opens in new tab)</span></a>}
+                </section>
+              )}
               {d.alerts.map((a) => <AlertRow key={a.id} alert={a} />)}
               <ol className="relative" aria-label="Stops in order">
                 <span className="absolute bottom-6 left-[19px] top-6 w-1" style={{ background: color }} aria-hidden />
@@ -125,7 +136,7 @@ export default function RoutePage() {
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">Individual riders are never shown. Updated {ago(vehicles[0]?.updatedAt)}.</p>
               </div>
-              {d.route.type==='intercity'?<IntercityModule key={d.route.id} center={center} provider="martz" routeId={d.route.id}/>:<TimetablePanel key={d.route.id} routeId={d.route.id} direction={activeDir} color={color} title={activeDir ? `Timetable · ${activeDir}` : 'Timetable'} />}
+              {d.route.type==='intercity'?<IntercityModule key={d.route.id} center={center} provider={providerFor(d.route.agencyId, d.route.id)} routeId={d.route.id}/>:<TimetablePanel key={d.route.id} routeId={d.route.id} stopOptions={d.timetableStops?.map((s) => ({ id: s.id, name: s.name }))} direction={activeDir} color={color} title={activeDir ? `Timetable · ${activeDir}` : 'Timetable'} />}
             </aside>
           </div>
         </>

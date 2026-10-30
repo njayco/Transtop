@@ -121,7 +121,9 @@ export const GetStopsResponse = zod.object({
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),
-  "longName": zod.string().optional()
+  "longName": zod.string().optional(),
+  "scheduleNotes": zod.array(zod.string()).optional(),
+  "sourceUrl": zod.string().optional()
 })),
   "arrivals": zod.array(zod.object({
   "id": zod.string(),
@@ -186,7 +188,9 @@ export const GetStopResponse = zod.object({
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),
-  "longName": zod.string().optional()
+  "longName": zod.string().optional(),
+  "scheduleNotes": zod.array(zod.string()).optional(),
+  "sourceUrl": zod.string().optional()
 })),
   "arrivals": zod.array(zod.object({
   "id": zod.string(),
@@ -238,7 +242,9 @@ export const GetRouteResponse = zod.object({
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),
-  "longName": zod.string().optional()
+  "longName": zod.string().optional(),
+  "scheduleNotes": zod.array(zod.string()).optional(),
+  "sourceUrl": zod.string().optional()
 }),
   "stops": zod.array(zod.object({
   "id": zod.string(),
@@ -257,7 +263,9 @@ export const GetRouteResponse = zod.object({
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),
-  "longName": zod.string().optional()
+  "longName": zod.string().optional(),
+  "scheduleNotes": zod.array(zod.string()).optional(),
+  "sourceUrl": zod.string().optional()
 })),
   "arrivals": zod.array(zod.object({
   "id": zod.string(),
@@ -303,7 +311,16 @@ export const GetRouteResponse = zod.object({
   "routeIds": zod.array(zod.string()),
   "source": zod.string()
 })),
-  "directions": zod.array(zod.string())
+  "directions": zod.array(zod.string()),
+  "timetableStops": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "sequence": zod.number().int(),
+  "time": zod.string().optional(),
+  "address": zod.string().optional(),
+  "lat": zod.number().optional(),
+  "lon": zod.number().optional()
+})).optional()
 })
 
 
@@ -356,7 +373,9 @@ export const GetCatalogResponse = zod.object({
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),
-  "longName": zod.string().optional()
+  "longName": zod.string().optional(),
+  "scheduleNotes": zod.array(zod.string()).optional(),
+  "sourceUrl": zod.string().optional()
 })),
   "stops": zod.array(zod.object({
   "id": zod.string(),
@@ -375,7 +394,9 @@ export const GetCatalogResponse = zod.object({
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),
-  "longName": zod.string().optional()
+  "longName": zod.string().optional(),
+  "scheduleNotes": zod.array(zod.string()).optional(),
+  "sourceUrl": zod.string().optional()
 })),
   "arrivals": zod.array(zod.object({
   "id": zod.string(),
@@ -554,7 +575,9 @@ export const GetNetworkResponse = zod.object({
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),
-  "longName": zod.string().optional()
+  "longName": zod.string().optional(),
+  "scheduleNotes": zod.array(zod.string()).optional(),
+  "sourceUrl": zod.string().optional()
 }),
   "shape": zod.array(zod.array(zod.number())),
   "vehicles": zod.array(zod.object({
@@ -579,7 +602,9 @@ export const GetNetworkResponse = zod.object({
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),
-  "longName": zod.string().optional()
+  "longName": zod.string().optional(),
+  "scheduleNotes": zod.array(zod.string()).optional(),
+  "sourceUrl": zod.string().optional()
 }))
 })),
   "totalLines": zod.number().int(),
@@ -592,7 +617,9 @@ export const GetNetworkResponse = zod.object({
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),
-  "longName": zod.string().optional()
+  "longName": zod.string().optional(),
+  "scheduleNotes": zod.array(zod.string()).optional(),
+  "sourceUrl": zod.string().optional()
 })),
   "truncated": zod.boolean(),
   "busDetailZoom": zod.number().int(),

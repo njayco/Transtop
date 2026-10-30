@@ -14,6 +14,7 @@ import { journeyHealth } from "./journeys";
 import { stopTimesMode } from "./generations";
 import { tripIdentity } from "./bus-time";
 import { intercityCatalog, intercityArrivals, intercityRoute, intercityProviders } from "./intercity/service";
+import { documentArrivals,documentRoute,isDocumentId } from "./intercity/uploaded-service";
 
 let stopCache:{at:number;demo:TransitStop[];live:TransitStop[]}|undefined;
 export async function allStops(mode:Mode) {
@@ -55,6 +56,7 @@ export function officialArrivals(stop:TransitStop,now=Date.now()) {
 }
 export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<TransitStop> {
   if(mode==="demo")return demoArrivals(stop);
+  if(isDocumentId(stop.id))return {...stop,arrivals:documentArrivals(stop)};
   if(stop.type==="intercity")return {...stop,arrivals:await intercityArrivals(stop)};
   const {arrivals:official,excluded}=officialArrivals(stop);
   const community=deep?await communityArrivals(stop):[];
@@ -67,6 +69,9 @@ export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<Tran
   return {...stop,arrivals,alerts:liveAlerts().filter(a=>stop.routes.some(r=>a.routeIds.includes(r.id)))};
 }
 const knownPlaces=[
+  {terms:["easton"],lat:40.689434071649,lon:-75.209040322102},
+  {terms:["pohatcong","phillipsburg"],lat:40.677134426789,lon:-75.142608109327},
+  {terms:["wall street","wall st"],lat:40.703284765181,lon:-74.010092405239},
   {terms:["port authority","pabt"],lat:40.756143,lon:-73.990672},
   {terms:["times square","times sq","midtown","42nd street","42 st","7th avenue"],lat:40.75529,lon:-73.98749},
   {terms:["bryant park","new york public library","fifth avenue"],lat:40.7536,lon:-73.9832},
@@ -93,7 +98,7 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
   if(exact&&!foundPlace){lat=exact.lat;lon=exact.lon;}
   if(q&&!foundPlace)rows=rows.filter(s=>s.name.toLowerCase().includes(q)||s.neighborhood?.toLowerCase().includes(q)||s.routes.some(r=>r.name.toLowerCase()===q||r.id.toLowerCase()===q));
   rows=rows.map(s=>{const d=distance(lat,lon,s.lat,s.lon);return {...s,distance:Math.round(d),walkingMinutes:Math.max(1,Math.round(d/75))};})
-    .filter(s=>s.type!=="intercity"||s.distance<=3000)
+    .filter(s=>s.type!=="intercity"&&!s.id.startsWith("nj-transit:")||s.distance<=3000)
     .sort((a,b)=>a.distance-b.distance).slice(0,16);
   const enriched=await Promise.all(rows.map(s=>enrich(s,mode)));
   return {stops:enriched,mode,updatedAt:new Date().toISOString(),centerLat:lat,centerLon:lon,
@@ -104,6 +109,7 @@ export async function stopDetail(id:string,mode:Mode) {
   return s?enrich(s,mode,true):undefined;
 }
 export async function routeDetail(id:string,mode:Mode,direction?:string):Promise<RouteDetail|undefined> {
+  if(mode==="live"&&isDocumentId(id))return documentRoute(id,direction);
   if(mode==="live"&&id.startsWith("martz:"))return intercityRoute(id);
   const [r]=await db.select().from(routes).where(and(eq(routes.id,id),eq(routes.mode,mode)));
   if(!r)return;
@@ -159,7 +165,7 @@ export async function sources() {
       url:a.documentation,updatedAt:health.updatedAt||data?.importedAt||null};
   });
   const google=journeyHealth();
-  const intercity=(await intercityProviders()).map(p=>({id:p.id,agency:p.name,type:"intercity",status:p.status,
+  const intercity=(await intercityProviders()).map(p=>({id:p.id,agency:p.name,type:p.id==="nj-transit"?"bus":"intercity",status:p.status,
     description:p.description,url:p.url,updatedAt:p.updatedAt||p.checkedAt,lastError:p.lastError}));
   return [...result,...intercity,{id:"google-routes",agency:"Google journey planning",type:"journey planner",
     status:google.status,lastError:"message" in google?google.message:undefined,

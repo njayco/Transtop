@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Alert } from './alert';
+import type { IntercityTripStop } from './intercityTripStop';
 import type { Route } from './route';
 import type { Stop } from './stop';
 import type { Vehicle } from './vehicle';
@@ -16,4 +17,5 @@ export interface RouteDetail {
   vehicles: Vehicle[];
   alerts: Alert[];
   directions: string[];
+  timetableStops?: IntercityTripStop[];
 }

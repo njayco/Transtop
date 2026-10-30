@@ -1,6 +1,6 @@
 export type Mode = "demo" | "live";
 export type TransitType = "subway" | "bus" | "rail" | "intercity";
-export interface TransitRoute { id:string; name:string; color:string; type:TransitType; agency:string;agencyId?:string;serviceClass?:"local"|"express";longName?:string }
+export interface TransitRoute { id:string; name:string; color:string; type:TransitType; agency:string;agencyId?:string;serviceClass?:"local"|"express";longName?:string;scheduleNotes?:string[];sourceUrl?:string }
 export interface Arrival {
   id:string; routeId:string; routeName:string; color:string; direction:string; destination:string;
   minutes:number; source:"demo"|"live"|"scheduled"|"community"|"unavailable"; updatedAt:string;
@@ -13,7 +13,8 @@ export interface TransitStop {
   rawId?:string; parent?:string;
 }
 export interface TransitVehicle {id:string; lat:number; lon:number; source:string; updatedAt:string}
-export interface RouteDetail {route:TransitRoute; stops:TransitStop[]; shape:number[][]; vehicles:TransitVehicle[]; alerts:TransitAlert[]; directions:string[]}
+export interface RouteDetail {route:TransitRoute; stops:TransitStop[]; shape:number[][]; vehicles:TransitVehicle[]; alerts:TransitAlert[]; directions:string[];
+  timetableStops?:{id:string;name:string;sequence:number}[]}
 export const namespace = (agency:string, id:string) => `${agency}:${id}`;
 export function distance(a:number,b:number,c:number,d:number) {
   const r=Math.PI/180, x=Math.sin((c-a)*r/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin((d-b)*r/2)**2;

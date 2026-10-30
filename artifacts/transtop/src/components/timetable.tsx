@@ -19,13 +19,16 @@ export function nowHM() { return newYorkTime(); }
 const LIMIT = 25;
 
 /** Published (scheduled) timetable for a stop or route. Not realtime. */
-export function TimetablePanel({ stopId, routeId, direction, color, title = 'Published timetable' }: { stopId?: string; routeId?: string; direction?: string; color?: string; title?: string }) {
+export function TimetablePanel({ stopId, routeId, direction, color, title = 'Published timetable', stopOptions }: { stopOptions?: { id: string; name: string }[]; stopId?: string; routeId?: string; direction?: string; color?: string; title?: string }) {
   const { mode } = usePrefs();
   const [date, setDate] = useState(todayISO);
   const [from, setFrom] = useState(nowHM);
   const [offset, setOffset] = useState(0);
-  useEffect(()=>setOffset(0),[stopId,routeId,direction,mode]);
-  const params: GetTimetableParams = { mode, date, from, offset, limit: LIMIT, ...(stopId ? { stopId } : {}), ...(routeId ? { routeId } : {}), ...(direction ? { direction } : {}) };
+  const [pick, setPick] = useState('');
+  useEffect(()=>setPick(''),[routeId,direction]);
+  useEffect(()=>setOffset(0),[stopId,routeId,direction,mode,pick]);
+  const effStop = stopOptions && pick ? pick : stopId;
+  const params: GetTimetableParams = { mode, date, from, offset, limit: LIMIT, ...(effStop ? { stopId: effStop } : {}), ...(routeId ? { routeId } : {}), ...(direction ? { direction } : {}) };
   const q = useGetTimetable(params, { query: { queryKey: getGetTimetableQueryKey(params), enabled: /^\d{4}-\d{2}-\d{2}$/.test(date) && /^\d{2}:\d{2}$/.test(from), retry: 1 } });
   const rows = q.data?.departures ?? [];
   const total = q.data?.total ?? 0;
@@ -49,6 +52,15 @@ export function TimetablePanel({ stopId, routeId, direction, color, title = 'Pub
             <span className="sr-only">From time</span>
             <input type="time" value={from} onChange={(e) => reset(setFrom)(e.target.value)} className="bg-transparent focus:outline-none" data-testid="input-timetable-from" />
           </label>
+          {stopOptions && stopOptions.length > 0 && (
+            <label className="inline-flex h-11 max-w-full items-center gap-2 rounded-xl border border-input bg-background px-3 text-sm">
+              <span className="shrink-0 text-muted-foreground">Departure timepoint</span>
+              <select value={pick} onChange={(e) => { setPick(e.target.value); setOffset(0); }} className="min-w-0 bg-transparent focus:outline-none" data-testid="select-timetable-timepoint">
+                <option value="">Origin of each run</option>
+                {stopOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+              </select>
+            </label>
+          )}
           <button onClick={() => { setDate(todayISO()); setFrom(nowHM()); setOffset(0); }} className="h-11 rounded-full border border-border px-4 text-sm font-semibold text-muted-foreground hover:text-foreground" data-testid="button-timetable-now">Now</button>
         </div>
       </header>

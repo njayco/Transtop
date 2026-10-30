@@ -40,7 +40,7 @@ export async function timetable(p:TimetableParams) {
   const date=DateTime.fromISO(p.date,{zone:ZONE}),from=p.from||"00:00";
   if(!date.isValid||date.toISODate()!==p.date||!/^([01]\d|2[0-3]):[0-5]\d$/.test(from))throw new Error("Invalid timetable date or time");
   if(!p.stopId&&!p.routeId)throw new Error("Select a stop or route");
-  if(p.mode!=="demo"&&(p.stopId?.startsWith("martz:")||p.routeId?.startsWith("martz:"))){
+  if(p.mode!=="demo"&&[p.stopId,p.routeId].some(id=>id&&/^(martz|transbridge|nj-transit):/.test(id))){
     if(p.stopId&&p.routeId&&p.stopId.split(":")[0]!==p.routeId.split(":")[0])throw new Error("Stop and route must belong to the same operator");
     return intercityTimetable(p);
   }

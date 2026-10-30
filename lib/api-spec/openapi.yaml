@@ -314,6 +314,8 @@ components:
         agencyId: {type: string}
         serviceClass: {type: string, enum: [local, express]}
         longName: {type: string}
+        scheduleNotes: {type: array, items: {type: string}}
+        sourceUrl: {type: string}
     Arrival:
       type: object
       required: [id, routeId, routeName, color, direction, destination, minutes, source, updatedAt, status, scheduledAt]
@@ -428,6 +430,7 @@ components:
         vehicles: {type: array, items: {$ref: "#/components/schemas/Vehicle"}}
         alerts: {type: array, items: {$ref: "#/components/schemas/Alert"}}
         directions: {type: array, items: {type: string}}
+        timetableStops: {type: array, items: {$ref: "#/components/schemas/IntercityTripStop"}}
     FeedSource:
       type: object
       required: [id, agency, status, description, url, updatedAt]
