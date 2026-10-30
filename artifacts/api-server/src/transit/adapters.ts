@@ -4,6 +4,8 @@ export interface AgencyAdapter {
   id:string; name:string; type:"subway"|"bus"|"rail"; staticUrl?:string; realtimeUrls:string[];
   documentation:string; status:string; setup:string;
   staticFeeds?:{id:string;url:string}[];
+  staticAgencyIds?:string[];
+  routeName?:string;
 }
 const rt="https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/";
 // Allowlist verified against https://www.mta.info/developers and the linked
@@ -36,6 +38,18 @@ export const adapters:AgencyAdapter[]=[
     documentation:"https://www.mta.info/schedules",status:"scheduled only",setup:"Bronx commuter feeder buses to Metro-North stations. NYSDOT 511NY public GTFS under NY open-data terms."},
   {id:"airtrain-jfk",name:"JFK AirTrain",type:"rail",staticUrl:"https://s3.amazonaws.com/datatools-511ny/public/AirTrain_JFK.zip",realtimeUrls:[],
     documentation:"https://www.jfkairport.com/to-from-airport/air-train",status:"scheduled only",setup:"Airport rail connections in Queens, distributed through NYSDOT 511NY under NY open-data terms. Timetable departures are published estimates, not live vehicle predictions."},
+  {id:"cttransit",name:"CTtransit / CTfastrak",type:"bus",
+    staticUrl:"https://www.cttransit.com/sites/default/files/gtfs/googlect_transit.zip",
+    realtimeUrls:["TripUpdate/TripUpdates","Vehicle/VehiclePositions","Alert/Alerts"].map(p=>`https://cttprdtmgtfs.ctttrpcloud.com/TMGTFSRealTimeWebService/${p}.pb`),
+    documentation:"https://www.cttransit.com/about/developers",status:"configured",
+    setup:"Official CTtransit schedules for Hartford, New Haven, Stamford, New Britain, Waterbury and Meriden, including CTfastrak and published express services. Public trip updates, vehicle positions and alerts need no API key; only fresh observations are labeled live. Data as-is; no agency affiliation. Data license: https://www.cttransit.com/about/developers/terms-of-use"},
+  {id:"ctrail-hartford",name:"CTrail Hartford Line",type:"rail",staticUrl:"https://ctrides.com/hlgtfs.zip",
+    realtimeUrls:[],documentation:"https://www.cttransit.com/about/developers",status:"scheduled only",
+    setup:"Official linked Hartford Line GTFS: New Haven–Hartford–Springfield. Published calendars, stops and route shapes; no verified public rail realtime feed configured. Metro-North New Haven service remains separately provided by Metro-North."},
+  {id:"ctrail-sle",name:"CTrail Shore Line East",type:"rail",staticUrl:"https://content.amtrak.com/content/gtfs/GTFS.zip",
+    staticAgencyIds:["1230"],routeName:"Shore Line East",realtimeUrls:[],
+    documentation:"https://www.cttransit.com/about/developers",status:"scheduled only",
+    setup:"CTtransit's official Shore Line East download links to a shared Amtrak GTFS archive. Only the Shore Line East operator (agency 1230) and its referenced data are imported; national Amtrak services are excluded. Current trips do not reference shape geometry: stations and timetables are available, not a fabricated route line. Published schedules, not live rail predictions. Check https://shorelineeast.com/schedules for service changes."},
   {id:"private-commuter",name:"Private commuter operators",type:"bus",realtimeUrls:[],documentation:"https://www.hamptonjitney.com/",status:"coverage gap",
     setup:"Hampton Jitney, Hampton Luxury Liner, and other private commuter services are not in this catalog: no current authorized bulk feed verified. Check each operator's official timetable. Google may return some services but does not guarantee coverage."},
 ];

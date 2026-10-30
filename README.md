@@ -1,6 +1,6 @@
 # Transtop
 
-A mobile-first NYC and Long Island transit app based on the creator's original Transtop concept, with selected intercity and local connections into New Jersey and Pennsylvania. Desktop has synchronized stop results and a Google map; mobile has Nearby, Search, Favorites and Ride navigation. No account is required.
+A mobile-first NYC, Long Island and Connecticut transit app based on the creator's original Transtop concept, with selected intercity and local connections into New Jersey and Pennsylvania. Desktop has synchronized stop results and a Google map; mobile has Nearby, Search, Favorites and Ride navigation. No account is required.
 
 ## Current features and recent updates
 
@@ -10,6 +10,7 @@ Documentation updated **October 30, 2026**. Coverage describes implemented sourc
 - **Live-only rider experience:** real agency observations, labeled published schedules and eligible community estimates; no Demo toggle or simulated live arrivals. Missing data is disclosed rather than replaced with examples.
 - **Google Maps and regional browsing:** dark geographic basemaps, shared stop/route selection, operator/mode/local-or-express filters, numbered route stops and a searchable legend. Panning starts a new tile-loading cycle; delayed tiles, offline recovery and authorization failures have explicit states.
 - **MTA buses across all five boroughs:** six coordinated static packages cover Manhattan, Bronx, Brooklyn, Queens, Staten Island and MTA Bus Company, including local, SBS and express services. Authorized Bus Time feeds add official predictions, reported vehicle positions and alerts where fresh matching data is available.
+- **Connecticut buses and trains:** official CTtransit/CTfastrak schedules and public realtime bus feeds, plus published CTrail Hartford Line and Shore Line East timetables. Regional map bounds include Connecticut and Springfield; major Connecticut locations are searchable. Existing Metro-North service remains separate.
 - **Integrated Intercity Bus Network:** browse by selected location alongside local buses, subway and commuter rail, then filter by provider and inspect remaining stops and final destinations. Port Authority is a boarding location in this shared experience, **not a separate terminal hub**.
 - **Trans-Bridge:** regular and verified Thanksgiving/Black Friday timetables from all 15 supplied carrier PDFs, with stop locations, PABT gates, airport boarding guidance and reservation/drop-off restrictions. Details and known conflicts are documented below.
 - **NJ TRANSIT 890/891:** the uploaded T1890 brochure adds weekday local-bus timetables, numbered timepoints, published fares, lift-equipped service notes and school/flex restrictions. These remain local buses, not intercity buses.
@@ -70,6 +71,9 @@ The regional importer supports the agencies below. Settings is the current cover
 | Suffolk County Transit | Official public static GTFS | Fixed-route service only; realtime access requires agency approval. |
 | Huntington HART / Long Beach / Glen Cove | Public GTFS distributed through NYSDOT 511NY | Check displayed service windows and seasonal timetables. No unverified live predictions. |
 | Hudson Rail Link / JFK AirTrain | Public GTFS distributed through NYSDOT 511NY | Bronx commuter feeder buses and Queens airport rail connections. Schedules only. |
+| CTtransit / CTfastrak | Official GTFS and public GTFS-RT trip updates, vehicle positions and alerts | Hartford, New Haven, Stamford, New Britain, Waterbury and Meriden divisions, including published express routes. No API key required. Live labels require fresh observations; otherwise eligible schedules remain labeled scheduled. |
+| CTrail Hartford Line | Official Hartford Line GTFS linked by CTtransit | New Haven–Hartford–Springfield calendars, stations and shapes. Published schedules only; no separate verified public rail realtime feed configured. |
+| CTrail Shore Line East | Shore Line East subset of the Amtrak GTFS linked by CTtransit | Only operator ID `1230` and its referenced trips, services, stops and shapes. National Amtrak services are excluded. Scheduled, not realtime; check carrier notices for temporary changes. |
 | Trans-Bridge Lines | Curated regular and exact November 26–27, 2026 holiday schedules from 15 carrier PDFs | Allentown/Clinton, Doylestown/Flemington, Newark Airport, Wind Creek and Wall Street. Scheduled times only, qualified map locations and source links; exceptions/conflicts below. |
 | Martz | Partial validated public New York timetable | Recurring trip-specific patterns only. Special/ambiguous trips and unverified holidays are withheld. Not complete network or live-vehicle coverage. |
 | NJ TRANSIT 890/891 | Uploaded T1890 weekday local-bus brochure | 29 trip patterns and 16 numbered timepoints, effective July 11, 2026. Not a full NJ TRANSIT integration; weekend and unverified holiday schedules are not supplied. |
@@ -149,6 +153,28 @@ Useful API entry points:
 - `GET /api/transit/timetable?mode=live&routeId=transbridge%3Aallentown-west&date=2026-11-26` — shared selected-date timetable.
 - Shared `/api/transit/stops`, `/api/transit/routes/:id` and `/api/transit/network` also include eligible imported stops/routes.
 
+### Connecticut coverage and operation
+
+CTtransit buses use ordinary **bus** mode; Hartford Line and Shore Line East use **rail**. All three operators appear in the source inventory, search/agency filters, nearby stops, selected-date timetables and regional map. They are not intercity bus providers. Metro-North's Connecticut/New Haven Line coverage remains under its existing operator rather than being imported again.
+
+Official bus schedules come from [CTtransit's developer download](https://www.cttransit.com/about/developers). The source covers the listed divisions, not every independent Connecticut bus operator. CTfastrak is bus rapid transit, not a train. Published 900-series express routes are classified separately from local/CTfastrak buses.
+
+Three public realtime protobuf feeds provide bus trip updates, vehicle coordinates and alerts without a new credential. Existing feed/vehicle freshness rules apply: stale/unavailable observations never produce fabricated movement or live labels. Connecticut alerts are namespaced to Connecticut routes, not MTA routes.
+
+Rail downloads are `https://ctrides.com/hlgtfs.zip` and the CTtransit-linked `https://content.amtrak.com/content/gtfs/GTFS.zip`. The latter is a shared national archive: selection uses Shore Line East's operator ID, not its generic “Commuter Rail” route name. Unrelated agencies, trips, calendars, stop times, stops and shapes are excluded. A missing selected operator fails the import rather than publishing an empty replacement.
+
+The current Shore Line East trips do not reference route shapes, so stations and timetables are available without an invented map line. Hartford Line supplies referenced geometry. CT bus realtime normalization discards invalid optional display extensions that cannot be stored in JSONB; it preserves identifiers, timestamps and arrival/departure events.
+
+To import/refresh the development database:
+
+```sh
+pnpm --filter @workspace/api-server run import-gtfs cttransit ctrail-hartford ctrail-sle
+```
+
+These adapters also participate in the existing opt-in daily GTFS importer. Imported development data does not automatically seed a separate production database.
+
+The owner accepted [CTtransit's GTFS license](https://www.cttransit.com/about/developers/terms-of-use) before import. Data is supplied as-is; CTtransit/CTDOT do not guarantee accuracy, completeness or currency. No CTtransit logos or official copyrighted maps are reproduced. Confirm temporary changes with [CTtransit](https://www.cttransit.com/alerts), [Hartford Line](https://www.hartfordline.com/) and [Shore Line East](https://shorelineeast.com/schedules), particularly beyond imported service windows.
+
 ## Arrival selection and timestamps
 
 The server prefers fresh official predictions, then eligible community estimates for a specific trip, then published schedules, then an honest no-arrivals state. Official data older than 60 seconds, in the future, or from a failed poll is not labeled live. Each arrival includes its own source and update time. A server response timestamp is not evidence that the underlying transit observation is fresh.
@@ -159,7 +185,7 @@ Route geometry comes from every distinct available imported GTFS shape reference
 
 ### Regional map
 
-Open **Regional map** from Nearby to fit NYC's five boroughs, Nassau and Suffolk without geolocation. The supported-operator list comes from the existing catalog, including expired/future schedule status and coverage gaps. It does not imply that every operator or every active service is covered.
+Open **Regional map** from Nearby to fit NYC's five boroughs, Nassau, Suffolk and Connecticut, including the Hartford Line's Springfield terminus, without geolocation. The supported-operator list comes from the existing catalog, including expired/future schedule status and coverage gaps. It does not imply that every operator or every active service is covered.
 
 `GET /api/transit/network` accepts all four ordered `west,south,east,north` bounds, `zoom` (0–22), mode, type, agency, service class and optional route ID. Bounds must be finite and non-antimeridian-crossing. Legacy `lat,lon` callers remain supported. Results include stable shape IDs, named catalog stops with serving routes, generation, totals, missing geometry and an explicit `truncated` flag. Segment/viewport intersection includes paths that cross the view with no vertex inside it. Simplification retains official vertices. Cached shape bounds avoid expensive intersection work on unrelated paths, and geometry is cached by imported snapshot generation, with importer invalidation and concurrent-load deduplication.
 
@@ -267,6 +293,8 @@ pnpm --filter @workspace/transtop test
 ```
 
 The Trans-Bridge update passed the **17 combined intercity/uploaded-schedule tests**, backend/frontend typechecks, frontend production build and running API checks. Checks cover the two exact holiday replacements, Wall Street closure, duplicate prevention, Friday/weekend restrictions, after-midnight dates, source conflicts, conditional/drop-off stops and verified locations. This records that update's verification, not a claim that every suite was rerun for this documentation edit or that production is continuously healthy.
+
+`src/transit/connecticut.test.ts` adds regression coverage for operator-limited shared-archive imports, dependent calendars/trips/shapes/platforms, unchanged unfiltered adapters, CT express classification and correctly scoped CT/MTA alerts.
 
 See [transit import operations](docs/transit-imports.md) for database import tests, isolated performance checks, cleanup and rollback requirements. API tests do not replace browser checks for real Google tiles, swipe gestures, geolocation permissions or offline recovery.
 

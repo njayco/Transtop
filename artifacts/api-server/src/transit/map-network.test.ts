@@ -47,7 +47,10 @@ test("network keeps multiple branches, discloses missing geometry, caches and in
   const route: TransitRoute = { id: "fixture:r", name: "R", agency: "Fixture", type: "rail", color: "#123456" };
   const bus: TransitRoute = { ...route, id: "fixture:b", name: "X1", type: "bus", serviceClass: "express" };
   let generation = 1, reads = 0;
-  const queries = mock.method(pool, "query", (async (sql: string) => {
+  const queries = mock.method(pool, "query", (async (query: string | {text:string}) => {
+    const sql=typeof query==="string"?query:query.text;
+    // Drizzle's separate intercity snapshot read is not part of this fixture.
+    if(typeof query!=="string"&&sql.includes("transit_feed_snapshots"))return {rows:[]};
     if (sql.includes("transit_feed_snapshots")) return { rows: [{ id: "fixture:static", updated_at: generation }] };
     if (sql.includes("WITH patterns")) {
       reads++;

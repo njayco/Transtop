@@ -4,6 +4,8 @@ import { adapters, alertUrl } from "./adapters";
 import { logger } from "../lib/logger";
 import type { TransitAlert } from "./types";
 import { busRequestUrl, matchBusTrips } from "./bus-time";
+import { officialAlert } from "./official-alert";
+import { normalizeCtRealtime } from "./ct-realtime";
 export interface LiveFeed { timestamp:number; fetchedAt:number; entities:any[]; error?:string }
 const cache=new Map<string,LiveFeed>(), inflight=new Map<string,Promise<void>>();
 export const FRESH_MS=60_000;
@@ -15,6 +17,7 @@ export async function pollFeed(url:string,agency:string) {
       const response=await fetch(busRequestUrl(url),{signal:AbortSignal.timeout(15000),redirect:"error"});
       if(!response.ok)throw new Error(`Feed HTTP ${response.status}`);
       const data=GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(new Uint8Array(await response.arrayBuffer()));
+      if(agency==="cttransit")normalizeCtRealtime(data.entity);
       if(agency==="mta-bus"&&url.endsWith("/tripUpdates"))await matchBusTrips(data.entity);
       const f:LiveFeed={timestamp:Number(data.header.timestamp),fetchedAt:Date.now(),entities:data.entity};
       cache.set(url,f);
@@ -66,19 +69,13 @@ export function mapVehicles(mode: "live" | "demo" = "live") {
   }
   return [...vehicles.values()];
 }
-const text=(t:any)=>t?.translation?.find((x:any)=>x.language==="en")?.text||t?.translation?.[0]?.text||"";
 export function liveAlerts():TransitAlert[] {
-  const feeds=[{feed:cache.get(alertUrl),bus:false},...feedsFor("mta-bus").map(feed=>({feed,bus:true}))];
+  const feeds=[{feed:cache.get(alertUrl),agency:undefined as string|undefined},
+    ...["mta-bus","cttransit"].flatMap(agency=>feedsFor(agency).map(feed=>({feed,agency})))];
   const now=Date.now()/1000;
-  return feeds.flatMap(({feed,bus})=> !feed||!fresh(feed)?[]:feed.entities.filter(e=>e.alert).filter(e=>{
+  const alerts=feeds.flatMap(({feed,agency})=> !feed||!fresh(feed)?[]:feed.entities.filter(e=>e.alert).filter(e=>{
     const periods=e.alert.activePeriod||[];
     return !periods.length||periods.some((p:any)=>(!p.start||Number(p.start)<=now)&&(!p.end||Number(p.end)>=now));
-  }).map(e=>{
-    const a=e.alert;
-    return {id:(bus?"mta-bus-alert:":"mta-alert:")+e.id,title:text(a.headerText),description:text(a.descriptionText),severity:a.effect===1?"disruption":a.effect===3?"delay":"notice",
-      routeIds:[...new Set<string>((a.informedEntity||[]).filter((i:any)=>i.routeId||i.trip?.routeId).map((i:any)=>{
-        const ag=bus?"mta-bus":i.agencyId==="LI"?"mta-lirr":i.agencyId==="MNR"?"mta-mnr":"mta-subway";
-        return `${ag}:${i.routeId||i.trip.routeId}`;
-      }))],source:"Live agency data"};
-  }));
+  }).map(e=>officialAlert(e,agency)));
+  return [...new Map(alerts.map(a=>[a.id,a])).values()];
 }

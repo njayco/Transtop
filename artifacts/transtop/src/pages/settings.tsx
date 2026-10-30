@@ -44,6 +44,9 @@ const EXPECTED = [
   { k: 'Glen Cove Loop Bus', id: 'glen-cove' },
   { k: 'Hudson Rail Link', id: 'hudson-link' },
   { k: 'JFK AirTrain', id: 'airtrain-jfk' },
+  { k: 'CTtransit / CTfastrak buses', id: 'cttransit' },
+  { k: 'CTrail Hartford Line', id: 'ctrail-hartford' },
+  { k: 'CTrail Shore Line East', id: 'ctrail-sle' },
   { k: 'Private commuter operators', id: 'private-commuter' },
   { k: 'Google journey planning', id: 'google-routes' },
 ];

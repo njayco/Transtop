@@ -5,3 +5,5 @@
 - [Local process lifetime](local-process-lifetime.md) — disposable services must stay foreground processes inside a background shell; detached children can die when the parent call ends.
 - [Intercity browsing scope](intercity-browsing.md) — integrate by selected location, mode and provider; no separate Port Authority hub.
 - [Intercity source trust](intercity-source-trust.md) — old feeds can have future calendars; atlas data and ambiguous printed rows must not become current departure predictions.
+- [Connecticut data license](connecticut-license.md) — the owner accepted CTtransit's GTFS license before adding Connecticut services.
+- [CT realtime compatibility](connecticut-realtime.md) — invalid optional decoded display metadata must not disable otherwise valid bus trip updates.

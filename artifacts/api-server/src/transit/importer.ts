@@ -9,6 +9,7 @@ import { logger } from "../lib/logger";
 import { invalidateNetwork } from "./network";
 import type { TransitRoute } from "./types";
 import { IMPORT_LOCK, cleanupGenerations, insertStopTimes } from "./generations";
+import { GtfsSelection,isExpressRoute } from "./gtfs-selection";
 const tables=[agencies,routes,trips,stopTimes,calendars,calendarExceptions,shapes,stops];
 
 export async function importGtfs(agency:string) {
@@ -39,6 +40,7 @@ async function importLocked(agency:string) {
     data:{kind:"gtfs-generation",stage}});
   try {
   for(const feed of a.staticFeeds||[{id:agency,url:a.staticUrl}]){
+  const selection=new GtfsSelection(a.staticAgencyIds);
   const scope=(id:string)=>a.staticFeeds?`${feed.id}~${id}`:id;
   const response=await fetch(feed.url,{signal:AbortSignal.timeout(120000),redirect:"error"});
   if(!response.ok)throw new Error(`GTFS download returned ${response.status}`);
@@ -80,6 +82,7 @@ async function importLocked(agency:string) {
          // shape IDs, which can collide between independently published feeds.
          for(const key of ["trip_id","service_id","shape_id"])if(r[key])r[key]=scope(r[key]);
          if(name==="agency"&&a.staticFeeds)r.agency_id=scope(r.agency_id||agency);
+         if(!selection.accept(name,r))continue;
          if(name==="calendar"||name==="calendar_dates"){
            const start=r.start_date||r.date,end=r.end_date||r.date;
            if(name==="calendar"||r.exception_type==="1"){
@@ -88,9 +91,9 @@ async function importLocked(agency:string) {
            }
          }
         if(name==="routes") {
-           const name=r.route_short_name||r.route_long_name;
-           const express=a.type==="bus"&&(/^(?:BM|BXM|QM|SIM|X)\d/i.test(name)||/\dX$/i.test(name)||/\bexpress\b/i.test(`${r.route_long_name} ${r.route_desc}`));
-           const rr:TransitRoute={id:`${agency}:${r.route_id}`,name,longName:r.route_long_name||name,color:"#"+(r.route_color||"468AC4"),type:a.type,agency:agencyNames.get(r.agency_id||"")||a.name,agencyId:agency,serviceClass:express?"express":"local"};
+           const name=a.routeName||r.route_short_name||r.route_long_name;
+           const express=a.type==="bus"&&isExpressRoute(agency,name,`${r.route_long_name} ${r.route_desc}`);
+           const rr:TransitRoute={id:`${agency}:${r.route_id}`,name,longName:a.routeName||r.route_long_name||name,color:"#"+(r.route_color||"468AC4"),type:a.type,agency:agencyNames.get(r.agency_id||"")||a.name,agencyId:agency,serviceClass:express?"express":"local"};
           allRoutes.set(r.route_id,rr);
         }
         if(name==="trips")tripRoute.set(r.trip_id,r.route_id);
@@ -116,12 +119,14 @@ async function importLocked(agency:string) {
       if(!Number.isFinite(Number(r.stop_lat))||!Number.isFinite(Number(r.stop_lon)))throw new Error("Invalid stop coordinates");
       allStops.set(r.stop_id,r);
     }
+    selection.retainStops(allStops);
     components.push({id:feed.id,url:feed.url,serviceStart,serviceEnd});
     const shapeEntry=file("shapes");
     if(shapeEntry) {
       const shapeParser=shapeEntry.stream().pipe(parse({columns:true,bom:true,skip_empty_lines:true}));
       for await(const r of shapeParser) {
         const id=scope(r.shape_id);
+        if(!selection.accept("shapes",{...r,shape_id:id}))continue;
         if(!shapeMap.has(id))shapeMap.set(id,[]);
         shapeMap.get(id)!.push([Number(r.shape_pt_lon),Number(r.shape_pt_lat),Number(r.shape_pt_sequence)]);
       }

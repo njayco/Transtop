@@ -10,8 +10,8 @@ import { MODE_COLOR, MODE_NAME, RouteBadge } from '@/components/transit';
 import { usePrefs } from '@/lib/prefs';
 import { cn } from '@/lib/utils';
 
-export const REGION_BOUNDS = { west: -74.27, south: 40.48, east: -71.85, north: 41.17 };
-const REGION_CENTER = { lat: 40.82, lon: -73.06 };
+export const REGION_BOUNDS = { west: -74.27, south: 40.48, east: -71.75, north: 42.15 };
+const REGION_CENTER = { lat: 41.32, lon: -73.01 };
 const REGION_ZOOM = 8;
 const MODES = ['subway', 'bus', 'rail', 'intercity'] as const;
 type Mode = (typeof MODES)[number];
@@ -96,7 +96,7 @@ export function RegionalMap({ onClose }: { onClose?: () => void }) {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Regional map</p>
-          <h2 className="font-display text-2xl md:text-3xl">New York City and Long Island</h2>
+          <h2 className="font-display text-2xl md:text-3xl">NYC, Long Island and Connecticut</h2>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setFitKey((k) => k + 1)} data-testid="button-fit-region" className="inline-flex h-11 items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold hover:bg-white/5"><Crosshair className="h-4 w-4" />Fit region</button>

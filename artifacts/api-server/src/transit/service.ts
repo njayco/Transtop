@@ -69,6 +69,15 @@ export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<Tran
   return {...stop,arrivals,alerts:liveAlerts().filter(a=>stop.routes.some(r=>a.routeIds.includes(r.id)))};
 }
 const knownPlaces=[
+  {terms:["new haven"],lat:41.297172,lon:-72.925945},
+  {terms:["hartford"],lat:41.768960,lon:-72.681831},
+  {terms:["stamford"],lat:41.0469,lon:-73.5415},
+  {terms:["new britain"],lat:41.6657,lon:-72.7838},
+  {terms:["waterbury"],lat:41.5545,lon:-73.0438},
+  {terms:["meriden"],lat:41.538894,lon:-72.801485},
+  {terms:["new london"],lat:41.3542,lon:-72.0930},
+  {terms:["old saybrook"],lat:41.3006,lon:-72.3773},
+  {terms:["springfield"],lat:42.106137,lon:-72.593041},
   {terms:["easton"],lat:40.689434071649,lon:-75.209040322102},
   {terms:["pohatcong","phillipsburg"],lat:40.677134426789,lon:-75.142608109327},
   {terms:["wall street","wall st"],lat:40.703284765181,lon:-74.010092405239},
