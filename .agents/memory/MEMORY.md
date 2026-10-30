@@ -1,3 +1,4 @@
 - [Generated API pitfalls](api-generation.md) — Orval can rewrite root barrels and create type/value export collisions; header helpers require DOM iterable types.
 - [Google Maps credentials](google-maps.md) — the connected MCP provides docs, not map runtime credentials; browser keys must be website/API restricted.
 - [Transit release scope](transit-release-scope.md) — schedules-only release approved; Google journey planning is deferred, while existing Google Maps stays available.
+- [Local process lifetime](local-process-lifetime.md) — disposable services must stay foreground processes inside a background shell; detached children can die when the parent call ends.

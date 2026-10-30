@@ -1,5 +1,5 @@
 import { db, pool, stops, routes, feedSnapshots } from "@workspace/db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { adapters } from "./adapters";
 import { demoArrivals, demoAlerts } from "./demo";
 import { feedsFor, fresh, liveAlerts, feedStatus } from "./realtime";
@@ -11,11 +11,12 @@ import { DateTime } from "luxon";
 import { ZONE } from "./time";
 import { patternLabel,resolvePattern } from "./catalog";
 import { journeyHealth } from "./journeys";
+import { stopTimesMode } from "./generations";
 
 let stopCache:{at:number;demo:TransitStop[];live:TransitStop[]}|undefined;
 export async function allStops(mode:Mode) {
   if(!stopCache||Date.now()-stopCache.at>60000){
-    const data=await db.select().from(stops);
+    const data=await db.select().from(stops).where(inArray(stops.mode,["live","demo"]));
     stopCache={at:Date.now(),demo:data.filter(s=>s.mode==="demo").map(s=>s.data as TransitStop),
       live:data.filter(s=>s.mode==="live").map(s=>s.data as TransitStop)};
   }
@@ -114,10 +115,10 @@ export async function routeDetail(id:string,mode:Mode,direction?:string):Promise
     const {rows}=await pool.query(`SELECT id,data FROM transit_trips t WHERE mode='live' AND agency=$1 AND data->>'route_id'=$2
       AND COALESCE(NULLIF(data->>'direction_id',''),'0')=$3
       AND COALESCE(NULLIF(data->>'trip_headsign',''),'Direction ' || COALESCE(NULLIF(data->>'direction_id',''),'0'))=$4
-      ORDER BY (SELECT max(st.sequence) FROM transit_stop_times st WHERE st.mode=t.mode AND st.trip_id=t.id) DESC,t.id LIMIT 1`,[agency,raw,dir,headsign]);
+      ORDER BY (SELECT max(st.sequence) FROM transit_stop_times st WHERE st.mode=${stopTimesMode("$1::text")} AND st.trip_id=t.id) DESC,t.id LIMIT 1`,[agency,raw,dir,headsign]);
     if(rows[0]){
-      const {rows:ordered}=await pool.query(`SELECT s.data FROM transit_stop_times st JOIN transit_stops s ON s.id=st.stop_id AND s.mode=st.mode
-        WHERE st.mode='live' AND st.trip_id=$1 ORDER BY st.sequence`,[rows[0].id]);
+      const {rows:ordered}=await pool.query(`SELECT s.data FROM transit_stop_times st JOIN transit_stops s ON s.id=st.stop_id AND s.mode='live'
+        WHERE st.mode=${stopTimesMode("$2::text")} AND st.trip_id=$1 ORDER BY st.sequence`,[rows[0].id,agency]);
       const seen=new Set<string>(), all=await allStops(mode);
       ss=ordered.map(o=>{const s=o.data as TransitStop;return s.parent?all.find(p=>p.id===`${agency}:${s.parent}`)||s:s;}).filter(s=>{if(seen.has(s.id))return false;seen.add(s.id);return true;});
       const {rows:sh}=await pool.query("SELECT data FROM transit_shapes WHERE mode='live' AND id=$1",[`${agency}:${rows[0].data.shape_id}`]);

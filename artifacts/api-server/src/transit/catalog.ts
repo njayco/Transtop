@@ -6,6 +6,7 @@ import { activeService, serviceInstant, ZONE } from "./time";
 import type { Mode, TransitRoute } from "./types";
 import { GetCatalogQueryParams, GetTimetableQueryParams } from "@workspace/api-zod";
 import type { z } from "zod";
+import { stopTimesMode } from "./generations";
 type CatalogParams=z.infer<typeof GetCatalogQueryParams>;
 type TimetableParams=z.infer<typeof GetTimetableQueryParams>;
 
@@ -54,18 +55,18 @@ export async function timetable(p:TimetableParams) {
   // stop-times table. A correlated MIN per stop becomes prohibitively expensive
   // on the full multi-million-row bus catalog.
   const selected=ids?`WITH selected_times AS MATERIALIZED (
-    SELECT * FROM transit_stop_times WHERE mode='live' AND stop_id=ANY($3::text[])
+    SELECT * FROM transit_stop_times WHERE mode=${stopTimesMode("$1::text")} AND stop_id=ANY($3::text[])
   )`:`WITH selected_trips AS MATERIALIZED (
     SELECT * FROM transit_trips WHERE mode='live' AND agency=$1 AND data->>'route_id'=$2
   )`;
-  const fromClause=ids?`FROM selected_times st JOIN transit_trips t ON t.mode=st.mode AND t.id=st.trip_id`:
+  const fromClause=ids?`FROM selected_times st JOIN transit_trips t ON t.mode='live' AND t.id=st.trip_id`:
     `FROM selected_trips t JOIN LATERAL (
-      SELECT * FROM transit_stop_times st WHERE st.mode='live' AND st.trip_id=t.id ORDER BY sequence LIMIT 1
+      SELECT * FROM transit_stop_times st WHERE st.mode=${stopTimesMode("$1::text")} AND st.trip_id=t.id ORDER BY sequence LIMIT 1
     ) st ON true`;
   const {rows}=await pool.query(`${selected}
     SELECT st.data AS timing,st.departure_seconds,t.id AS trip_id,t.data AS trip,c.data AS calendar,s.data AS stop,r.data AS route
     ${fromClause}
-    JOIN transit_stops s ON s.mode=st.mode AND s.id=st.stop_id
+    JOIN transit_stops s ON s.mode='live' AND s.id=st.stop_id
     JOIN transit_routes r ON r.mode=t.mode AND r.id=(t.agency||':'||(t.data->>'route_id'))
     LEFT JOIN transit_calendars c ON c.mode=t.mode AND c.id=(t.agency||':'||(t.data->>'service_id'))
     WHERE t.mode='live' AND t.agency=$1 AND ($2::text IS NULL OR t.data->>'route_id'=$2)

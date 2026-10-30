@@ -1,15 +1,16 @@
 import { pool } from "@workspace/db";
 import { activeService, serviceDates, serviceInstant } from "./time";
 import type { Arrival, TransitStop } from "./types";
+import { stopTimesMode } from "./generations";
 export async function scheduledArrivals(stop:TransitStop,excluded:Set<string>,now=Date.now()):Promise<Arrival[]> {
   const prefix=stop.id.split(":")[0], raw=stop.rawId||stop.id.slice(prefix.length+1);
   const ids=stop.parent?[stop.id]:[stop.id,`${prefix}:${raw}N`,`${prefix}:${raw}S`];
   const {rows}=await pool.query(`
     SELECT st.data AS timing, st.arrival_seconds, t.id AS trip_id, t.data AS trip, c.data AS calendar
     FROM transit_stop_times st
-    JOIN transit_trips t ON t.mode=st.mode AND t.id=st.trip_id
+    JOIN transit_trips t ON t.mode='live' AND t.id=st.trip_id
     LEFT JOIN transit_calendars c ON c.mode=t.mode AND c.id=($2 || ':' || (t.data->>'service_id'))
-    WHERE st.mode='live' AND st.stop_id=ANY($1::text[])`,[ids,prefix]);
+    WHERE st.mode=${stopTimesMode("$2::text")} AND st.stop_id=ANY($1::text[])`,[ids,prefix]);
   const {rows:ex}=await pool.query("SELECT data FROM transit_calendar_exceptions WHERE mode='live' AND agency=$1",[prefix]);
   const dates=serviceDates(now), result:Arrival[]=[];
   for(const row of rows) {

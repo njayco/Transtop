@@ -7,9 +7,24 @@ import { adapter } from "./adapters";
 import { gtfsSeconds } from "./time";
 import { logger } from "../lib/logger";
 import type { TransitRoute } from "./types";
+import { IMPORT_LOCK, cleanupGenerations, insertStopTimes } from "./generations";
 const tables=[agencies,routes,trips,stopTimes,calendars,calendarExceptions,shapes,stops];
 
 export async function importGtfs(agency:string) {
+  const lock=await pool.connect();
+  let locked=false;
+  try {
+    const {rows}=await lock.query("SELECT pg_try_advisory_lock($1) AS locked",[IMPORT_LOCK]);
+    locked=rows[0].locked;
+    if(!locked)throw new Error("Another GTFS import or cleanup is already running");
+    await importLocked(agency);
+  } finally {
+    if(locked)await lock.query("SELECT pg_advisory_unlock($1)",[IMPORT_LOCK]);
+    lock.release();
+  }
+}
+
+async function importLocked(agency:string) {
   const a=adapter(agency);
   if(!a.staticUrl)throw new Error("No approved static feed configured");
   const stage=`import-${randomUUID()}`;
@@ -17,13 +32,23 @@ export async function importGtfs(agency:string) {
   const routeStops=new Map<string,Set<string>>();
   const components:{id:string;url:string;serviceStart:string;serviceEnd:string}[]=[];
   let count=0;
+  let published=false;
+  const started=Date.now();
+  await db.insert(feedSnapshots).values({id:`${agency}:generation:${stage}`,mode:"live",agency,
+    data:{kind:"gtfs-generation",stage}});
   try {
   for(const feed of a.staticFeeds||[{id:agency,url:a.staticUrl}]){
   const scope=(id:string)=>a.staticFeeds?`${feed.id}~${id}`:id;
   const response=await fetch(feed.url,{signal:AbortSignal.timeout(120000),redirect:"error"});
   if(!response.ok)throw new Error(`GTFS download returned ${response.status}`);
-  const bytes=Buffer.from(await response.arrayBuffer());
-  if(bytes.length>100*1024*1024)throw new Error("GTFS archive exceeds configured size limit");
+  const chunks:Uint8Array[]=[]; let size=0;
+  if(!response.body)throw new Error("GTFS download has no body");
+  for await(const chunk of response.body){
+    size+=chunk.length;
+    if(size>100*1024*1024)throw new Error("GTFS archive exceeds configured size limit");
+    chunks.push(chunk);
+  }
+  const bytes=Buffer.concat(chunks);
   const zip=await Open.buffer(bytes);
   const file=(n:string)=>zip.files.find(f=>f.path===`${n}.txt`);
   if(!file("stops")||!file("routes")||!file("trips")||!file("stop_times"))throw new Error("Required GTFS files missing");
@@ -40,9 +65,14 @@ export async function importGtfs(agency:string) {
     ];
     for(const [name,table,idOf] of specs) {
       const entry=file(name); if(!entry)continue;
-      const parser=entry.stream().pipe(parse({columns:true,bom:true,skip_empty_lines:true,relax_column_count:true}));
+      const parser=entry.stream().pipe(parse({columns:true,bom:true,skip_empty_lines:true,relax_column_count:true,max_record_size:256*1024}));
       let batch:any[]=[];
-      const flush=async()=>{if(batch.length){await db.insert(table).values(batch).onConflictDoNothing();count+=batch.length;batch=[];}};
+      let batchBytes=0;
+      const flush=async()=>{if(batch.length){
+        if(name==="stop_times")await insertStopTimes(batch);
+        else await db.insert(table).values(batch).onConflictDoNothing();
+        count+=batch.length;batch=[];batchBytes=0;
+      }};
       for await(const row of parser) {
          const r={...row} as Record<string,string>;
          // Keep route/stop IDs stable across boroughs; scope trip, service and
@@ -74,7 +104,8 @@ export async function importGtfs(agency:string) {
         } else {
           batch.push({id:`${agency}:${idOf(r)}`,agency,mode:stage,data:name==="routes"?{...r,...allRoutes.get(r.route_id)}:r});
         }
-        if(batch.length>=1500)await flush();
+        batchBytes+=Buffer.byteLength(JSON.stringify(batch[batch.length-1]));
+        if(batch.length>=1500||batchBytes>=1024*1024)await flush();
       }
       await flush();
       logger.info({agency,file:name,records:count},"GTFS import progress");
@@ -112,27 +143,42 @@ export async function importGtfs(agency:string) {
         arrivals:[],alerts:[],distance:0,walkingMinutes:0,updatedAt:new Date().toISOString()},
     }));
     for(let i=0;i<stopRows.length;i+=1000)await db.insert(stops).values(stopRows.slice(i,i+1000));
+    // Statistics must be ready before readers can see the new generation.
+    for(const name of ["transit_stop_times","transit_trips","transit_stops","transit_routes",
+      "transit_calendars","transit_calendar_exceptions","transit_shapes"])await pool.query(`ANALYZE ${name}`);
     // A complete generation is swapped atomically; failed downloads/imports leave
     // the previous published dataset intact.
     await db.transaction(async tx=>{
+      await tx.execute(sql`SET LOCAL lock_timeout = '5s'`);
+      const previous=await tx.select().from(feedSnapshots).where(and(eq(feedSnapshots.mode,"live"),eq(feedSnapshots.id,`${agency}:static`)));
+      if(!previous[0]?.data.stopTimesMode){
+        await tx.insert(feedSnapshots).values({id:`${agency}:generation:live`,mode:"live",agency,
+          data:{kind:"gtfs-generation",stage:"live"}}).onConflictDoNothing();
+      }
       for(const table of tables) {
+        if(table===stopTimes)continue;
         await tx.delete(table).where(and(eq(table.agency,agency),eq(table.mode,"live")));
         await tx.update(table).set({mode:"live"}).where(eq(table.mode,stage));
       }
-      const data={status:"ready",importedAt:new Date().toISOString(),sourceUrl:a.staticUrl,records:count,stopCount:stopRows.length,routeCount:allRoutes.size,components,
+      // The smaller tables changed mode during publication. Refresh their
+      // statistics too, so live route/shape joins do not use staging estimates.
+      for(const name of ["transit_trips","transit_stops","transit_routes","transit_calendars",
+        "transit_calendar_exceptions","transit_shapes"])await tx.execute(sql.raw(`ANALYZE ${name}`));
+      const data={status:"ready",stopTimesMode:stage,importedAt:new Date().toISOString(),sourceUrl:a.staticUrl,records:count,stopCount:stopRows.length,routeCount:allRoutes.size,components,
         serviceStart:components.map(c=>c.serviceStart).sort()[0],serviceEnd:components.map(c=>c.serviceEnd).sort().at(-1)};
       await tx.insert(feedSnapshots).values({id:`${agency}:static`,mode:"live",agency,data}).onConflictDoUpdate({target:[feedSnapshots.mode,feedSnapshots.id],set:{data,updatedAt:new Date()}});
       await tx.delete(feedSnapshots).where(and(eq(feedSnapshots.mode,"live"),eq(feedSnapshots.id,`${agency}:import-error`)));
     });
-    await pool.query("ANALYZE transit_stop_times");
-    await pool.query("ANALYZE transit_trips");
-    logger.info({agency,records:count,stops:stopRows.length},"GTFS import complete");
+    published=true;
+    logger.info({agency,records:count,stops:stopRows.length,durationMs:Date.now()-started},"GTFS import complete");
   } catch(error) {
     const data={message:error instanceof Error?error.message:"GTFS import failed",at:new Date().toISOString()};
     await db.insert(feedSnapshots).values({id:`${agency}:import-error`,mode:"live",agency,data})
       .onConflictDoUpdate({target:[feedSnapshots.mode,feedSnapshots.id],set:{data,updatedAt:new Date()}});
     throw error;
   } finally {
-    for(const table of tables)await db.delete(table).where(eq(table.mode,stage));
+    // Cleanup failure must not turn a committed publication into an import error.
+    try { await cleanupGenerations(); }
+    catch(err){logger.warn({err,agency,published},"GTFS cleanup deferred; generation registry retained");}
   }
 }

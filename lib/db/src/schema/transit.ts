@@ -3,6 +3,8 @@ import { sql } from "drizzle-orm";
 
 // GTFS source records are retained without lossy column transformations.
 // mode + id forms the boundary between examples and imported official records.
+// For stop_times, mode may be an immutable import generation; live readers
+// resolve feedSnapshots.data.stopTimesMode (missing means legacy "live").
 const records = (name: string) => pgTable(name, {
   id: text("id").notNull(),
   mode: text("mode").notNull(),

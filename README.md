@@ -2,6 +2,12 @@
 
 A mobile-first NYC and Long Island transit app based on the creator's original Transtop concept. Desktop has synchronized stop results and a Google map; mobile has Nearby, Search, Favorites and Ride navigation. No account is required.
 
+## Daily GTFS refresh operations
+
+See [transit import performance and rollback](docs/transit-imports.md) for the
+generation-based publication strategy, isolated benchmarks, cleanup limits, and
+the required compatibility step before reverting to older schedule readers.
+
 ## Run locally
 
 Requires Node.js 24, pnpm 10 and PostgreSQL. Replit supplies the development database through `DATABASE_URL`; never commit credentials.
