@@ -72,7 +72,20 @@ export async function planJourney(input:JourneyInput):Promise<JourneyResults> {
         throw new JourneyError(503,message+" Published agency timetables still work.");
       }
       if(response.status===429)throw new JourneyError(429,"Google's trip-planning quota was reached. Try later or browse the agency timetables.");
-      if(response.status===400)throw new JourneyError(400,"Google could not plan that request. Check both locations, time and transit preferences.");
+      if(response.status===400){
+        const info=await response.json().catch(()=>null) as any;
+        const reasons=new Set((info?.error?.details||[]).map((d:any)=>d.reason));
+        const text=String(info?.error?.message||"").toLowerCase();
+        if(reasons.has("API_KEY_INVALID")||/api key.*(not valid|invalid)/.test(text)){
+          const message="Google rejected the server Routes key as invalid. Replace GOOGLE_MAPS_ROUTES_API_KEY through Replit Secrets with the complete valid server key, without quotes or extra text.";
+          lastCheck={status:"Google authorization blocked",message,updatedAt:new Date().toISOString()};
+          throw new JourneyError(503,message+" Published agency timetables still work.");
+        }
+        if(/field.?mask/.test(text))throw new JourneyError(502,"Google rejected the requested route response fields. The journey integration needs a field-mask update; published timetables still work.");
+        if(/(departure|arrival).*time/.test(text))throw new JourneyError(400,"Google rejected the selected journey time. Choose a time within its supported transit schedule window.");
+        if(/(origin|destination|address)/.test(text))throw new JourneyError(400,"Google could not resolve the journey endpoints. Use a specific street address or station name for both locations.");
+        throw new JourneyError(400,"Google could not plan that request. Check both locations, time and transit preferences.");
+      }
       throw new JourneyError(502,"Google trip planning is temporarily unavailable. Try again or use the published timetables.");
     }
     const result=await response.json() as {routes?:unknown[]};
