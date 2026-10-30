@@ -24,7 +24,7 @@ async function loadModule(file, { local = {}, session = {}, failEnd = false } = 
   const sessionStorage = storage(session);
   const effects = [];
   const context = vm.createContext({
-    console, Date, Set, JSON, Promise, localStorage, sessionStorage,
+    console, Date, Set, JSON, Promise, Event, localStorage, sessionStorage,
     document: { visibilityState: 'visible', documentElement: { classList: { toggle() {} } } },
     navigator: { onLine: true, geolocation: {
       watchPosition(callback) { calls.watch++; calls.position = callback; return 42; },
@@ -32,6 +32,7 @@ async function loadModule(file, { local = {}, session = {}, failEnd = false } = 
     } },
     window: {
       addEventListener(name, callback) { calls.events[name] = callback; },
+      dispatchEvent(event) { calls.events[event.type]?.(event); },
       setTimeout(fn, ms) { calls.timers.push({ fn, ms }); return calls.timers.length; },
       clearTimeout() {},
     },

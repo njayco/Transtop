@@ -51,6 +51,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
       Object.keys(localStorage).filter((k) => k.startsWith('transtop.')).forEach((k) => localStorage.removeItem(k));
       Object.keys(sessionStorage).filter((k) => k.startsWith('transtop.')).forEach((k) => sessionStorage.removeItem(k));
     } catch { /* ignore */ }
+    window.dispatchEvent(new Event('transtop:local-data-cleared'));
     setPrefs(DEFAULTS);
   }, []);
 

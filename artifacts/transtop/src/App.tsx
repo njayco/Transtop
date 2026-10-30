@@ -16,6 +16,7 @@ import Favorites from '@/pages/favorites';
 import RidePage from '@/pages/ride';
 import Settings from '@/pages/settings';
 import TrainPage from '@/pages/train';
+import { TrainFollowsProvider } from '@/lib/train-follows';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 15_000, refetchOnWindowFocus: true, networkMode: 'online' } },
@@ -51,9 +52,11 @@ function App() {
         <TooltipProvider>
           <EntryGate>
             <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+              <TrainFollowsProvider>
               <Shell>
                 <Router />
               </Shell>
+              </TrainFollowsProvider>
             </WouterRouter>
           </EntryGate>
           <Toaster />

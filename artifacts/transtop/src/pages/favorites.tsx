@@ -4,6 +4,7 @@ import { MobileTop } from '@/components/shell';
 import { MODE_NAME, ModeIcon, RouteBadge, TransitLines } from '@/components/transit';
 import { useOnline, usePrefs } from '@/lib/prefs';
 import { ago } from '@/lib/format';
+import { FollowedTrains } from '@/components/train-follow';
 
 export default function Favorites() {
   const { favStops, favRoutes, set } = usePrefs();
@@ -49,6 +50,7 @@ export default function Favorites() {
             </ul>
           </section>
         )}
+        <FollowedTrains />
         {favRoutes.length > 0 && (
           <section>
             <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Routes</h2>

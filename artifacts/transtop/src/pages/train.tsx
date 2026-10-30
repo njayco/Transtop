@@ -5,6 +5,7 @@ import { getGetTrainQueryKey, useGetTrain, type TrainCall, type TrainDetail } fr
 import { ErrorState, SkeletonCards, StatusText, TransitLines } from '@/components/transit';
 import { ago } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { TrainFollowCard } from '@/components/train-follow';
 
 const AMTRAK = '#e0662f';
 
@@ -147,6 +148,7 @@ export default function TrainPage() {
           {t && <p className="text-xs text-muted-foreground">Refreshes every 30 seconds while open. Estimates are checked against their expiry every 15 seconds.</p>}
         </div>
         <aside className="space-y-4">
+          {t && <TrainFollowCard key={trainId} train={t} />}
           {t && (
             <div className="rounded-2xl border border-card-border bg-card p-4 text-sm" data-testid="card-train-credit">
               <p className="font-bold">Data sources</p>
