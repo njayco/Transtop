@@ -25,13 +25,18 @@ import type {
 
 import type {
   Alert,
+  CatalogResults,
   FeedSource,
   GetAlertsParams,
+  GetCatalogParams,
   GetNetworkParams,
   GetRouteParams,
   GetStopParams,
   GetStopsParams,
+  GetTimetableParams,
   HealthStatus,
+  JourneyInput,
+  JourneyResults,
   NetworkLine,
   ReportInput,
   Ride,
@@ -39,7 +44,8 @@ import type {
   RouteDetail,
   SampleInput,
   Stop,
-  StopResults
+  StopResults,
+  TimetableResults
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -580,6 +586,292 @@ export function useGetSources<TData = Awaited<ReturnType<typeof getSources>>, TE
 
 
 
+
+export const getGetCatalogUrl = (params?: GetCatalogParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/transit/catalog?${stringifiedParams}` : `/api/transit/catalog`
+}
+
+export const getCatalog = async (params?: GetCatalogParams, options?: Parameters<typeof customFetch>[1]): Promise<CatalogResults> => {
+
+  return customFetch<CatalogResults>(getGetCatalogUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCatalogQueryKey = (params?: GetCatalogParams,) => {
+    return [
+    `/api/transit/catalog`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetCatalogQueryOptions = <TData = Awaited<ReturnType<typeof getCatalog>>, TError = ErrorType<unknown>>(params?: GetCatalogParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCatalog>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCatalogQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCatalog>>> = ({ signal }) => getCatalog(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCatalog>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCatalogQueryResult = NonNullable<Awaited<ReturnType<typeof getCatalog>>>
+export type GetCatalogQueryError = ErrorType<unknown>
+
+
+export function useGetCatalog<TData = Awaited<ReturnType<typeof getCatalog>>, TError = ErrorType<unknown>>(
+ params: undefined |  GetCatalogParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCatalog>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCatalog>>,
+          TError,
+          Awaited<ReturnType<typeof getCatalog>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCatalog<TData = Awaited<ReturnType<typeof getCatalog>>, TError = ErrorType<unknown>>(
+ params?: GetCatalogParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCatalog>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCatalog>>,
+          TError,
+          Awaited<ReturnType<typeof getCatalog>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCatalog<TData = Awaited<ReturnType<typeof getCatalog>>, TError = ErrorType<unknown>>(
+ params?: GetCatalogParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCatalog>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetCatalog<TData = Awaited<ReturnType<typeof getCatalog>>, TError = ErrorType<unknown>>(
+ params?: GetCatalogParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCatalog>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCatalogQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetTimetableUrl = (params: GetTimetableParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/transit/timetable?${stringifiedParams}` : `/api/transit/timetable`
+}
+
+export const getTimetable = async (params: GetTimetableParams, options?: Parameters<typeof customFetch>[1]): Promise<TimetableResults> => {
+
+  return customFetch<TimetableResults>(getGetTimetableUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTimetableQueryKey = (params?: GetTimetableParams,) => {
+    return [
+    `/api/transit/timetable`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetTimetableQueryOptions = <TData = Awaited<ReturnType<typeof getTimetable>>, TError = ErrorType<unknown>>(params: GetTimetableParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimetable>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTimetableQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTimetable>>> = ({ signal }) => getTimetable(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTimetable>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetTimetableQueryResult = NonNullable<Awaited<ReturnType<typeof getTimetable>>>
+export type GetTimetableQueryError = ErrorType<unknown>
+
+
+export function useGetTimetable<TData = Awaited<ReturnType<typeof getTimetable>>, TError = ErrorType<unknown>>(
+ params: GetTimetableParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimetable>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTimetable>>,
+          TError,
+          Awaited<ReturnType<typeof getTimetable>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTimetable<TData = Awaited<ReturnType<typeof getTimetable>>, TError = ErrorType<unknown>>(
+ params: GetTimetableParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimetable>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTimetable>>,
+          TError,
+          Awaited<ReturnType<typeof getTimetable>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTimetable<TData = Awaited<ReturnType<typeof getTimetable>>, TError = ErrorType<unknown>>(
+ params: GetTimetableParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimetable>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetTimetable<TData = Awaited<ReturnType<typeof getTimetable>>, TError = ErrorType<unknown>>(
+ params: GetTimetableParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimetable>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetTimetableQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPlanJourneyUrl = () => {
+
+
+
+
+  return `/api/transit/journeys`
+}
+
+export const planJourney = async (journeyInput: JourneyInput, options?: Parameters<typeof customFetch>[1]): Promise<JourneyResults> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<JourneyResults>(getPlanJourneyUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(journeyInput)
+  }
+);}
+
+
+
+
+
+export const getPlanJourneyMutationKey = () => ['planJourney'] as const;
+
+export const getPlanJourneyMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof planJourney>>, TError,PlanJourneyMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof planJourney>>, TError,PlanJourneyMutationVariables, TContext> => {
+
+const mutationKey = getPlanJourneyMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof planJourney>>, PlanJourneyMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  planJourney(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PlanJourneyMutationResult = NonNullable<Awaited<ReturnType<typeof planJourney>>>
+    export type PlanJourneyMutationBody = BodyType<JourneyInput>
+    export type PlanJourneyMutationError = ErrorType<unknown>
+    export type PlanJourneyMutationVariables = {data: BodyType<JourneyInput>}
+
+    export const usePlanJourney = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof planJourney>>, TError,PlanJourneyMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof planJourney>>,
+        TError,
+        PlanJourneyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPlanJourneyMutationOptions(options), queryClient);
+    }
 
 export const getGetNetworkUrl = (params?: GetNetworkParams,) => {
   const normalizedParams = new URLSearchParams();

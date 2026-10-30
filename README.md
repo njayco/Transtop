@@ -10,7 +10,7 @@ Requires Node.js 24, pnpm 10 and PostgreSQL. Replit supplies the development dat
 pnpm install
 pnpm --filter @workspace/db run push
 pnpm --filter @workspace/api-spec run codegen
-pnpm --filter @workspace/api-server run import-gtfs mta-subway mta-lirr mta-mnr
+pnpm --filter @workspace/api-server run import-gtfs mta-subway mta-lirr mta-mnr mta-bus nice suffolk hart long-beach glen-cove hudson-link airtrain-jfk
 ```
 
 Start the existing **API Server** and **Transtop web** workflows. They inject `PORT` and `BASE_PATH`. The API is mounted at `/api`, the app at `/`. For non-Replit hosting, provide the same variables and route `/api` to Express with the frontend at `/`. Build the API with its `build` script and the web app with its `build` script. The web app needs the API service as well as static assets.
@@ -21,7 +21,7 @@ Start the existing **API Server** and **Transtop web** workflows. They inject `P
 
 **Demo is the default.** The persistent “Demo data” indicator means arrivals, alerts and illustrative map lines are examples, not advice for travel. Demo and live records have separate database keys, and live APIs do not substitute demo records. Favorites are stored on the device, tagged with their data mode.
 
-Switch to **Live** in the app header/settings. Official static data was imported for NYC Subway, LIRR and Metro-North during development. Imported development data does not automatically seed a new production database; perform the documented imports in the target environment through an authorized job after schema setup.
+Switch to **Live** in the app header/settings. The regional importer supports the agencies below. Settings is the current coverage inventory: imported counts, source files, import timestamps, service windows, expired/partial data and last errors. Do not infer current coverage from an adapter being configured. Imported development data does not automatically seed a new production database; perform the documented imports in the target environment through an authorized job after schema setup.
 
 ### Integration status
 
@@ -30,8 +30,12 @@ Switch to **Live** in the app header/settings. Official static data was imported
 | NYC Subway | Working: regular GTFS + all eight public GTFS-RT feeds + official alerts | No key required. Live predictions verified end to end. GPS positions are not invented from arrival times. Regular static schedule omits many temporary changes; fresh live updates/alerts are authoritative. |
 | LIRR | Working: GTFS + public GTFS-RT | No key required. Static import and fresh feed verified. Displays vehicle coordinates only when provided. |
 | Metro-North | Working: GTFS + public GTFS-RT | No key required. Port Jervis and Pascack Valley services require a separate NJ TRANSIT integration and are excluded. |
-| MTA Bus | Static GTFS importer available for Manhattan; live integration not configured | Bus Time requires the operator's own authorized key. The live SIRI/GTFS-RT Bus Time adapter and additional borough configuration remain to be implemented. No key is requested or used by this build. Bus examples are demo-only unless static schedules are imported. |
-| NICE Bus | Unsupported / planned | No permitted, documented current live feed verified. No production NICE estimates are invented. |
+| MTA Bus | Six official packages imported as one atomic generation: Manhattan, Bronx, Brooklyn, Queens, Staten Island, MTA Bus Company | Local/SBS/express schedules. Bus Time live predictions still require separate authorization and an adapter; no fake bus positions. Some routes cross boroughs; the borough file name is not a geographic boundary. |
+| NICE Bus | Official public static GTFS | Nassau local/express stops and schedules. No unverified live predictions. |
+| Suffolk County Transit | Official public static GTFS | Fixed-route service only; realtime access requires agency approval. |
+| Huntington HART / Long Beach / Glen Cove | Public GTFS distributed through NYSDOT 511NY | Check displayed service windows and seasonal timetables. No unverified live predictions. |
+| Hudson Rail Link / JFK AirTrain | Public GTFS distributed through NYSDOT 511NY | Bronx commuter feeder buses and Queens airport rail connections. Schedules only. |
+| Private commuter operators | Coverage gap | Hampton Jitney, Hampton Luxury Liner and other operators without a verified authorized bulk feed are not claimed as complete. Use official operator schedules. Google may return some journeys but does not guarantee coverage. |
 | Ferry / air | Out of scope | Future expansion only. |
 
 Official documentation verified on 2026-10-29:
@@ -41,8 +45,13 @@ Official documentation verified on 2026-10-29:
 - [MTA data terms](https://www.mta.info/developers/terms-and-conditions)
 - [MTA Bus Time API documentation](https://bustime.mta.info/wiki/Developers/Index)
 - [US Census address geocoder](https://geocoding.geo.census.gov/geocoder/Geocoding_Services_API.html)
+- [NICE developer downloads and terms](https://www.nicebus.com/Passenger-Information/App-showcase)
+- [Suffolk developer downloads](https://suffolkcountyny.gov/Departments/Public-Works/Transportation/General-Transit-Feed-Specification-Details)
+- [NYSDOT open-data terms for 511NY feeds](https://data.ny.gov/download/77gx-ii52/application/pdf)
 
-The allowlisted endpoints are in `artifacts/api-server/src/transit/adapters.ts`. Feeds are fetched, decoded and cached by Transtop's server; browsers never directly fetch MTA data. The adapter registry is the extension point for more cities/agencies. External IDs are namespaced by agency, with dataset mode as a separate key.
+The allowlisted endpoints are in `artifacts/api-server/src/transit/adapters.ts`. Feeds are fetched, decoded and cached by Transtop's server; browsers never directly fetch MTA data. External IDs are namespaced by agency, with dataset mode as a separate key. MTA bus trip/service/shape IDs are additionally feed-scoped; shared route/stop identifiers remain stable for favorites. The six borough/company files must never be published as successive replacements of the same agency.
+
+Search offers paginated route/stop browsing by operator, mode and local/express class. Stop and route pages have selected-service-date timetables and actual destination/direction patterns; route-only timetables show trips departing their origin. All controls and displayed times use **America/New_York**, including for visitors in other timezones. GTFS departures beyond 24:00 show their following calendar date. Untimed intermediate stops remain in route ordering but never acquire fabricated exact times. A published timetable is not a realtime prediction or a guarantee against disruptions.
 
 MTA data is supplied as-is. Transtop is independent and is not affiliated with, endorsed by or licensed by the MTA. No agency logos, proprietary official maps or MetroCard balance integration are included. Original generic route labels/colors are used for identification; review MTA licensing requirements before public launch.
 
@@ -53,6 +62,8 @@ The server prefers fresh official predictions, then eligible community estimates
 GTFS trip cancellations and skipped/no-data stop updates are excluded from predictions and schedule fallback when fresh. Regular GTFS is not guaranteed to reflect short-term changes. Agency time uses `America/New_York`, calendar exceptions override weekly calendars, and the schedule conversion follows GTFS noon-minus-12-hours semantics across DST and supports times over 24:00.
 
 Route geometry is sourced from the imported trip shape. The network map chooses one representative shape per route, so it is not an exhaustive display of all branches and directions. Subway prediction feeds do not generally include GPS positions. Rail positions are shown only when supplied by the agency; markers refresh rather than imply unobserved movement.
+
+MTA's supplemented subway feed was reviewed: it overlaps the regular feed and covers only the next seven calendar days. This build retains the regular complete catalog plus fresh GTFS-RT/alerts, rather than merging two overlapping catalogs and duplicating trips. Temporary static service changes can therefore be missing; always check agency alerts.
 
 Walking distances are straight-line approximations, not turn-by-turn accessible walking routes. Accessibility “not confirmed” is not a statement that a station is inaccessible. Elevator outage integration is not implemented.
 
@@ -83,7 +94,7 @@ Use an **always-running server** for predictable polling and retention. The API 
 - GTFS-RT and official alerts polling every 30 seconds with limited concurrency and 15-second timeouts.
 - Feed health assessed against upstream timestamps on every read.
 - Retention cleanup every minute and on startup.
-- Optional daily static imports with `TRANSIT_AUTO_IMPORT=true`; initial imports must be run with the CLI. Static import is disabled by default to avoid unexpected resource use.
+- With `TRANSIT_AUTO_IMPORT=true`, missing/stale static datasets are refreshed on startup and daily, using a shared advisory lock with the CLI. Successful imports younger than 22 hours are skipped. Independent agency failures preserve the last successful generation and do not stop the other agencies. Without this opt-in, run the CLI explicitly.
 
 Static imports stage a full generation in separate mode keys, then swap atomically. A failed import leaves the previous complete live dataset intact. The import CLI supports only registry-approved agencies and endpoints, not arbitrary user URLs.
 
@@ -97,7 +108,11 @@ Google Maps Platform is connected through Replit Integrations for official devel
 
 Add `VITE_GOOGLE_MAPS_API_KEY` through Replit Secrets. Enable **Maps JavaScript API** and billing on its Google Cloud project. Browser keys are intentionally visible to visitors: restrict this key to Maps JavaScript API and the exact preview/published website origins using Google Cloud website restrictions. The loader uses origin-only referrers, so allow the website origin rather than a narrow URL path. Never reuse a server-only Google key in this variable. Vite embeds this value at build time; restart development after changing it and rebuild/republish for production changes.
 
-Only Maps JavaScript API is used; Places, Geocoding and Routes API are not enabled or called by this integration. Existing official transit predictions and GTFS shapes remain Transtop's sources, not Google-generated transit ETAs. Address search continues to use the separately disclosed Census geocoder. Opening the map transmits its viewport and ordinary connection metadata to Google; opt-in individual rider samples are not published.
+Maps JavaScript API supplies the basemap. Google **Routes API** additionally supplies on-demand journey alternatives through `POST /api/transit/journeys`; it does not supply the complete GTFS catalog. Existing official transit predictions and GTFS shapes remain separately labeled sources. Ordinary numbered address lookup continues to use Census. Opening a map transmits its viewport and ordinary connection metadata to Google; submitting a journey explicitly sends the two location texts, travel time and transit preferences to Google. Individual rider samples are never sent to Google as public markers.
+
+For the journey planner, enable **Routes API** and billing in Google Cloud and add **`GOOGLE_MAPS_ROUTES_API_KEY`** through Replit Secrets. This is a separate server-only credential restricted to Routes API (and appropriate server application restrictions where supported), never the website-restricted `VITE_` browser key. The Replit MCP connection cannot enable billing/APIs or provision this credential. Missing authorization, quota exhaustion, timeouts and no-route responses have distinct messages; schedules continue working without Google.
+
+Google itinerary responses are not written to the database or browser storage and are sent with `Cache-Control: no-store`. A selected Google route is rendered only on a Google map, not on the schematic fallback. Required attribution stays visible. The server uses explicit field masks, a 20-second timeout, no silent billable retries, per-IP limits of 10 requests/minute, an overall 100 requests/minute and at most six concurrent requests per process. Configure stricter Google Cloud quotas/budgets as appropriate; multiple instances require shared quota enforcement. Google determines available alternatives and service coverage. Transit plans support one departure or arrival time, not both; dates must be within Google's supported transit planning window. Times are planned itineraries, not guaranteed official live predictions.
 
 The shared map component renders stop markers, clickable colored route polylines, source-labeled vehicle markers, selection highlights and route bounds. Google’s native attribution and controls remain visible. It requests raster rendering for browsers without WebGL and uses Advanced Markers. An optional `VITE_GOOGLE_MAPS_MAP_ID` can select your own Google Cloud map configuration; the documented `DEMO_MAP_ID` is the development default. Configure a project-owned map ID for production. Loading/authentication errors and timeouts show the interactive geographic schematic and an explicit error, never a fake Google basemap; the list stays usable.
 
@@ -114,4 +129,4 @@ The web app includes a PWA manifest and original icon. Its production service wo
 
 ## Remaining release work
 
-Live bus adapter and authorized key; additional borough and NICE feed verification; reliable live-trip association where static/realtime IDs differ; calibrated segment/dwell history; aggregated rider-report/crowding publication; stronger independent-contributor verification and abuse controls; multi-instance workers; production map-provider agreement; automated regression coverage for calendar/DST, stale fallback, cancellations, permission denial, expiry, ingestion races, outliers and demo/live isolation. These are documented limitations, not silently simulated features.
+Live bus adapter and authorized access; private-operator coverage agreements; reliable live-trip association where static/realtime IDs differ; calibrated segment/dwell history; aggregated rider-report/crowding publication; stronger independent-contributor verification and abuse controls; multi-instance workers; production Google billing/key/domain configuration; broader automated regression coverage for stale fallback, permission denial, expiry, ingestion races, outliers and demo/live isolation. These are documented limitations, not silently simulated features.

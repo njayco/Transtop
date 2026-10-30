@@ -1,6 +1,6 @@
 export type Mode = "demo" | "live";
 export type TransitType = "subway" | "bus" | "rail";
-export interface TransitRoute { id:string; name:string; color:string; type:TransitType; agency:string }
+export interface TransitRoute { id:string; name:string; color:string; type:TransitType; agency:string;agencyId?:string;serviceClass?:"local"|"express";longName?:string }
 export interface Arrival {
   id:string; routeId:string; routeName:string; color:string; direction:string; destination:string;
   minutes:number; source:"demo"|"live"|"scheduled"|"community"|"unavailable"; updatedAt:string;

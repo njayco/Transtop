@@ -5,6 +5,7 @@ import { getGetStopQueryKey, useGetStop, type Arrival } from '@workspace/api-cli
 import { ModeSwitch } from '@/components/shell';
 import { AlertRow, Countdown, ErrorState, FavButton, ModeIcon, RouteBadge, SkeletonCards, SourceLabel, StatusText, TransitLines } from '@/components/transit';
 import { TransitMap } from '@/components/transit-map';
+import { TimetablePanel } from '@/components/timetable';
 import { honest, usePrefs } from '@/lib/prefs';
 import { ago, clock } from '@/lib/format';
 
@@ -66,7 +67,7 @@ export default function StopPage() {
           {groups.map((g, gi) => (
             <section key={g.key} className="rise overflow-hidden rounded-2xl border border-card-border bg-card" style={{ animationDelay: `${gi * 50}ms` }}>
               <header className="flex items-baseline justify-between gap-2 border-b border-white/5 px-4 py-3">
-                <h2 className="text-xl font-bold tracking-tight">{g.direction}</h2>
+                <h2 className="text-xl font-bold tracking-tight">{g.direction} <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Now</span></h2>
                 <p className="truncate text-sm text-muted-foreground">to {g.destination}</p>
               </header>
               <ul>
@@ -84,6 +85,7 @@ export default function StopPage() {
               </ul>
             </section>
           ))}
+          {stop && <TimetablePanel stopId={stop.id} title="Timetable for any date" />}
           {stop && <p className="text-xs text-muted-foreground">Stop data updated {ago(stop.updatedAt)}. Times refresh every 30 seconds while open.</p>}
         </div>
         <aside className="space-y-4">

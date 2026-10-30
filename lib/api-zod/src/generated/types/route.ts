@@ -4,6 +4,7 @@
  * Api
  * OpenAPI spec version: 0.1.0
  */
+import type { RouteServiceClass } from './routeServiceClass';
 import type { RouteType } from './routeType';
 
 export interface Route {
@@ -12,4 +13,7 @@ export interface Route {
   color: string;
   type: RouteType;
   agency: string;
+  agencyId?: string;
+  serviceClass?: RouteServiceClass;
+  longName?: string;
 }

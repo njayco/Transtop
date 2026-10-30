@@ -1,77 +1,109 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'wouter';
 import { Search as SearchIcon, ArrowUpRight } from 'lucide-react';
-import { getGetStopsQueryKey, useGetStops, type Route } from '@workspace/api-client-react';
+import { getGetCatalogQueryKey, useGetCatalog, useGetSources, type GetCatalogParams, type GetCatalogServiceClass } from '@workspace/api-client-react';
 import { MobileTop } from '@/components/shell';
 import { ErrorState, ModeIcon, RouteBadge, SkeletonCards, StopCard, MODE_NAME } from '@/components/transit';
+import { JourneyPlanner } from '@/components/journey';
+import { Pager, apiErrorText } from '@/components/timetable';
 import { usePrefs } from '@/lib/prefs';
+import { cn } from '@/lib/utils';
 
-const SUGGEST = ['Times Square', 'Grand Central', 'Penn Station', 'Bryant Park', 'Jamaica', 'M15', 'Port Washington'];
+const SUGGEST = ['Times Square', 'Grand Central', 'Penn Station', 'Jamaica', 'M15', 'Port Washington', 'n6'];
+const TYPES = [{ v: '', l: 'All modes' }, { v: 'subway', l: 'Subway' }, { v: 'bus', l: 'Bus' }, { v: 'rail', l: 'Commuter Rail' }];
+const CLASSES: { v: GetCatalogServiceClass; l: string }[] = [{ v: 'all', l: 'Local + express' }, { v: 'local', l: 'Local' }, { v: 'express', l: 'Express' }];
+const LIMIT = 20;
 
 export default function SearchPage() {
   const { mode } = usePrefs();
+  const [tab, setTab] = useState<'browse' | 'plan'>('browse');
   const [text, setText] = useState('');
   const [q, setQ] = useState('');
+  const [agency, setAgency] = useState('');
+  const [type, setType] = useState('');
+  const [serviceClass, setServiceClass] = useState<GetCatalogServiceClass>('all');
+  const [offset, setOffset] = useState(0);
   const timer = useRef<number | null>(null);
   useEffect(() => {
     if (timer.current) window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setQ(text.trim()), 300);
+    timer.current = window.setTimeout(() => { setQ(text.trim()); setOffset(0); }, 300);
     return () => { if (timer.current) window.clearTimeout(timer.current); };
   }, [text]);
-  const params = { q, mode };
-  const res = useGetStops(params, { query: { queryKey: getGetStopsQueryKey(params), enabled: q.length >= 2 } });
-  const stops = res.data?.stops ?? [];
-  const routes = useMemo(() => {
-    const m = new Map<string, Route>();
-    stops.forEach((s) => s.routes.forEach((r) => {
-      if (r.name.toLowerCase().includes(q.toLowerCase()) || r.id.toLowerCase().includes(q.toLowerCase())) m.set(r.id, r);
-    }));
-    return Array.from(m.values());
-  }, [stops, q]);
+  useEffect(() => setOffset(0), [agency, type, serviceClass, mode]);
+
+  const sources = useGetSources();
+  const agencies = useMemo(() => (sources.data ?? []).filter(s=>['subway','bus','rail'].includes(s.type||'')).sort((a,b)=>a.agency.localeCompare(b.agency)), [sources.data]);
+  const params: GetCatalogParams = { mode, offset, limit: LIMIT, serviceClass, ...(q ? { q } : {}), ...(agency ? { agency } : {}), ...(type ? { type } : {}) };
+  const res = useGetCatalog(params, { query: { queryKey: getGetCatalogQueryKey(params), placeholderData: (p) => p, retry: 1 } });
+  const d = res.data;
+  const total = Math.max(d?.totalRoutes ?? 0, d?.totalStops ?? 0);
+  const sel = 'h-11 rounded-xl border border-input bg-card px-3 text-sm';
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-4xl">
       <MobileTop />
       <div className="space-y-6 p-4 md:p-8">
         <h1 className="font-display text-4xl md:text-6xl">Where to?</h1>
-        <div className="relative">
-          <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" aria-hidden />
-          <input autoFocus value={text} onChange={(e) => setText(e.target.value)} type="search" aria-label="Search stations, stops, routes and addresses" data-testid="input-search"
-            placeholder="Stations, stops, routes, addresses" className="h-16 w-full rounded-2xl border border-input bg-card pl-14 pr-4 text-lg placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+        <div className="inline-flex rounded-full border border-border bg-card p-0.5" role="tablist" aria-label="Search mode">
+          {(['browse', 'plan'] as const).map((t) => (
+            <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} data-testid={`tab-search-${t}`}
+              className={cn('h-10 rounded-full px-5 text-sm font-semibold', tab === t ? 'bg-white/10' : 'text-muted-foreground')}>{t === 'browse' ? 'Routes and stops' : 'Plan a trip'}</button>
+          ))}
         </div>
-        {q.length < 2 && (
-          <div>
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Try</p>
-            <div className="flex flex-wrap gap-2">
-              {SUGGEST.map((s) => <button key={s} onClick={() => setText(s)} className="h-11 rounded-full border border-border px-4 text-sm font-semibold hover:border-white/40" data-testid={`button-suggest-${s}`}>{s}</button>)}
-            </div>
-          </div>
-        )}
-        {q.length >= 2 && res.isLoading && <SkeletonCards n={3} />}
-        {res.isError && <ErrorState title="Search failed" onRetry={() => res.refetch()} />}
-        {res.data && (
+
+        {tab === 'plan' ? <JourneyPlanner /> : (
           <>
-            {res.data.message && <p className="text-sm text-muted-foreground" role="status">{res.data.message}</p>}
-            {routes.length > 0 && (
-              <section>
-                <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Routes</h2>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {routes.map((r) => (
-                    <Link key={r.id} href={`/routes/${encodeURIComponent(r.id)}`} data-testid={`link-route-${r.id}`} className="flex items-center gap-3 rounded-2xl border border-card-border bg-card p-3 hover:border-white/25">
-                      <RouteBadge name={r.name} color={r.color} size="lg" />
-                      <div className="min-w-0 flex-1"><p className="font-bold">{r.name} {MODE_NAME[r.type]}</p><p className="truncate text-sm text-muted-foreground">{r.agency}</p></div>
-                      <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
-                    </Link>
-                  ))}
-                </div>
-              </section>
+            <div className="relative">
+              <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <input autoFocus value={text} onChange={(e) => setText(e.target.value)} maxLength={180} type="search" aria-label="Search stations, stops and routes" data-testid="input-search"
+                placeholder="Stations, stops, routes" className="h-16 w-full rounded-2xl border border-input bg-card pl-14 pr-4 text-lg placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <select value={agency} onChange={(e) => setAgency(e.target.value)} aria-label="Agency" data-testid="select-catalog-agency" className={sel}>
+                <option value="">All agencies</option>{agencies.map((a) => <option key={a.id} value={a.id}>{a.agency}</option>)}
+              </select>
+              <select value={type} onChange={(e) => setType(e.target.value)} aria-label="Mode" data-testid="select-catalog-type" className={sel}>
+                {TYPES.map((t) => <option key={t.v} value={t.v}>{t.l}</option>)}
+              </select>
+              <select value={serviceClass} onChange={(e) => setServiceClass(e.target.value as GetCatalogServiceClass)} aria-label="Service class" data-testid="select-catalog-class" className={sel}>
+                {CLASSES.map((c) => <option key={c.v} value={c.v}>{c.l}</option>)}
+              </select>
+            </div>
+            {!q && (
+              <div className="flex flex-wrap gap-2">
+                {SUGGEST.map((s) => <button key={s} onClick={() => setText(s)} className="h-10 rounded-full border border-border px-4 text-sm font-semibold hover:border-white/40" data-testid={`button-suggest-${s}`}>{s}</button>)}
+              </div>
             )}
-            <section>
-              <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Stations and stops</h2>
-              {stops.length === 0
-                ? <div className="flex items-center gap-3 rounded-2xl border border-dashed border-border p-6"><ModeIcon type="bus" size={36} /><p className="text-muted-foreground">Nothing matches "{q}". Try a station name, a route like "Q" or "M15", or a neighborhood.</p></div>
-                : <div className="space-y-3">{stops.map((s, i) => <StopCard key={s.id} stop={s} index={i} />)}</div>}
-            </section>
+            {res.isLoading && <SkeletonCards n={3} />}
+            {res.isError && <ErrorState title="Catalog unavailable" detail={apiErrorText(res.error, 'Check Settings for feed status.')} onRetry={() => res.refetch()} />}
+            {d && (
+              <div className={cn('space-y-6 transition-opacity', res.isFetching && 'opacity-60')}>
+                <section>
+                  <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground" data-testid="text-total-routes">Routes · {d.totalRoutes.toLocaleString()}</h2>
+                  {d.routes.length === 0 ? <p className="text-sm text-muted-foreground">{offset > 0 && d.totalRoutes > 0 ? 'No more routes on this page.' : 'No routes match these filters.'}</p> : (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {d.routes.map((r) => (
+                        <Link key={r.id} href={`/routes/${encodeURIComponent(r.id)}`} data-testid={`link-route-${r.id}`} className="flex items-center gap-3 rounded-2xl border border-card-border bg-card p-3 hover:border-white/25">
+                          <RouteBadge name={r.name} color={r.color} size="lg" />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold">{r.name} {MODE_NAME[r.type]}{r.serviceClass === 'express' && <span className="ml-2 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-primary">Express</span>}</p>
+                            <p className="truncate text-sm text-muted-foreground">{r.longName ? `${r.longName} · ` : ''}{r.agency}</p>
+                          </div>
+                          <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </section>
+                <section>
+                  <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground" data-testid="text-total-stops">Stations and stops · {d.totalStops.toLocaleString()}</h2>
+                  {d.stops.length === 0
+                    ? <div className="flex items-center gap-3 rounded-2xl border border-dashed border-border p-6"><ModeIcon type="bus" size={36} /><p className="text-muted-foreground">{q ? `No stops match "${q}".` : 'No stops on this page.'} Try a station name, a route like "M15", or clear a filter.</p></div>
+                    : <div className="space-y-3">{d.stops.map((s, i) => <StopCard key={s.id} stop={s} index={i} />)}</div>}
+                </section>
+                {total > LIMIT && <div className="rounded-2xl border border-card-border bg-card"><Pager offset={offset} limit={LIMIT} total={total} onChange={(o) => { setOffset(o); window.scrollTo({ top: 0 }); }} label="results" /></div>}
+              </div>
+            )}
           </>
         )}
       </div>

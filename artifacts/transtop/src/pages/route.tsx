@@ -5,6 +5,7 @@ import { getGetRouteQueryKey, useGetRoute } from '@workspace/api-client-react';
 import { ModeSwitch } from '@/components/shell';
 import { AlertRow, Countdown, ErrorState, FavButton, MODE_NAME, RouteBadge, SkeletonCards, SourceLabel } from '@/components/transit';
 import { TransitMap } from '@/components/transit-map';
+import { TimetablePanel } from '@/components/timetable';
 import { honest, usePrefs } from '@/lib/prefs';
 import { ago } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -57,6 +58,7 @@ export default function RoutePage() {
           )}
           <div className="mt-6 grid gap-6 md:grid-cols-[1fr_1.1fr]">
             <div className="space-y-4">
+              {dirs.length > 0 && <p className="text-xs text-muted-foreground" data-testid="text-patterns">{dirs.length} service pattern{dirs.length > 1 ? 's' : ''} from the published schedule. Stops shown for {activeDir}.</p>}
               {d.alerts.map((a) => <AlertRow key={a.id} alert={a} />)}
               <ol className="relative" aria-label="Stops in order">
                 <span className="absolute bottom-6 left-[19px] top-6 w-1" style={{ background: color }} aria-hidden />
@@ -79,7 +81,7 @@ export default function RoutePage() {
                 })}
               </ol>
             </div>
-            <aside className="space-y-3 md:sticky md:top-20 md:self-start">
+            <aside className="space-y-3">
               <TransitMap center={center} stops={mapStops} activeId={currentStop} shape={shape} vehicles={vehicles} className="h-[380px] w-full overflow-hidden rounded-2xl border border-border" label={`Map of route ${d.route.name}`} />
               <div className="rounded-2xl border border-card-border bg-card p-4 text-sm">
                 <p className="font-bold">Vehicle positions</p>
@@ -94,6 +96,7 @@ export default function RoutePage() {
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">Individual riders are never shown. Updated {ago(vehicles[0]?.updatedAt)}.</p>
               </div>
+              <TimetablePanel key={d.route.id} routeId={d.route.id} direction={activeDir} color={color} title={activeDir ? `Timetable · ${activeDir}` : 'Timetable'} />
             </aside>
           </div>
         </>

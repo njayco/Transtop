@@ -32,6 +32,7 @@ type Props = {
   zoom?: number;
   className?: string;
   label?: string;
+  googleOnly?: boolean;
 };
 
 // One shared auth-error notification for all map instances (Nearby, stop and route).
@@ -50,7 +51,7 @@ function installAuthHook() {
   };
 }
 
-export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehicles = [], network, onRoute, zoom = 14.5, className, label = 'Transit map' }: Props) {
+export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehicles = [], network, onRoute, zoom = 14.5, className, label = 'Transit map', googleOnly = false }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
   const libraries = useRef<Awaited<ReturnType<typeof loadGoogleMaps>> | null>(null);
@@ -204,7 +205,7 @@ export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehi
 
   if (failed) return (
     <div className={`relative ${className ?? ''}`}>
-      <SchematicMap center={center} stops={stops} activeId={activeId} onSelect={onSelect} shape={shape} vehicles={vehicles} network={network} onRoute={onRoute} className="h-full w-full" label={label} />
+      {!googleOnly && <SchematicMap center={center} stops={stops} activeId={activeId} onSelect={onSelect} shape={shape} vehicles={vehicles} network={network} onRoute={onRoute} className="h-full w-full" label={label} />}
       <p className="absolute bottom-8 left-3 right-3 rounded-lg border border-white/10 bg-black/90 px-3 py-2 text-xs text-white" role="status">
         Google Maps could not load. Check connectivity, billing, Maps JavaScript API access and allowed website domains. Stops and routes remain available in this schematic and the list.
       </p>

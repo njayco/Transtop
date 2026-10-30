@@ -1,6 +1,6 @@
 import { Link } from 'wouter';
 import { ExternalLink, Trash2, Play, Radio } from 'lucide-react';
-import { useGetSources } from '@workspace/api-client-react';
+import { useGetSources, type FeedSource } from '@workspace/api-client-react';
 import { MobileTop, ModeSwitch } from '@/components/shell';
 import { ErrorState, SourceLabel } from '@/components/transit';
 import { useEntry } from '@/components/intro';
@@ -15,6 +15,9 @@ import { useToast } from '@/hooks/use-toast';
 function statusStyle(s: string) {
   const v = s.toLowerCase();
   if (/partial/.test(v)) return { c: 'text-[hsl(var(--warn))]', l: 'Partial' };
+  if (/expired|future/.test(v)) return { c: 'text-[hsl(var(--warn))]', l: s };
+  if (/scheduled only/.test(v)) return { c: 'text-[hsl(var(--ok))]', l: 'Scheduled only' };
+  if (/configured.*verify/.test(v)) return { c: 'text-[hsl(var(--warn))]', l: 'Access not verified' };
   if (/unsupport/.test(v)) return { c: 'text-muted-foreground', l: 'Unsupported' };
   if (/credential/.test(v)) return { c: 'text-[hsl(var(--warn))]', l: 'Awaiting credentials' };
   if (/unavailable/.test(v)) return { c: 'text-[hsl(var(--bad))]', l: 'Unavailable' };
@@ -24,6 +27,45 @@ function statusStyle(s: string) {
   if (/(unsupport|planned)/.test(v)) return { c: 'text-muted-foreground', l: 'Planned coverage' };
   if (/(demo)/.test(v)) return { c: 'text-primary', l: 'Demo' };
   return { c: 'text-[hsl(var(--bad))]', l: s };
+}
+
+function ymd(s: string) { return /^\d{8}$/.test(s) ? `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6)}` : s; }
+
+const EXPECTED = [
+  { k: 'NYC Subway / Staten Island Railway', id: 'mta-subway' },
+  { k: 'MTA buses (all boroughs, express)', id: 'mta-bus' },
+  { k: 'LIRR', id: 'mta-lirr' },
+  { k: 'Metro-North', id: 'mta-mnr' },
+  { k: 'NICE Bus (Nassau)', id: 'nice' },
+  { k: 'Suffolk County Transit', id: 'suffolk' },
+  { k: 'Huntington HART', id: 'hart' },
+  { k: 'City of Long Beach', id: 'long-beach' },
+  { k: 'Glen Cove Loop Bus', id: 'glen-cove' },
+  { k: 'Hudson Rail Link', id: 'hudson-link' },
+  { k: 'JFK AirTrain', id: 'airtrain-jfk' },
+  { k: 'Private commuter operators', id: 'private-commuter' },
+  { k: 'Google journey planning', id: 'google-routes' },
+];
+function Checklist({ sources }: { sources: FeedSource[] }) {
+  return (
+    <div className="rounded-2xl border border-card-border bg-card p-4" data-testid="section-coverage-checklist">
+      <p className="font-bold">Coverage checklist</p>
+      <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
+        {EXPECTED.map((e) => {
+          const m = sources.filter((s) => e.id === s.id);
+          const st = m.length ? statusStyle(m[0].status) : { c: 'text-muted-foreground', l: 'Gap: not covered' };
+          const ok = st.l === 'Working' || st.l === 'Scheduled only';
+          return (
+            <li key={e.k} className="flex items-center gap-2 text-sm" data-testid={`row-coverage-${e.k}`}>
+              <span className={cn('inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-black', ok ? 'border-[hsl(var(--ok))] bg-[hsl(var(--ok))] text-black' : 'border-border')}>{ok ? '\u2713' : ''}</span>
+              <span className="flex-1">{e.k}</span><span className={cn('text-xs font-bold', st.c)}>{st.l}</span>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-3 text-xs text-muted-foreground">Gaps mean Transtop has no feed for that operator; its routes will not appear in search, timetables or maps.</p>
+    </div>
+  );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -64,6 +106,7 @@ export default function Settings() {
         <Section title="Agency coverage and feed status">
           {sources.isLoading && <div className="space-y-2">{[0, 1, 2].map((i) => <div key={i} className="skel h-20" />)}</div>}
           {sources.isError && <ErrorState title="Feed status unavailable" onRetry={() => sources.refetch()} />}
+          {sources.data && <Checklist sources={sources.data} />}
           <ul className="space-y-2">
             {(sources.data ?? []).map((f) => {
               const st = statusStyle(f.status);
@@ -74,8 +117,17 @@ export default function Settings() {
                     <p className={cn('text-sm font-bold', st.c)}>{st.l}</p>
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">{f.description}</p>
+                  <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-4">
+                    <div><dt className="text-muted-foreground">Type</dt><dd className="font-semibold">{f.type ?? 'Not reported'}</dd></div>
+                    <div><dt className="text-muted-foreground">GTFS routes</dt><dd className="font-semibold" data-testid={`text-source-routes-${f.id}`}>{f.routeCount != null ? f.routeCount.toLocaleString() : 'None imported'}</dd></div>
+                    <div><dt className="text-muted-foreground">GTFS stop records</dt><dd className="font-semibold">{f.stopCount != null ? f.stopCount.toLocaleString() : 'None imported'}</dd></div>
+                    <div><dt className="text-muted-foreground">Service window</dt><dd className="font-semibold">{f.serviceStart && f.serviceEnd ? `${ymd(f.serviceStart)} to ${ymd(f.serviceEnd)}` : 'Unknown'}</dd></div>
+                  </dl>
+                  {f.lastError && <p className="mt-2 rounded-lg border border-[hsl(var(--bad)/.4)] px-3 py-2 text-xs text-[hsl(var(--bad))]" data-testid={`text-source-error-${f.id}`}>Last error: {f.lastError}</p>}
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     <span>Last updated {ago(f.updatedAt)}</span>
+                    {f.importedAt && <span>Schedule imported {ago(f.importedAt)}</span>}
+                    {f.sourceUrl && f.sourceUrl !== f.url && <a href={f.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline underline-offset-2 hover:text-foreground">Feed file <ExternalLink className="h-3 w-3" /></a>}
                     {f.url && <a href={f.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline underline-offset-2 hover:text-foreground">Source and terms <ExternalLink className="h-3 w-3" /></a>}
                   </div>
                 </li>
@@ -89,7 +141,7 @@ export default function Settings() {
           <div className="space-y-3 rounded-2xl border border-card-border bg-card p-4 text-sm">
             <p><b>Nearby location</b> is requested only when you tap Use my location. It is used once to sort stops and is not stored. You can revoke it in your browser settings.</p>
             <p><b>Address search</b>: station and neighborhood names are matched by Transtop. Numbered street addresses are sent to the US Census geocoder to find coordinates.</p>
-            <p><b>Google Maps</b>: opening a map sends your map viewport and ordinary connection information to Google. When you choose Use my location, the map can center on that location. Individual rider contributions are never sent as public map markers. <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline">Google Privacy Policy</a> · <a href="https://maps.google.com/help/terms_maps/" target="_blank" rel="noreferrer" className="underline">Google Maps Terms</a></p>
+            <p><b>Google Maps</b>: opening a map sends your map viewport and ordinary connection information to Google. Submitting a journey sends both location texts and your travel time/preferences to Google through Transtop; journey results are not permanently stored. When you choose Use my location, the map can center on that location. Individual rider contributions are never sent as public map markers. <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline">Google Privacy Policy</a> · <a href="https://maps.google.com/help/terms_maps/" target="_blank" rel="noreferrer" className="underline">Google Maps Terms</a></p>
             <p><b>Ride sharing</b> is a separate, per-ride choice. Raw samples are deleted within 24 hours and only aggregated, reduced-precision positions are published.</p>
             {ride ? (
               <button onClick={async () => { await stopRide('user'); toast({ title: 'Sharing stopped' }); }} className="flex h-12 items-center gap-2 rounded-full bg-[hsl(var(--bad))] px-5 font-bold text-white" data-testid="button-settings-stop-sharing"><Radio className="h-4 w-4" />Stop sharing now</button>

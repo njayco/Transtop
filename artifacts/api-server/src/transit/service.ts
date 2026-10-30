@@ -7,6 +7,10 @@ import { scheduledArrivals } from "./schedules";
 import { communityArrivals } from "./estimator";
 import { geocodeAddress } from "./geocoder";
 import { distance, type Mode, type Arrival, type TransitStop, type TransitRoute, type RouteDetail } from "./types";
+import { DateTime } from "luxon";
+import { ZONE } from "./time";
+import { patternLabel,resolvePattern } from "./catalog";
+import { journeyHealth } from "./journeys";
 
 let stopCache:{at:number;demo:TransitStop[];live:TransitStop[]}|undefined;
 export async function allStops(mode:Mode) {
@@ -67,7 +71,7 @@ const knownPlaces=[
   {terms:["jamaica"],lat:40.7003,lon:-73.8087},
   {terms:["atlantic terminal","barclays"],lat:40.6843,lon:-73.9777},
 ];
-export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:number;lon?:number}) {
+export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:number;lon?:number;agency?:string;serviceClass?:string}) {
   const mode=params.mode||"demo", q=(params.q||"").trim().toLowerCase().slice(0,180);
   let lat=params.lat??40.75529,lon=params.lon??-73.98749;
   let foundPlace=false;
@@ -77,7 +81,8 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
     const point=await geocodeAddress(q);
     if(point){lat=point.lat;lon=point.lon;foundPlace=true;}
   }
-  let rows=(await allStops(mode)).filter(s=>!s.parent&&s.routes.length&&(!params.type||params.type==="all"||s.type===params.type));
+  let rows=(await allStops(mode)).filter(s=>!s.parent&&s.routes.length&&(!params.type||params.type==="all"||s.type===params.type)&&
+    (!params.agency||s.id.split(":")[0]===params.agency)&&(!params.serviceClass||params.serviceClass==="all"||s.routes.some(r=>r.serviceClass===params.serviceClass)));
   const exact=q?rows.find(s=>s.name.toLowerCase().includes(q)):undefined;
   if(exact&&!foundPlace){lat=exact.lat;lon=exact.lon;}
   if(q&&!foundPlace)rows=rows.filter(s=>s.name.toLowerCase().includes(q)||s.neighborhood?.toLowerCase().includes(q)||s.routes.some(r=>r.name.toLowerCase()===q||r.id.toLowerCase()===q));
@@ -96,13 +101,20 @@ export async function routeDetail(id:string,mode:Mode,direction?:string):Promise
   if(!r)return;
   const route=r.data as TransitRoute, agency=id.split(":")[0], raw=id.slice(agency.length+1);
   let ss=(await allStops(mode)).filter(s=>!s.parent&&s.routes.some(r=>r.id===id)),shape:number[][]=[];
+  let directions=route.type==="rail"?["Outbound","Inbound"]:["Uptown","Downtown"];
   if(mode==="demo"){
     ss=ss.sort((a,b)=>a.lat-b.lat);
     if(direction==="Downtown"||direction==="Inbound")ss.reverse();
   }
   if(mode==="live"){
-    const {rows}=await pool.query(`SELECT id,data FROM transit_trips WHERE mode='live' AND agency=$1 AND data->>'route_id'=$2
-      AND ($3::text IS NULL OR data->>'direction_id'=$3) LIMIT 1`,[agency,raw,direction==="Downtown"||direction==="Inbound"?"1":direction?"0":null]);
+    const {rows:patterns}=await pool.query(`SELECT DISTINCT data->>'direction_id' AS direction,data->>'trip_headsign' AS headsign
+      FROM transit_trips WHERE mode='live' AND agency=$1 AND data->>'route_id'=$2 ORDER BY 1,2`,[agency,raw]);
+    directions=patterns.map(p=>patternLabel({direction_id:p.direction,trip_headsign:p.headsign}));
+    const selected=resolvePattern(directions,direction),dir=selected?.split(" · ")[0],headsign=selected?.split(" · ").slice(1).join(" · ");
+    const {rows}=await pool.query(`SELECT id,data FROM transit_trips t WHERE mode='live' AND agency=$1 AND data->>'route_id'=$2
+      AND COALESCE(NULLIF(data->>'direction_id',''),'0')=$3
+      AND COALESCE(NULLIF(data->>'trip_headsign',''),'Direction ' || COALESCE(NULLIF(data->>'direction_id',''),'0'))=$4
+      ORDER BY (SELECT max(st.sequence) FROM transit_stop_times st WHERE st.mode=t.mode AND st.trip_id=t.id) DESC,t.id LIMIT 1`,[agency,raw,dir,headsign]);
     if(rows[0]){
       const {rows:ordered}=await pool.query(`SELECT s.data FROM transit_stop_times st JOIN transit_stops s ON s.id=st.stop_id AND s.mode=st.mode
         WHERE st.mode='live' AND st.trip_id=$1 ORDER BY st.sequence`,[rows[0].id]);
@@ -110,7 +122,7 @@ export async function routeDetail(id:string,mode:Mode,direction?:string):Promise
       ss=ordered.map(o=>{const s=o.data as TransitStop;return s.parent?all.find(p=>p.id===`${agency}:${s.parent}`)||s:s;}).filter(s=>{if(seen.has(s.id))return false;seen.add(s.id);return true;});
       const {rows:sh}=await pool.query("SELECT data FROM transit_shapes WHERE mode='live' AND id=$1",[`${agency}:${rows[0].data.shape_id}`]);
       shape=sh[0]?.data.coordinates||[];
-    }
+    }else ss=[];
   }
   if(!shape.length)shape=ss.map(s=>[s.lon,s.lat]);
   const vehicles=mode==="demo"?[]:feedsFor(agency).filter(f=>fresh(f)).flatMap(f=>f.entities.filter(e=>e.vehicle?.position&&`${agency}:${e.vehicle.trip?.routeId}`===id).map(e=>({
@@ -118,14 +130,30 @@ export async function routeDetail(id:string,mode:Mode,direction?:string):Promise
   })));
   return {route,stops:await Promise.all(ss.map(s=>enrich(s,mode))),shape,vehicles,
     alerts:(mode==="demo"?demoAlerts:liveAlerts()).filter(a=>a.routeIds.includes(id)),
-    directions:route.type==="rail"?["Outbound","Inbound"]:["Uptown","Downtown"]};
+    directions};
 }
 export async function sources() {
   const imports=await db.select().from(feedSnapshots).where(eq(feedSnapshots.mode,"live"));
-  return adapters.map(a=>{
-    const imp=imports.find(i=>i.id===`${a.id}:static`),health=feedStatus(a.id);
-    return {id:a.id,agency:a.name,status:!a.realtimeUrls.length?a.status:!imp?"Integration not configured":health.fresh===health.total?"working":health.fresh?"partial":"unavailable",
-      description:a.setup+(!imp&&a.staticUrl?` Run pnpm --filter @workspace/api-server run import-gtfs ${a.id}.`:"")+(imp?` ${imp.data.stopCount} imported stops; ${health.fresh}/${health.total} fresh live feeds.`:""),
-      url:a.documentation,updatedAt:health.updatedAt};
+  const today=DateTime.now().setZone(ZONE).toFormat("yyyyMMdd");
+  const {rows:counts}=await pool.query(`SELECT agency,'routes' AS kind,count(*)::int AS count FROM transit_routes WHERE mode='live' GROUP BY agency
+    UNION ALL SELECT agency,'stops',count(*)::int FROM transit_stops WHERE mode='live' GROUP BY agency`);
+  const result=adapters.map(a=>{
+    const imp=imports.find(i=>i.id===`${a.id}:static`),health=feedStatus(a.id),data=imp?.data;
+    const lastError=imports.find(i=>i.id===`${a.id}:import-error`);
+    const status=!imp?(a.staticUrl?"not imported":a.status):data?.serviceEnd&&data.serviceEnd<today?"expired schedules":
+      data?.components?.some((c:any)=>c.serviceEnd<today)?"partial schedules":
+      data?.serviceStart&&data.serviceStart>today?"future schedules":health.fresh?"schedules + live predictions":"scheduled only";
+    const failed=lastError&&(!data||lastError.data.at>data.importedAt)?lastError.data.message:undefined;
+    return {id:a.id,agency:a.name,type:a.type,status,description:a.setup+
+      (data&&data.components?.length>1?` Packages: ${data.components.map((c:any)=>`${c.id} (${c.serviceStart}–${c.serviceEnd})`).join(", ")}.`:"")+
+      (imp?` ${health.fresh}/${health.total} fresh live feeds.`:""),
+      routeCount:counts.find(c=>c.agency===a.id&&c.kind==="routes")?.count||0,stopCount:counts.find(c=>c.agency===a.id&&c.kind==="stops")?.count||0,
+      importedAt:data?.importedAt,serviceStart:data?.serviceStart,serviceEnd:data?.serviceEnd,sourceUrl:data?.sourceUrl,lastError:failed,
+      url:a.documentation,updatedAt:health.updatedAt||data?.importedAt||null};
   });
+  const google=journeyHealth();
+  return [...result,{id:"google-routes",agency:"Google journey planning",type:"journey planner",
+    status:google.status,lastError:"message" in google?google.message:undefined,
+    description:"On-demand Google transit itineraries, not a complete agency catalog or official live arrival feed. Requires Routes API, Google Cloud billing and a separate server key. Provider access is checked when a journey is requested.",
+    url:"https://developers.google.com/maps/documentation/routes/transit-route",updatedAt:google.updatedAt}];
 }

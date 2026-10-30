@@ -26,11 +26,12 @@ export async function network(mode:Mode,type?:string,lat=40.75529,lon=-73.98749)
   if(mode==="demo")lines=demoRoutes.map(route=>({route,shape:demoShape(route)}));
   else{
     if(!cached||Date.now()-cached.at>300000){
-      const {rows}=await pool.query(`SELECT DISTINCT ON (r.id) r.data AS route,s.data AS shape
+      const {rows}=await pool.query(`SELECT r.data AS route,s.data AS shape
         FROM transit_routes r
-        JOIN transit_trips t ON t.mode=r.mode AND t.agency=r.agency AND t.data->>'route_id'=r.data->>'route_id'
+        JOIN LATERAL (SELECT data,mode,agency FROM transit_trips t WHERE t.mode=r.mode AND t.agency=r.agency AND t.data->>'route_id'=r.data->>'route_id'
+          AND t.data->>'shape_id' IS NOT NULL ORDER BY t.id LIMIT 1) t ON true
         JOIN transit_shapes s ON s.mode=t.mode AND s.id=t.agency || ':' || (t.data->>'shape_id')
-        WHERE r.mode='live' ORDER BY r.id,t.id`);
+        WHERE r.mode='live' ORDER BY r.id`);
       cached={at:Date.now(),lines:rows.map(r=>({route:r.route,shape:r.shape.coordinates}))};
     }
     lines=cached.lines;

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useLocation } from 'wouter';
 import { LocateFixed, Search, List, Map as MapIcon, X, MapPin } from 'lucide-react';
-import { getGetNetworkQueryKey, getGetStopsQueryKey, useGetAlerts, useGetNetwork, useGetStops, type GetNetworkParams, type GetStopsParams } from '@workspace/api-client-react';
+import { getGetNetworkQueryKey, getGetStopsQueryKey, useGetAlerts, useGetNetwork, useGetSources, useGetStops, type GetNetworkParams, type GetStopsParams } from '@workspace/api-client-react';
 import { MobileTop } from '@/components/shell';
 import { AlertRow, ErrorState, SkeletonCards, StopCard, TransitLines } from '@/components/transit';
 import { TransitMap, vehicleKind } from '@/components/transit-map';
@@ -20,15 +20,19 @@ export default function Nearby() {
   const [, nav] = useLocation();
   const [place, setPlace] = useState<Place>(TIMES_SQUARE);
   const [filter, setFilter] = useState<string>('all');
+  const [agency, setAgency] = useState('');
+  const [svc, setSvc] = useState<'all' | 'local' | 'express'>('all');
+  const sources = useGetSources();
+  const agencies = useMemo(() => (sources.data ?? []).filter(s=>['subway','bus','rail'].includes(s.type||'')).sort((a,b)=>a.agency.localeCompare(b.agency)), [sources.data]);
   const [view, setView] = useState<'list' | 'map'>('list');
   const [text, setText] = useState('');
   const [hover, setHover] = useState<string | null>(null);
   const [geo, setGeo] = useState<'idle' | 'explain' | 'asking' | 'denied' | 'unsupported'>('idle');
 
   const params: GetStopsParams = useMemo(() => ({
-    mode, ...(filter !== 'all' ? { type: filter } : {}),
+    mode, ...(filter !== 'all' ? { type: filter } : {}), ...(agency ? { agency } : {}), ...(svc !== 'all' ? { serviceClass: svc } : {}),
     ...('q' in place ? { q: place.q } : { lat: place.lat, lon: place.lon }),
-  }), [mode, filter, place]);
+  }), [mode, filter, place, agency, svc]);
   const stops = useGetStops(params, { query: { queryKey: getGetStopsQueryKey(params), refetchInterval: 30_000, retry: 1 } });
   const alerts = useGetAlerts({ mode });
   const list = stops.data?.stops ?? [];
@@ -37,7 +41,8 @@ export default function Nearby() {
     ? { lat: stops.data.centerLat, lon: stops.data.centerLon }
     : 'lat' in place ? place : TIMES_SQUARE;
   const netParams: GetNetworkParams = useMemo(() => ({ mode, ...(filter !== 'all' ? { type: filter } : {}), lat: center.lat, lon: center.lon }), [mode, filter, center.lat, center.lon]);
-  const network = useGetNetwork(netParams, { query: { queryKey: getGetNetworkQueryKey(netParams), refetchInterval: 30_000, retry: 1 } });
+  const networkQ = useGetNetwork(netParams, { query: { queryKey: getGetNetworkQueryKey(netParams), refetchInterval: 30_000, retry: 1 } });
+  const network = useMemo(() => ({ isError: networkQ.isError, data: networkQ.data?.filter((l) => (!agency || l.route.id.split(':')[0] === agency) && (svc === 'all' || (l.route.serviceClass ?? 'local') === svc)) }), [networkQ.isError, networkQ.data, agency, svc]);
   const hoverRoutes = useMemo(() => new Set(list.find((s) => s.id === hover)?.routes.map((r) => r.id) ?? []), [list, hover]);
   const lines = useMemo(() => (network.data ?? []).map((l) => ({ id: l.route.id, name: l.route.name, color: hoverRoutes.size && !hoverRoutes.has(l.route.id) ? '#55555c' : l.route.color, coords: l.shape })), [network.data, hoverRoutes]);
   const vehicles = useMemo(() => (network.data ?? []).flatMap((l) => l.vehicles
@@ -119,6 +124,14 @@ export default function Nearby() {
           <button key={f.v} role="radio" aria-checked={filter === f.v} onClick={() => setFilter(f.v)} data-testid={`filter-${f.v}`}
             className={cn('h-10 shrink-0 rounded-full border px-4 text-sm font-semibold transition-colors', filter === f.v ? 'border-foreground bg-foreground text-background' : 'border-border text-muted-foreground hover:text-foreground')}>{f.l}</button>
         ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <select value={agency} onChange={(e) => setAgency(e.target.value)} aria-label="Agency filter" data-testid="select-nearby-agency" className="h-10 rounded-xl border border-input bg-card px-3 text-sm">
+          <option value="">All agencies</option>{agencies.map((a) => <option key={a.id} value={a.id}>{a.agency}</option>)}
+        </select>
+        <select value={svc} onChange={(e) => setSvc(e.target.value as 'all' | 'local' | 'express')} aria-label="Local or express" data-testid="select-nearby-class" className="h-10 rounded-xl border border-input bg-card px-3 text-sm">
+          <option value="all">Local + express</option><option value="local">Local only</option><option value="express">Express only</option>
+        </select>
       </div>
       <div className="flex items-end justify-between gap-2">
         <div>

@@ -1,4 +1,5 @@
 import { pgTable, text, jsonb, timestamp, doublePrecision, integer, boolean, index, primaryKey } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // GTFS source records are retained without lossy column transformations.
 // mode + id forms the boundary between examples and imported official records.
@@ -8,7 +9,8 @@ const records = (name: string) => pgTable(name, {
   agency: text("agency").notNull(),
   data: jsonb("data").$type<Record<string, any>>().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-}, t => [primaryKey({ columns: [t.mode, t.id] }), index(`${name}_agency_idx`).on(t.mode, t.agency)]);
+}, t => [primaryKey({ columns: [t.mode, t.id] }), index(`${name}_agency_idx`).on(t.mode, t.agency),
+  ...(name==="transit_trips"?[index("transit_trips_route_idx").on(t.mode,t.agency,sql`(${t.data}->>'route_id')`)]:[])]);
 
 export const agencies = records("transit_agencies");
 export const feedSources = records("transit_feed_sources");

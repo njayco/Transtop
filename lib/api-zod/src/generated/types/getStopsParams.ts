@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { GetStopsMode } from './getStopsMode';
+import type { GetStopsServiceClass } from './getStopsServiceClass';
 
 export type GetStopsParams = {
 q?: string;
@@ -12,4 +13,6 @@ mode?: GetStopsMode;
 type?: string;
 lat?: number;
 lon?: number;
+agency?: string;
+serviceClass?: GetStopsServiceClass;
 };

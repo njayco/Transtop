@@ -19,7 +19,9 @@ export const GetStopsQueryParams = zod.object({
   "mode": zod.enum(['demo', 'live']).default(getStopsQueryModeDefault),
   "type": zod.coerce.string().optional(),
   "lat": zod.coerce.number().optional(),
-  "lon": zod.coerce.number().optional()
+  "lon": zod.coerce.number().optional(),
+  "agency": zod.coerce.string().optional(),
+  "serviceClass": zod.enum(['all', 'local', 'express']).optional()
 })
 
 export const GetStopsResponse = zod.object({
@@ -37,7 +39,10 @@ export const GetStopsResponse = zod.object({
   "name": zod.string(),
   "color": zod.string(),
   "type": zod.enum(['subway', 'bus', 'rail']),
-  "agency": zod.string()
+  "agency": zod.string(),
+  "agencyId": zod.string().optional(),
+  "serviceClass": zod.enum(['local', 'express']).optional(),
+  "longName": zod.string().optional()
 })),
   "arrivals": zod.array(zod.object({
   "id": zod.string(),
@@ -99,7 +104,10 @@ export const GetStopResponse = zod.object({
   "name": zod.string(),
   "color": zod.string(),
   "type": zod.enum(['subway', 'bus', 'rail']),
-  "agency": zod.string()
+  "agency": zod.string(),
+  "agencyId": zod.string().optional(),
+  "serviceClass": zod.enum(['local', 'express']).optional(),
+  "longName": zod.string().optional()
 })),
   "arrivals": zod.array(zod.object({
   "id": zod.string(),
@@ -148,7 +156,10 @@ export const GetRouteResponse = zod.object({
   "name": zod.string(),
   "color": zod.string(),
   "type": zod.enum(['subway', 'bus', 'rail']),
-  "agency": zod.string()
+  "agency": zod.string(),
+  "agencyId": zod.string().optional(),
+  "serviceClass": zod.enum(['local', 'express']).optional(),
+  "longName": zod.string().optional()
 }),
   "stops": zod.array(zod.object({
   "id": zod.string(),
@@ -164,7 +175,10 @@ export const GetRouteResponse = zod.object({
   "name": zod.string(),
   "color": zod.string(),
   "type": zod.enum(['subway', 'bus', 'rail']),
-  "agency": zod.string()
+  "agency": zod.string(),
+  "agencyId": zod.string().optional(),
+  "serviceClass": zod.enum(['local', 'express']).optional(),
+  "longName": zod.string().optional()
 })),
   "arrivals": zod.array(zod.object({
   "id": zod.string(),
@@ -220,9 +234,200 @@ export const GetSourcesResponseItem = zod.object({
   "status": zod.string(),
   "description": zod.string(),
   "url": zod.string(),
-  "updatedAt": zod.string().nullable()
+  "updatedAt": zod.string().nullable(),
+  "type": zod.string().optional(),
+  "routeCount": zod.number().int().optional(),
+  "stopCount": zod.number().int().optional(),
+  "serviceStart": zod.string().optional(),
+  "serviceEnd": zod.string().optional(),
+  "importedAt": zod.string().optional(),
+  "sourceUrl": zod.string().optional(),
+  "lastError": zod.string().optional()
 })
 export const GetSourcesResponse = zod.array(GetSourcesResponseItem)
+
+
+export const getCatalogQueryModeDefault = `live`;
+export const getCatalogQueryQMax = 180;
+
+export const getCatalogQueryOffsetDefault = 0;
+export const getCatalogQueryOffsetMin = 0;
+
+export const getCatalogQueryLimitDefault = 20;
+export const getCatalogQueryLimitMax = 50;
+
+
+
+export const GetCatalogQueryParams = zod.object({
+  "mode": zod.enum(['demo', 'live']).default(getCatalogQueryModeDefault),
+  "q": zod.coerce.string().max(getCatalogQueryQMax).optional(),
+  "agency": zod.coerce.string().optional(),
+  "type": zod.coerce.string().optional(),
+  "serviceClass": zod.enum(['all', 'local', 'express']).optional(),
+  "offset": zod.coerce.number().int().min(getCatalogQueryOffsetMin).default(getCatalogQueryOffsetDefault),
+  "limit": zod.coerce.number().int().min(1).max(getCatalogQueryLimitMax).default(getCatalogQueryLimitDefault)
+})
+
+export const GetCatalogResponse = zod.object({
+  "routes": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "color": zod.string(),
+  "type": zod.enum(['subway', 'bus', 'rail']),
+  "agency": zod.string(),
+  "agencyId": zod.string().optional(),
+  "serviceClass": zod.enum(['local', 'express']).optional(),
+  "longName": zod.string().optional()
+})),
+  "stops": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "agency": zod.string(),
+  "type": zod.enum(['subway', 'bus', 'rail']),
+  "lat": zod.number(),
+  "lon": zod.number(),
+  "distance": zod.number(),
+  "walkingMinutes": zod.number().int(),
+  "routes": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "color": zod.string(),
+  "type": zod.enum(['subway', 'bus', 'rail']),
+  "agency": zod.string(),
+  "agencyId": zod.string().optional(),
+  "serviceClass": zod.enum(['local', 'express']).optional(),
+  "longName": zod.string().optional()
+})),
+  "arrivals": zod.array(zod.object({
+  "id": zod.string(),
+  "routeId": zod.string(),
+  "routeName": zod.string(),
+  "color": zod.string(),
+  "direction": zod.string(),
+  "destination": zod.string(),
+  "minutes": zod.number().int(),
+  "source": zod.enum(['demo', 'live', 'community', 'scheduled', 'unavailable']),
+  "updatedAt": zod.string(),
+  "status": zod.string(),
+  "scheduledAt": zod.string(),
+  "tripId": zod.string().optional(),
+  "rangeMax": zod.number().int().optional(),
+  "confidence": zod.string().optional()
+})),
+  "alerts": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "severity": zod.string(),
+  "routeIds": zod.array(zod.string()),
+  "source": zod.string()
+})),
+  "accessible": zod.boolean(),
+  "updatedAt": zod.string(),
+  "neighborhood": zod.string().optional()
+})),
+  "totalRoutes": zod.number().int(),
+  "totalStops": zod.number().int(),
+  "offset": zod.number().int(),
+  "limit": zod.number().int()
+})
+
+
+export const getTimetableQueryModeDefault = `live`;
+export const getTimetableQueryDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const getTimetableQueryFromDefault = `00:00`;
+export const getTimetableQueryFromRegExp = new RegExp('^\\d{2}:\\d{2}$');
+export const getTimetableQueryOffsetDefault = 0;
+export const getTimetableQueryOffsetMin = 0;
+
+export const getTimetableQueryLimitDefault = 40;
+export const getTimetableQueryLimitMax = 100;
+
+
+
+export const GetTimetableQueryParams = zod.object({
+  "mode": zod.enum(['demo', 'live']).default(getTimetableQueryModeDefault),
+  "stopId": zod.coerce.string().optional(),
+  "routeId": zod.coerce.string().optional(),
+  "direction": zod.coerce.string().optional(),
+  "date": zod.coerce.string().regex(getTimetableQueryDateRegExp),
+  "from": zod.coerce.string().regex(getTimetableQueryFromRegExp).default(getTimetableQueryFromDefault),
+  "offset": zod.coerce.number().int().min(getTimetableQueryOffsetMin).default(getTimetableQueryOffsetDefault),
+  "limit": zod.coerce.number().int().min(1).max(getTimetableQueryLimitMax).default(getTimetableQueryLimitDefault)
+})
+
+export const GetTimetableResponse = zod.object({
+  "departures": zod.array(zod.object({
+  "id": zod.string(),
+  "tripId": zod.string(),
+  "stopId": zod.string(),
+  "stopName": zod.string(),
+  "routeId": zod.string(),
+  "routeName": zod.string(),
+  "destination": zod.string(),
+  "direction": zod.string(),
+  "time": zod.string()
+})),
+  "total": zod.number().int(),
+  "offset": zod.number().int(),
+  "limit": zod.number().int(),
+  "date": zod.string(),
+  "message": zod.string()
+})
+
+
+export const planJourneyBodyOriginMin = 2;
+export const planJourneyBodyOriginMax = 200;
+
+export const planJourneyBodyDestinationMin = 2;
+export const planJourneyBodyDestinationMax = 200;
+
+export const planJourneyBodyModesMax = 5;
+
+
+
+export const PlanJourneyBody = zod.object({
+  "origin": zod.string().min(planJourneyBodyOriginMin).max(planJourneyBodyOriginMax),
+  "destination": zod.string().min(planJourneyBodyDestinationMin).max(planJourneyBodyDestinationMax),
+  "timeType": zod.enum(['departure', 'arrival']),
+  "time": zod.coerce.date().optional(),
+  "modes": zod.array(zod.enum(['BUS', 'SUBWAY', 'TRAIN', 'LIGHT_RAIL', 'RAIL'])).max(planJourneyBodyModesMax).optional()
+})
+
+export const PlanJourneyResponse = zod.object({
+  "journeys": zod.array(zod.object({
+  "id": zod.string(),
+  "durationSeconds": zod.number(),
+  "distanceMeters": zod.number(),
+  "shape": zod.array(zod.array(zod.number())),
+  "steps": zod.array(zod.object({
+  "mode": zod.string(),
+  "instruction": zod.string(),
+  "durationSeconds": zod.number(),
+  "line": zod.string().optional(),
+  "agency": zod.string().optional(),
+  "agencies": zod.array(zod.object({
+  "name": zod.string(),
+  "url": zod.string().optional()
+})).optional(),
+  "departureStop": zod.string().optional(),
+  "arrivalStop": zod.string().optional(),
+  "departureTime": zod.string().optional(),
+  "arrivalTime": zod.string().optional(),
+  "start": zod.object({
+  "lat": zod.number(),
+  "lon": zod.number()
+}).optional(),
+  "end": zod.object({
+  "lat": zod.number(),
+  "lon": zod.number()
+}).optional()
+}))
+})),
+  "message": zod.string(),
+  "provider": zod.string(),
+  "configured": zod.boolean()
+})
 
 
 export const getNetworkQueryModeDefault = `demo`;
@@ -240,7 +445,10 @@ export const GetNetworkResponseItem = zod.object({
   "name": zod.string(),
   "color": zod.string(),
   "type": zod.enum(['subway', 'bus', 'rail']),
-  "agency": zod.string()
+  "agency": zod.string(),
+  "agencyId": zod.string().optional(),
+  "serviceClass": zod.enum(['local', 'express']).optional(),
+  "longName": zod.string().optional()
 }),
   "shape": zod.array(zod.array(zod.number())),
   "vehicles": zod.array(zod.object({

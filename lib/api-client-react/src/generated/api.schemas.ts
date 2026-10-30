@@ -17,12 +17,23 @@ export const RouteType = {
   rail: 'rail',
 } as const;
 
+export type RouteServiceClass = typeof RouteServiceClass[keyof typeof RouteServiceClass];
+
+
+export const RouteServiceClass = {
+  local: 'local',
+  express: 'express',
+} as const;
+
 export interface Route {
   id: string;
   name: string;
   color: string;
   type: RouteType;
   agency: string;
+  agencyId?: string;
+  serviceClass?: RouteServiceClass;
+  longName?: string;
 }
 
 export type ArrivalSource = typeof ArrivalSource[keyof typeof ArrivalSource];
@@ -128,6 +139,120 @@ export interface FeedSource {
   url: string;
   /** @nullable */
   updatedAt: string | null;
+  type?: string;
+  routeCount?: number;
+  stopCount?: number;
+  serviceStart?: string;
+  serviceEnd?: string;
+  importedAt?: string;
+  sourceUrl?: string;
+  lastError?: string;
+}
+
+export interface CatalogResults {
+  routes: Route[];
+  stops: Stop[];
+  totalRoutes: number;
+  totalStops: number;
+  offset: number;
+  limit: number;
+}
+
+export interface TimetableDeparture {
+  id: string;
+  tripId: string;
+  stopId: string;
+  stopName: string;
+  routeId: string;
+  routeName: string;
+  destination: string;
+  direction: string;
+  time: string;
+}
+
+export interface TimetableResults {
+  departures: TimetableDeparture[];
+  total: number;
+  offset: number;
+  limit: number;
+  date: string;
+  message: string;
+}
+
+export type JourneyInputTimeType = typeof JourneyInputTimeType[keyof typeof JourneyInputTimeType];
+
+
+export const JourneyInputTimeType = {
+  departure: 'departure',
+  arrival: 'arrival',
+} as const;
+
+export type JourneyInputModesItem = typeof JourneyInputModesItem[keyof typeof JourneyInputModesItem];
+
+
+export const JourneyInputModesItem = {
+  BUS: 'BUS',
+  SUBWAY: 'SUBWAY',
+  TRAIN: 'TRAIN',
+  LIGHT_RAIL: 'LIGHT_RAIL',
+  RAIL: 'RAIL',
+} as const;
+
+export interface JourneyInput {
+  /**
+     * @minLength 2
+     * @maxLength 200
+     */
+  origin: string;
+  /**
+     * @minLength 2
+     * @maxLength 200
+     */
+  destination: string;
+  timeType: JourneyInputTimeType;
+  time?: string;
+  /** @maxItems 5 */
+  modes?: JourneyInputModesItem[];
+}
+
+export interface JourneyPoint {
+  lat: number;
+  lon: number;
+}
+
+export interface JourneyAgency {
+  name: string;
+  url?: string;
+}
+
+export interface JourneyStep {
+  mode: string;
+  instruction: string;
+  durationSeconds: number;
+  line?: string;
+  agency?: string;
+  agencies?: JourneyAgency[];
+  departureStop?: string;
+  arrivalStop?: string;
+  departureTime?: string;
+  arrivalTime?: string;
+  start?: JourneyPoint;
+  end?: JourneyPoint;
+}
+
+export interface Journey {
+  id: string;
+  durationSeconds: number;
+  distanceMeters: number;
+  shape: number[][];
+  steps: JourneyStep[];
+}
+
+export interface JourneyResults {
+  journeys: Journey[];
+  message: string;
+  provider: string;
+  configured: boolean;
 }
 
 export type RideInputMode = typeof RideInputMode[keyof typeof RideInputMode];
@@ -197,6 +322,8 @@ mode?: GetStopsMode;
 type?: string;
 lat?: number;
 lon?: number;
+agency?: string;
+serviceClass?: GetStopsServiceClass;
 };
 
 export type GetStopsMode = typeof GetStopsMode[keyof typeof GetStopsMode];
@@ -205,6 +332,15 @@ export type GetStopsMode = typeof GetStopsMode[keyof typeof GetStopsMode];
 export const GetStopsMode = {
   demo: 'demo',
   live: 'live',
+} as const;
+
+export type GetStopsServiceClass = typeof GetStopsServiceClass[keyof typeof GetStopsServiceClass];
+
+
+export const GetStopsServiceClass = {
+  all: 'all',
+  local: 'local',
+  express: 'express',
 } as const;
 
 export type GetStopParams = {
@@ -228,6 +364,75 @@ export type GetRouteMode = typeof GetRouteMode[keyof typeof GetRouteMode];
 
 
 export const GetRouteMode = {
+  demo: 'demo',
+  live: 'live',
+} as const;
+
+export type GetCatalogParams = {
+mode?: GetCatalogMode;
+/**
+ * @maxLength 180
+ */
+q?: string;
+agency?: string;
+type?: string;
+serviceClass?: GetCatalogServiceClass;
+/**
+ * @minimum 0
+ */
+offset?: number;
+/**
+ * @minimum 1
+ * @maximum 50
+ */
+limit?: number;
+};
+
+export type GetCatalogMode = typeof GetCatalogMode[keyof typeof GetCatalogMode];
+
+
+export const GetCatalogMode = {
+  demo: 'demo',
+  live: 'live',
+} as const;
+
+export type GetCatalogServiceClass = typeof GetCatalogServiceClass[keyof typeof GetCatalogServiceClass];
+
+
+export const GetCatalogServiceClass = {
+  all: 'all',
+  local: 'local',
+  express: 'express',
+} as const;
+
+export type GetTimetableParams = {
+mode?: GetTimetableMode;
+stopId?: string;
+routeId?: string;
+direction?: string;
+/**
+ * @pattern ^\d{4}-\d{2}-\d{2}$
+ */
+date: string;
+/**
+ * @pattern ^\d{2}:\d{2}$
+ */
+from?: string;
+/**
+ * @minimum 0
+ */
+offset?: number;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+};
+
+export type GetTimetableMode = typeof GetTimetableMode[keyof typeof GetTimetableMode];
+
+
+export const GetTimetableMode = {
   demo: 'demo',
   live: 'live',
 } as const;

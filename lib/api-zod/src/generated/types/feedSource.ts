@@ -13,4 +13,12 @@ export interface FeedSource {
   url: string;
   /** @nullable */
   updatedAt: string | null;
+  type?: string;
+  routeCount?: number;
+  stopCount?: number;
+  serviceStart?: string;
+  serviceEnd?: string;
+  importedAt?: string;
+  sourceUrl?: string;
+  lastError?: string;
 }

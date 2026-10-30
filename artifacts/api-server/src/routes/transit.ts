@@ -6,8 +6,33 @@ import { liveAlerts } from "../transit/realtime";
 import { contributionLimit, start, authorize, end, sample, report } from "../transit/rides";
 import { GetNetworkQueryParams, GetNetworkResponse } from "@workspace/api-zod";
 import { network } from "../transit/network";
+import { GetCatalogQueryParams,GetCatalogResponse,GetTimetableQueryParams,GetTimetableResponse,PlanJourneyBody,PlanJourneyResponse } from "@workspace/api-zod";
+import { catalog,timetable } from "../transit/catalog";
+import { journeyLimit,planJourney,JourneyError } from "../transit/journeys";
 const router:IRouter=Router();
 router.use("/transit",(_req,res,next)=>{res.set("Cache-Control","no-store");next();});
+router.get("/transit/catalog",async(req,res):Promise<void>=>{
+  const p=GetCatalogQueryParams.safeParse(req.query);
+  if(!p.success){res.status(400).json({error:"Invalid catalog filters or page"});return;}
+  res.json(GetCatalogResponse.parse(await catalog(p.data)));
+});
+router.get("/transit/timetable",async(req,res):Promise<void>=>{
+  const p=GetTimetableQueryParams.safeParse(req.query);
+  if(!p.success){res.status(400).json({error:"Choose a valid date, time and timetable page"});return;}
+  let result;
+  try{result=await timetable(p.data);}catch(error){
+    if(error instanceof Error&&["Invalid timetable date or time","Select a stop or route","Stop and route must belong to the same operator"].includes(error.message)){
+      res.status(400).json({error:error.message});return;
+    }throw error;
+  }
+  res.json(GetTimetableResponse.parse(result));
+});
+router.post("/transit/journeys",journeyLimit,async(req,res):Promise<void>=>{
+  const p=PlanJourneyBody.safeParse(req.body);
+  if(!p.success||!p.data.origin.trim()||!p.data.destination.trim()){res.status(400).json({error:"Enter both journey locations and valid preferences"});return;}
+  try{res.json(PlanJourneyResponse.parse(await planJourney(p.data)));}
+  catch(error){if(error instanceof JourneyError){res.status(error.status).json({error:error.message});return;}throw error;}
+});
 router.get("/transit/stops",async(req,res):Promise<void>=>{
   const p=GetStopsQueryParams.safeParse(req.query);
   if(!p.success||p.data.lat!=null&&Math.abs(p.data.lat)>90||p.data.lon!=null&&Math.abs(p.data.lon)>180){res.status(400).json({error:"Invalid search coordinates"});return;}
