@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import * as maplibregl from 'maplibre-gl';
+import { loadGoogleMaps } from '@/lib/google-maps';
 import { SchematicMap } from './schematic-map';
 import { MODE_COLOR } from './transit';
 
@@ -9,22 +9,16 @@ export type MapLine = { id: string; name: string; color: string; coords: number[
 
 export function vehicleKind(source: string): 'official' | 'demo' | 'community' {
   const s = source.toLowerCase();
-  if (s.includes('demo')) return 'demo';
-  if (s.includes('community')) return 'community';
-  return 'official';
+  return s.includes('demo') ? 'demo' : s.includes('community') ? 'community' : 'official';
 }
 function sourceText(source: string) {
   const k = vehicleKind(source);
   return k === 'demo' ? 'Demo data' : k === 'community' ? 'Approximate community position' : source.toLowerCase() === 'live' ? 'Live agency data' : source;
 }
 function agoText(iso?: string) {
-  if (!iso) return 'update time unknown';
-  const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
-  if (Number.isNaN(m)) return 'update time unknown';
-  return m < 1 ? 'updated just now' : `updated ${m} min ago`;
+  const minutes = iso ? Math.round((Date.now() - new Date(iso).getTime()) / 60000) : NaN;
+  return Number.isNaN(minutes) ? 'update time unknown' : minutes < 1 ? 'updated just now' : `updated ${minutes} min ago`;
 }
-
-const STYLE_URL = (import.meta.env.VITE_MAP_STYLE_URL as string | undefined) || 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
 
 type Props = {
   center: { lat: number; lon: number };
@@ -40,127 +34,186 @@ type Props = {
   label?: string;
 };
 
+// One shared auth-error notification for all map instances (Nearby, stop and route).
+type MapsWindow = Window & { gm_authFailure?: () => void };
+let authHookInstalled = false;
+let authenticationFailed = false;
+function installAuthHook() {
+  if (authHookInstalled) return;
+  authHookInstalled = true;
+  const w = window as MapsWindow;
+  const previous = w.gm_authFailure;
+  w.gm_authFailure = () => {
+    authenticationFailed = true;
+    window.dispatchEvent(new Event('transtop:maps-auth-failure'));
+    previous?.();
+  };
+}
+
 export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehicles = [], network, onRoute, zoom = 14.5, className, label = 'Transit map' }: Props) {
   const el = useRef<HTMLDivElement>(null);
-  const map = useRef<maplibregl.Map | null>(null);
-  const markers = useRef<maplibregl.Marker[]>([]);
+  const map = useRef<google.maps.Map | null>(null);
+  const libraries = useRef<Awaited<ReturnType<typeof loadGoogleMaps>> | null>(null);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
-  const onSelectRef = useRef(onSelect);
-  onSelectRef.current = onSelect;
-  const onRouteRef = useRef(onRoute);
-  onRouteRef.current = onRoute;
-  const popup = useRef<maplibregl.Popup | null>(null);
+  const callbacks = useRef({ onSelect, onRoute });
+  callbacks.current = { onSelect, onRoute };
+  const initial = useRef({ center, zoom });
 
   useEffect(() => {
-    if (!el.current) return;
-    let m: maplibregl.Map;
-    try {
-      m = new maplibregl.Map({ container: el.current, style: STYLE_URL, center: [center.lon, center.lat], zoom, attributionControl: { compact: true } });
-    } catch {
-      setFailed(true);
-      return;
-    }
-    map.current = m;
-    m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
-    const timer = window.setTimeout(() => { if (!m.isStyleLoaded()) setFailed(true); }, 12000);
-    m.on('load', () => { window.clearTimeout(timer); setReady(true); });
-    m.on('error', (e: unknown) => { if (!m.isStyleLoaded() && (e as { error?: { status?: number } }).error) setFailed(true); });
-    return () => { window.clearTimeout(timer); m.remove(); map.current = null; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    const reduce = document.documentElement.classList.contains('reduce-motion') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) map.current?.jumpTo({ center: [center.lon, center.lat] });
-    else map.current?.easeTo({ center: [center.lon, center.lat], duration: 600 });
-  }, [center.lat, center.lon]);
-
-  useEffect(() => {
-    const m = map.current;
-    if (!m || !ready || !network) return;
-    const src = 'network';
-    const data = {
-      type: 'FeatureCollection' as const,
-      features: network.filter((l) => l.coords.length > 1).map((l) => ({
-        type: 'Feature' as const, properties: { id: l.id, name: l.name, color: l.color },
-        geometry: { type: 'LineString' as const, coordinates: l.coords },
-      })),
+    if (failed || !el.current) return;
+    let disposed = false;
+    const listeners: google.maps.MapsEventListener[] = [];
+    let resize: ResizeObserver | undefined;
+    let loaded = false;
+    const fail = () => { if (!disposed) setFailed(true); };
+    const timer = window.setTimeout(() => { if (!loaded) fail(); }, 20000);
+    window.addEventListener('transtop:maps-auth-failure', fail);
+    installAuthHook();
+    if (authenticationFailed) fail();
+    else void loadGoogleMaps().then((libs) => {
+      if (disposed || !el.current) return;
+      libraries.current = libs;
+      const [{ Map, RenderingType }] = libs;
+      // Raster also works without WebGL, unlike the previous MapLibre basemap.
+      const m = new Map(el.current, {
+        center: { lat: initial.current.center.lat, lng: initial.current.center.lon },
+        zoom: initial.current.zoom,
+        mapId: (import.meta.env.VITE_GOOGLE_MAPS_MAP_ID as string | undefined) || 'DEMO_MAP_ID',
+        renderingType: RenderingType.RASTER,
+        colorScheme: google.maps.ColorScheme.DARK,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: true,
+        clickableIcons: false,
+        gestureHandling: 'cooperative',
+      });
+      map.current = m;
+      listeners.push(m.addListener('tilesloaded', () => {
+        loaded = true;
+        window.clearTimeout(timer);
+        if (!disposed && !authenticationFailed) setReady(true);
+      }));
+      // Overlays may be mounted before tiles arrive, but loading remains visible.
+      if (!authenticationFailed) setReady(true);
+      resize = new ResizeObserver(() => google.maps.event.trigger(m, 'resize'));
+      resize.observe(el.current);
+    }).catch(fail);
+    return () => {
+      disposed = true;
+      window.clearTimeout(timer);
+      window.removeEventListener('transtop:maps-auth-failure', fail);
+      resize?.disconnect();
+      listeners.forEach((l) => l.remove());
+      if (map.current) google.maps.event.clearInstanceListeners(map.current);
+      map.current = null;
     };
-    const existing = m.getSource(src) as maplibregl.GeoJSONSource | undefined;
-    if (existing) { existing.setData(data); return; }
-    m.addSource(src, { type: 'geojson', data });
-    m.addLayer({ id: 'network-glow', type: 'line', source: src, paint: { 'line-color': ['get', 'color'], 'line-width': 8, 'line-opacity': 0.14, 'line-blur': 4 } });
-    m.addLayer({ id: 'network-line', type: 'line', source: src, layout: { 'line-join': 'miter' }, paint: { 'line-color': ['get', 'color'], 'line-width': 2.5, 'line-opacity': 0.9 } });
-    m.addLayer({ id: 'network-hit', type: 'line', source: src, paint: { 'line-color': '#000', 'line-width': 16, 'line-opacity': 0 } });
-    try {
-      m.addLayer({ id: 'network-label', type: 'symbol', source: src, layout: { 'symbol-placement': 'line', 'symbol-spacing': 280, 'text-field': ['get', 'name'], 'text-size': 12, 'text-font': ['Open Sans Bold'] }, paint: { 'text-color': '#ffffff', 'text-halo-color': ['get', 'color'], 'text-halo-width': 2.5 } });
-    } catch { /* style without glyphs: lines still drawn, legend lists names */ }
-    const click = (e: maplibregl.MapLayerMouseEvent) => { const id = e.features?.[0]?.properties?.id; if (id) onRouteRef.current?.(String(id)); };
-    m.on('click', 'network-hit', click);
-    m.on('click', 'network-label', click);
-    m.on('mouseenter', 'network-hit', () => { m.getCanvas().style.cursor = 'pointer'; });
-    m.on('mouseleave', 'network-hit', () => { m.getCanvas().style.cursor = ''; });
-  }, [network, ready]);
+  }, [failed]);
 
   useEffect(() => {
     const m = map.current;
-    if (!m || !ready) return;
-    const id = 'route-shape';
-    if (m.getLayer(id)) m.removeLayer(id);
-    if (m.getLayer(`${id}-glow`)) m.removeLayer(`${id}-glow`);
-    if (m.getSource(id)) m.removeSource(id);
-    if (shape && shape.coords.length > 1) {
-      m.addSource(id, { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: shape.coords } } });
-      m.addLayer({ id: `${id}-glow`, type: 'line', source: id, paint: { 'line-color': shape.color, 'line-width': 10, 'line-opacity': 0.18, 'line-blur': 4 } });
-      m.addLayer({ id, type: 'line', source: id, paint: { 'line-color': shape.color, 'line-width': 3.5 }, layout: { 'line-join': 'miter', 'line-cap': 'butt' } });
-      const b = new maplibregl.LngLatBounds();
-      shape.coords.forEach((c) => b.extend([c[0], c[1]] as [number, number]));
-      m.fitBounds(b, { padding: 48, duration: 0 });
+    if (!m || !ready || failed) return;
+    const c = { lat: center.lat, lng: center.lon };
+    const reduce = document.documentElement.classList.contains('reduce-motion') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) m.setCenter(c); else m.panTo(c);
+  }, [center.lat, center.lon, ready, failed]);
+
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !ready || failed) return;
+    const paths: google.maps.Polyline[] = [];
+    const listeners: google.maps.MapsEventListener[] = [];
+    for (const line of network ?? []) {
+      if (line.coords.length < 2) continue;
+      const path = line.coords.map(([lng, lat]) => ({ lat, lng }));
+      paths.push(new google.maps.Polyline({ map: m, path, strokeColor: line.color, strokeWeight: 9, strokeOpacity: 0.18, clickable: false, zIndex: 1 }));
+      const visible = new google.maps.Polyline({ map: m, path, strokeColor: line.color, strokeWeight: 3, strokeOpacity: 0.95, zIndex: 2 });
+      paths.push(visible);
+      listeners.push(visible.addListener('click', () => callbacks.current.onRoute?.(line.id)));
     }
-  }, [shape, ready]);
+    if (shape && shape.coords.length > 1) {
+      const path = shape.coords.map(([lng, lat]) => ({ lat, lng }));
+      paths.push(new google.maps.Polyline({ map: m, path, strokeColor: shape.color, strokeWeight: 11, strokeOpacity: 0.2, clickable: false, zIndex: 3 }));
+      paths.push(new google.maps.Polyline({ map: m, path, strokeColor: shape.color, strokeWeight: 4, strokeOpacity: 1, clickable: false, zIndex: 4 }));
+    }
+    return () => {
+      listeners.forEach((l) => l.remove());
+      paths.forEach((p) => p.setMap(null));
+    };
+  }, [network, shape, ready, failed]);
+
+  // Fit only when route geometry changes, not on each vehicle refresh.
+  useEffect(() => {
+    if (!map.current || !ready || failed || !shape || shape.coords.length < 2) return;
+    const bounds = new google.maps.LatLngBounds();
+    shape.coords.forEach(([lng, lat]) => bounds.extend({ lat, lng }));
+    map.current.fitBounds(bounds, 48);
+  }, [shape, ready, failed]);
 
   useEffect(() => {
-    const m = map.current;
-    if (!m) return;
-    markers.current.forEach((mk) => mk.remove());
-    markers.current = [];
-    stops.forEach((s) => {
-      const node = document.createElement('button');
-      node.type = 'button';
-      node.setAttribute('aria-label', `${s.name} stop`);
+    const m = map.current, libs = libraries.current;
+    if (!m || !libs || !ready || failed) return;
+    const [{ InfoWindow }, { AdvancedMarkerElement }] = libs;
+    const popup = new InfoWindow();
+    const markers: google.maps.marker.AdvancedMarkerElement[] = [];
+    const listeners: google.maps.MapsEventListener[] = [];
+    for (const s of stops) {
       const active = s.id === activeId;
-      const c = s.color ?? MODE_COLOR[s.type] ?? '#888';
-      node.style.cssText = `width:${active ? 26 : 16}px;height:${active ? 26 : 16}px;border-radius:999px;background:${c};border:${active ? 4 : 3}px solid #0c0c0d;box-shadow:0 0 0 ${active ? 2 : 1}px ${active ? '#f4f1ea' : 'rgba(255,255,255,.35)'};cursor:pointer;transition:width .2s,height .2s;`;
-      node.onclick = () => onSelectRef.current?.(s.id);
-      markers.current.push(new maplibregl.Marker({ element: node }).setLngLat([s.lon, s.lat]).addTo(m));
-    });
-    vehicles.forEach((v) => {
-      const kind = vehicleKind(v.source);
-      const label = `${v.routeName ? `Route ${v.routeName} vehicle` : 'Vehicle'}, ${sourceText(v.source)}, ${agoText(v.updatedAt)}`;
-      const node = document.createElement(v.routeId ? 'button' : 'div');
-      if (node instanceof HTMLButtonElement) node.type = 'button';
-      node.setAttribute('aria-label', label);
-      const c = v.color ?? '#f4f1ea';
-      node.style.cssText = kind === 'community'
-        ? 'width:34px;height:34px;border-radius:999px;border:2px dashed #5cc2f2;background:rgba(92,194,242,.15);cursor:pointer;padding:0;'
-        : `width:14px;height:14px;transform:rotate(45deg);background:${c};border:2px solid ${kind === 'demo' ? '#f5b82e' : '#f4f1ea'};box-shadow:0 0 10px ${c};cursor:pointer;padding:0;`;
-      const show = () => {
-        popup.current?.remove();
-        popup.current = new maplibregl.Popup({ closeButton: false, offset: 14, className: 'tt-popup' })
-          .setLngLat([v.lon, v.lat])
-          .setHTML(`<div style="font:600 12px Archivo,sans-serif;color:#111">${v.routeName ? `Route ${v.routeName}` : 'Vehicle'}<br><span style="font-weight:700;color:${kind === 'demo' ? '#a06d00' : kind === 'community' ? '#1b6f99' : '#1d7a47'}">${sourceText(v.source)}</span><br><span style="font-weight:500">${agoText(v.updatedAt)}</span></div>`)
-          .addTo(m);
-      };
-      node.addEventListener('mouseenter', show);
-      node.addEventListener('focus', show);
-      node.addEventListener('mouseleave', () => popup.current?.remove());
-      node.addEventListener('blur', () => popup.current?.remove());
-      if (v.routeId) node.addEventListener('click', () => onRouteRef.current?.(v.routeId!));
-      markers.current.push(new maplibregl.Marker({ element: node }).setLngLat([v.lon, v.lat]).addTo(m));
-    });
-  }, [stops, vehicles, activeId, ready]);
+      const color = s.color ?? MODE_COLOR[s.type] ?? '#888';
+      const dot = document.createElement('div');
+      dot.style.cssText = `width:${active ? 26 : 17}px;height:${active ? 26 : 17}px;border-radius:50%;background:${color};border:3px solid #111;box-shadow:0 0 0 ${active ? 3 : 1}px #fff;`;
+      const marker = new AdvancedMarkerElement({ map: m, position: { lat: s.lat, lng: s.lon }, title: `${s.name} stop`, zIndex: active ? 100 : 20 });
+      marker.append(dot);
+      listeners.push(marker.addListener('click', () => callbacks.current.onSelect?.(s.id)));
+      markers.push(marker);
+    }
+    for (const v of vehicles) {
+      const kind = vehicleKind(v.source), color = v.color ?? '#f4f1ea';
+      const title = `${v.routeName ? `Route ${v.routeName} vehicle` : 'Vehicle'} · ${sourceText(v.source)} · ${agoText(v.updatedAt)}`;
+      const dot = document.createElement('div');
+      dot.style.cssText = kind === 'community'
+        ? 'width:34px;height:34px;border-radius:50%;border:2px dashed #5cc2f2;background:rgba(92,194,242,.15);'
+        : `width:17px;height:17px;transform:rotate(45deg);background:${color};border:2px solid ${kind === 'demo' ? '#f5b82e' : '#fff'};box-shadow:0 0 8px ${color};`;
+      const marker = new AdvancedMarkerElement({ map: m, position: { lat: v.lat, lng: v.lon }, title, zIndex: 40 });
+      marker.append(dot);
+      listeners.push(marker.addListener('click', () => {
+        const content = document.createElement('div');
+        content.style.cssText = 'color:#111;font:600 13px Arial,sans-serif;max-width:240px;';
+        const text = document.createElement('p');
+        text.textContent = title;
+        content.append(text);
+        if (v.routeId) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.textContent = 'View route';
+          button.style.cssText = 'text-decoration:underline;padding:8px 0;cursor:pointer;';
+          button.onclick = () => callbacks.current.onRoute?.(v.routeId!);
+          content.append(button);
+        }
+        popup.setContent(content);
+        popup.open({ map: m, anchor: marker });
+      }));
+      markers.push(marker);
+    }
+    return () => {
+      popup.close();
+      listeners.forEach((l) => l.remove());
+      markers.forEach((marker) => { marker.map = null; });
+    };
+  }, [stops, vehicles, activeId, ready, failed]);
 
-  if (failed) return <SchematicMap center={center} stops={stops} activeId={activeId} onSelect={onSelect} shape={shape} vehicles={vehicles} network={network} onRoute={onRoute} className={className} label={label} />;
-  return <div ref={el} role="region" aria-label={label} className={className} data-testid="map" />;
+  if (failed) return (
+    <div className={`relative ${className ?? ''}`}>
+      <SchematicMap center={center} stops={stops} activeId={activeId} onSelect={onSelect} shape={shape} vehicles={vehicles} network={network} onRoute={onRoute} className="h-full w-full" label={label} />
+      <p className="absolute bottom-8 left-3 right-3 rounded-lg border border-white/10 bg-black/90 px-3 py-2 text-xs text-white" role="status">
+        Google Maps could not load. Check connectivity, billing, Maps JavaScript API access and allowed website domains. Stops and routes remain available in this schematic and the list.
+      </p>
+    </div>
+  );
+  return (
+    <div className={`relative ${className ?? ''}`} role="region" aria-label={`${label} · Google Maps`} data-testid="google-map">
+      <div ref={el} className="h-full w-full" />
+      {!ready && <div className="absolute inset-0 flex items-center justify-center bg-[#151515] text-sm text-white" role="status">Loading Google Maps…</div>}
+    </div>
+  );
 }

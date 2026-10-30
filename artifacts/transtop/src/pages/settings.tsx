@@ -82,13 +82,14 @@ export default function Settings() {
               );
             })}
           </ul>
-          <p className="text-xs text-muted-foreground">Transtop is an independent app and is not affiliated with or endorsed by the MTA, LIRR, Metro-North, NICE Bus or any agency. Transit data is provided by the agencies listed under their terms. Map data from OpenStreetMap contributors; basemap by the configured provider.</p>
+          <p className="text-xs text-muted-foreground">Transtop is an independent app and is not affiliated with or endorsed by the MTA, LIRR, Metro-North, NICE Bus or any agency. Transit data is provided by the agencies listed under their terms. Interactive basemaps are provided by Google Maps; route lines, stops and arrival information come from Transtop’s separately labeled transit sources.</p>
         </Section>
 
         <Section title="Location and sharing">
           <div className="space-y-3 rounded-2xl border border-card-border bg-card p-4 text-sm">
             <p><b>Nearby location</b> is requested only when you tap Use my location. It is used once to sort stops and is not stored. You can revoke it in your browser settings.</p>
             <p><b>Address search</b>: station and neighborhood names are matched by Transtop. Numbered street addresses are sent to the US Census geocoder to find coordinates.</p>
+            <p><b>Google Maps</b>: opening a map sends your map viewport and ordinary connection information to Google. When you choose Use my location, the map can center on that location. Individual rider contributions are never sent as public map markers. <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline">Google Privacy Policy</a> · <a href="https://maps.google.com/help/terms_maps/" target="_blank" rel="noreferrer" className="underline">Google Maps Terms</a></p>
             <p><b>Ride sharing</b> is a separate, per-ride choice. Raw samples are deleted within 24 hours and only aggregated, reduced-precision positions are published.</p>
             {ride ? (
               <button onClick={async () => { await stopRide('user'); toast({ title: 'Sharing stopped' }); }} className="flex h-12 items-center gap-2 rounded-full bg-[hsl(var(--bad))] px-5 font-bold text-white" data-testid="button-settings-stop-sharing"><Radio className="h-4 w-4" />Stop sharing now</button>

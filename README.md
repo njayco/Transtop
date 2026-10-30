@@ -1,6 +1,6 @@
 # Transtop
 
-A mobile-first NYC and Long Island transit app based on the creator's original Transtop concept. Desktop has synchronized stop results and a MapLibre map; mobile has Nearby, Search, Favorites and Ride navigation. No account is required.
+A mobile-first NYC and Long Island transit app based on the creator's original Transtop concept. Desktop has synchronized stop results and a Google map; mobile has Nearby, Search, Favorites and Ride navigation. No account is required.
 
 ## Run locally
 
@@ -91,13 +91,23 @@ Production should have a single poller/worker owner. Multiple independently poll
 
 The database schema is in `lib/db/src/schema/transit.ts`; the initial SQL migration is in `lib/db/drizzle/`. Apply development schema changes with Drizzle. Replit-managed production schema changes are applied through Publish; do not run startup-time DDL.
 
-Before production traffic, configure a MapLibre-compatible basemap provider whose plan and terms permit your expected traffic. `VITE_MAP_STYLE_URL` defaults to the attributed CARTO dark style for review. Public/default map hosting is not an unlimited-production agreement. The list remains usable if the map fails.
+### Google Maps
+
+Google Maps Platform is connected through Replit Integrations for official development documentation. That MCP connection does not provision a runtime API key or pay Google Cloud charges.
+
+Add `VITE_GOOGLE_MAPS_API_KEY` through Replit Secrets. Enable **Maps JavaScript API** and billing on its Google Cloud project. Browser keys are intentionally visible to visitors: restrict this key to Maps JavaScript API and the exact preview/published website origins using Google Cloud website restrictions. The loader uses origin-only referrers, so allow the website origin rather than a narrow URL path. Never reuse a server-only Google key in this variable. Vite embeds this value at build time; restart development after changing it and rebuild/republish for production changes.
+
+Only Maps JavaScript API is used; Places, Geocoding and Routes API are not enabled or called by this integration. Existing official transit predictions and GTFS shapes remain Transtop's sources, not Google-generated transit ETAs. Address search continues to use the separately disclosed Census geocoder. Opening the map transmits its viewport and ordinary connection metadata to Google; opt-in individual rider samples are not published.
+
+The shared map component renders stop markers, clickable colored route polylines, source-labeled vehicle markers, selection highlights and route bounds. Google’s native attribution and controls remain visible. It requests raster rendering for browsers without WebGL and uses Advanced Markers. An optional `VITE_GOOGLE_MAPS_MAP_ID` can select your own Google Cloud map configuration; the documented `DEMO_MAP_ID` is the development default. Configure a project-owned map ID for production. Loading/authentication errors and timeouts show the interactive geographic schematic and an explicit error, never a fake Google basemap; the list stays usable.
+
+Google Maps use may incur charges against your Google Cloud billing account. Set budgets and API quotas before public traffic. Do not cache Google map tiles or remove attribution. Official setup: https://developers.google.com/maps/documentation/javascript/get-api-key . Google Maps Platform terms: https://cloud.google.com/maps-platform/terms .
 
 The web app includes a PWA manifest and original icon. Its production service worker caches the app shell, never `/api` arrivals. Offline favorites are available locally, but arrivals require connectivity and must not be treated as current when offline.
 
 ## Code map
 
-- `artifacts/transtop`: responsive React app, MapLibre, favorites, consent and foreground geolocation.
+- `artifacts/transtop`: responsive React app, Google Maps, favorites, consent and foreground geolocation.
 - `artifacts/api-server/src/transit`: adapters, GTFS importer, realtime polling, schedule fallback, estimation, ingestion and jobs.
 - `lib/api-spec/openapi.yaml`: request/response contract; regenerate clients with `pnpm --filter @workspace/api-spec run codegen` after edits.
 - `lib/db`: PostgreSQL/Drizzle schema and migration.

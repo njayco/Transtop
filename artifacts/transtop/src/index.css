@@ -459,10 +459,6 @@ body { -webkit-tap-highlight-color: transparent; }
 .card-slide { animation: card-slide 1.6s cubic-bezier(.7,0,.2,1) both; }
 @keyframes shimmer { from { opacity: .45; } to { opacity: .8; } }
 .skel { background: hsl(var(--muted)); animation: shimmer 1s ease-in-out infinite alternate; border-radius: .5rem; }
-.maplibregl-ctrl-attrib { background: rgba(12,12,13,.75) !important; color: #aaa; font-size: 10px; }
-.maplibregl-ctrl-attrib a { color: #ddd !important; }
-.maplibregl-ctrl-group { background: #1a1a1c !important; }
-.maplibregl-ctrl-group button span { filter: invert(1); }
 .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; } }
 .large-text { font-size: 112.5%; }
