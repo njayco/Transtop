@@ -29,6 +29,7 @@ import type {
   FeedSource,
   GetAlertsParams,
   GetCatalogParams,
+  GetIntercityDeparturesParams,
   GetMapVehiclesParams,
   GetNetworkParams,
   GetRouteParams,
@@ -36,6 +37,8 @@ import type {
   GetStopsParams,
   GetTimetableParams,
   HealthStatus,
+  IntercityProvider,
+  IntercityResults,
   JourneyInput,
   JourneyResults,
   MapVehicle,
@@ -76,6 +79,203 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getGetIntercityProvidersUrl = () => {
+
+
+
+
+  return `/api/transit/intercity/providers`
+}
+
+export const getIntercityProviders = async ( options?: Parameters<typeof customFetch>[1]): Promise<IntercityProvider[]> => {
+
+  return customFetch<IntercityProvider[]>(getGetIntercityProvidersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetIntercityProvidersQueryKey = () => {
+    return [
+    `/api/transit/intercity/providers`
+    ] as const;
+    }
+
+
+export const getGetIntercityProvidersQueryOptions = <TData = Awaited<ReturnType<typeof getIntercityProviders>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIntercityProviders>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetIntercityProvidersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getIntercityProviders>>> = ({ signal }) => getIntercityProviders({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getIntercityProviders>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetIntercityProvidersQueryResult = NonNullable<Awaited<ReturnType<typeof getIntercityProviders>>>
+export type GetIntercityProvidersQueryError = ErrorType<unknown>
+
+
+export function useGetIntercityProviders<TData = Awaited<ReturnType<typeof getIntercityProviders>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIntercityProviders>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getIntercityProviders>>,
+          TError,
+          Awaited<ReturnType<typeof getIntercityProviders>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetIntercityProviders<TData = Awaited<ReturnType<typeof getIntercityProviders>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIntercityProviders>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getIntercityProviders>>,
+          TError,
+          Awaited<ReturnType<typeof getIntercityProviders>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetIntercityProviders<TData = Awaited<ReturnType<typeof getIntercityProviders>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIntercityProviders>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetIntercityProviders<TData = Awaited<ReturnType<typeof getIntercityProviders>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIntercityProviders>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetIntercityProvidersQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetIntercityDeparturesUrl = (params: GetIntercityDeparturesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/transit/intercity/departures?${stringifiedParams}` : `/api/transit/intercity/departures`
+}
+
+export const getIntercityDepartures = async (params: GetIntercityDeparturesParams, options?: Parameters<typeof customFetch>[1]): Promise<IntercityResults> => {
+
+  return customFetch<IntercityResults>(getGetIntercityDeparturesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetIntercityDeparturesQueryKey = (params?: GetIntercityDeparturesParams,) => {
+    return [
+    `/api/transit/intercity/departures`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetIntercityDeparturesQueryOptions = <TData = Awaited<ReturnType<typeof getIntercityDepartures>>, TError = ErrorType<unknown>>(params: GetIntercityDeparturesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIntercityDepartures>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetIntercityDeparturesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getIntercityDepartures>>> = ({ signal }) => getIntercityDepartures(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getIntercityDepartures>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetIntercityDeparturesQueryResult = NonNullable<Awaited<ReturnType<typeof getIntercityDepartures>>>
+export type GetIntercityDeparturesQueryError = ErrorType<unknown>
+
+
+export function useGetIntercityDepartures<TData = Awaited<ReturnType<typeof getIntercityDepartures>>, TError = ErrorType<unknown>>(
+ params: GetIntercityDeparturesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIntercityDepartures>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getIntercityDepartures>>,
+          TError,
+          Awaited<ReturnType<typeof getIntercityDepartures>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetIntercityDepartures<TData = Awaited<ReturnType<typeof getIntercityDepartures>>, TError = ErrorType<unknown>>(
+ params: GetIntercityDeparturesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIntercityDepartures>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getIntercityDepartures>>,
+          TError,
+          Awaited<ReturnType<typeof getIntercityDepartures>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetIntercityDepartures<TData = Awaited<ReturnType<typeof getIntercityDepartures>>, TError = ErrorType<unknown>>(
+ params: GetIntercityDeparturesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIntercityDepartures>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetIntercityDepartures<TData = Awaited<ReturnType<typeof getIntercityDepartures>>, TError = ErrorType<unknown>>(
+ params: GetIntercityDeparturesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIntercityDepartures>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetIntercityDeparturesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getHealthCheckUrl = () => {
 

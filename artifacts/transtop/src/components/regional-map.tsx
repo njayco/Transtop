@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 export const REGION_BOUNDS = { west: -74.27, south: 40.48, east: -71.85, north: 41.17 };
 const REGION_CENTER = { lat: 40.82, lon: -73.06 };
 const REGION_ZOOM = 8;
-const MODES = ['subway', 'bus', 'rail'] as const;
+const MODES = ['subway', 'bus', 'rail', 'intercity'] as const;
 type Mode = (typeof MODES)[number];
 type Viewport = { west: number; south: number; east: number; north: number; zoom: number };
 const r3 = (n: number) => Math.round(n * 1000) / 1000;
@@ -78,8 +78,12 @@ export function RegionalMap({ onClose }: { onClose?: () => void }) {
 
   const line = selLine ? routeIndex.get(selLine) ?? (data?.lines.find((l) => l.route.id === selLine)?.route) : undefined;
   const stop = selStop ? shownStops.find((s) => s.id === selStop) : undefined;
-  const agencies = useMemo(() => (sources.data ?? []).filter((s) => ['subway', 'bus', 'rail'].includes(s.type || '')).sort((a, b) => a.agency.localeCompare(b.agency)), [sources.data]);
-  const toggle = (m: Mode) => setModes((p) => { const n = new Set(p); if (n.has(m)) { if (n.size > 1) n.delete(m); } else n.add(m); return n; });
+  const agencies = useMemo(() => (sources.data ?? []).filter((s) => modes.has(s.type as Mode)).sort((a, b) => a.agency.localeCompare(b.agency)), [sources.data, modes]);
+  const toggle = (m: Mode) => {
+    const n = new Set(modes); if (n.has(m)) { if (n.size > 1) n.delete(m); } else n.add(m);
+    setModes(n);
+    if (agency && !(sources.data ?? []).some((s) => s.id === agency && n.has(s.type as Mode))) setAgency('');
+  };
   const pickLine = (id: string) => { setSelLine((p) => (p === id ? null : id)); setSelStop(null); };
   const pickStop = (id: string) => { setSelStop(id); setSelLine(null); };
 
@@ -148,7 +152,7 @@ export function RegionalMap({ onClose }: { onClose?: () => void }) {
             <span><span className="mr-1.5 inline-block h-2.5 w-2.5 rotate-45 bg-foreground align-middle" />Official vehicle position</span>
             <span><span className="mr-1.5 inline-block h-3 w-3 rounded-full border-2 border-foreground align-middle" />Stop or station at its published location</span>
           </div>
-          <p className="text-xs text-muted-foreground">Mode outlines: green subway, purple commuter rail (wide line), gold bus (dashed). Inner colors follow the operator’s published line colors. Express classification comes from the published route metadata; other commuter bus classifications are not inferred.</p>
+          <p className="text-xs text-muted-foreground">Mode outlines: green subway, purple commuter rail (wide line), gold bus (dashed). Intercity Bus Network boarding points appear as orange stops; no road paths are drawn for them. Inner colors follow the operator’s published line colors. Express classification comes from the published route metadata; other commuter bus classifications are not inferred.</p>
           {veh.isError && <p className="text-xs text-muted-foreground" role="status">Vehicle feed unavailable. Old positions expire automatically; static paths are still routes, not live vehicles.</p>}
         </div>
 

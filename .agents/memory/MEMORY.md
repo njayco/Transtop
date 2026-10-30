@@ -4,3 +4,4 @@
 - [Post-merge setup budget](post-merge-budget.md) — setup measured about 94 seconds with regional data; retain at least a two-minute timeout.
 - [Local process lifetime](local-process-lifetime.md) — disposable services must stay foreground processes inside a background shell; detached children can die when the parent call ends.
 - [Intercity browsing scope](intercity-browsing.md) — integrate by selected location, mode and provider; no separate Port Authority hub.
+- [Intercity source trust](intercity-source-trust.md) — old feeds can have future calendars; atlas data and ambiguous printed rows must not become current departure predictions.

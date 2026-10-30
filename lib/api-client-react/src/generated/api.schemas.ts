@@ -4,6 +4,55 @@
  * Api
  * OpenAPI spec version: 0.1.0
  */
+export interface IntercityProvider {
+  id: string;
+  name: string;
+  status: string;
+  description: string;
+  url: string;
+  checkedAt: string;
+  terminalService: string;
+  access: string;
+  aliases: string[];
+  updatedAt?: string;
+  lastError?: string;
+}
+
+export interface IntercityTripStop {
+  id: string;
+  name: string;
+  sequence: number;
+  time?: string;
+  address?: string;
+  lat?: number;
+  lon?: number;
+}
+
+export interface IntercityDeparture {
+  id: string;
+  tripId: string;
+  routeId: string;
+  providerId: string;
+  providerName: string;
+  stopId: string;
+  stopName: string;
+  time: string;
+  destination: string;
+  serviceDate: string;
+  boardingNotes: string;
+  stops: IntercityTripStop[];
+  sourceUrl: string;
+  updatedAt: string;
+}
+
+export interface IntercityResults {
+  providers: IntercityProvider[];
+  departures: IntercityDeparture[];
+  message: string;
+  updatedAt: string;
+  radiusMeters: number;
+}
+
 export interface HealthStatus {
   status: string;
 }
@@ -15,6 +64,7 @@ export const RouteType = {
   subway: 'subway',
   bus: 'bus',
   rail: 'rail',
+  intercity: 'intercity',
 } as const;
 
 export type RouteServiceClass = typeof RouteServiceClass[keyof typeof RouteServiceClass];
@@ -80,6 +130,7 @@ export const StopType = {
   subway: 'subway',
   bus: 'bus',
   rail: 'rail',
+  intercity: 'intercity',
 } as const;
 
 export interface Stop {
@@ -342,6 +393,28 @@ export interface ReportInput {
   kind: ReportInputKind;
   stopId: string;
 }
+
+export type GetIntercityDeparturesParams = {
+/**
+ * @minimum -90
+ * @maximum 90
+ */
+lat: number;
+/**
+ * @minimum -180
+ * @maximum 180
+ */
+lon: number;
+provider?: string;
+/**
+ * @pattern ^\d{4}-\d{2}-\d{2}$
+ */
+date: string;
+/**
+ * @pattern ^\d{2}:\d{2}$
+ */
+from?: string;
+};
 
 export type GetStopsParams = {
 q?: string;

@@ -1,15 +1,15 @@
 import { Link } from 'wouter';
-import { Bus, TrainFront, TrainFrontTunnel, Heart, AlertTriangle, Accessibility, RefreshCw, WifiOff } from 'lucide-react';
+import { Bus, BusFront, TrainFront, TrainFrontTunnel, Heart, AlertTriangle, Accessibility, RefreshCw, WifiOff } from 'lucide-react';
 import type { Alert, Arrival, Stop } from '@workspace/api-client-react';
 import { SOURCE_LABEL, ago, arrivalText, distance, severityTone, statusTone, textOn } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { honest, usePrefs } from '@/lib/prefs';
 
-export const MODE_COLOR: Record<string, string> = { subway: '#2fb36b', bus: '#e5a823', rail: '#a33a62' };
-export const MODE_NAME: Record<string, string> = { subway: 'Subway', bus: 'Bus', rail: 'Commuter Rail' };
+export const MODE_COLOR: Record<string, string> = { subway: '#2fb36b', bus: '#e5a823', rail: '#a33a62', intercity: '#e0662f' };
+export const MODE_NAME: Record<string, string> = { subway: 'Subway', bus: 'Bus', rail: 'Commuter Rail', intercity: 'Intercity Bus Network' };
 
 export function ModeIcon({ type, size = 40, className }: { type: string; size?: number; className?: string }) {
-  const Icon = type === 'bus' ? Bus : type === 'rail' ? TrainFront : TrainFrontTunnel;
+  const Icon = type === 'bus' ? Bus : type === 'intercity' ? BusFront : type === 'rail' ? TrainFront : TrainFrontTunnel;
   return (
     <span role="img" aria-label={MODE_NAME[type] ?? type} className={cn('inline-flex shrink-0 items-center justify-center rounded-full text-white', className)}
       style={{ width: size, height: size, background: MODE_COLOR[type] ?? '#555' }}>

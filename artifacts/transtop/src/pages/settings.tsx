@@ -3,6 +3,7 @@ import { ExternalLink, Trash2, Play, Radio } from 'lucide-react';
 import { useGetSources, type FeedSource } from '@workspace/api-client-react';
 import { MobileTop, LiveIndicator } from '@/components/shell';
 import { ErrorState, SourceLabel } from '@/components/transit';
+import { IntercityProviderList } from '@/components/intercity-providers';
 import { useEntry } from '@/components/intro';
 import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -134,6 +135,10 @@ export default function Settings() {
             })}
           </ul>
           <p className="text-xs text-muted-foreground">Transtop is an independent app and is not affiliated with or endorsed by the MTA, LIRR, Metro-North, NICE Bus or any agency. Transit data is provided by the agencies listed under their terms. Interactive basemaps are provided by Google Maps; route lines, stops and arrival information come from Transtop’s separately labeled transit sources.</p>
+        </Section>
+
+        <Section title="Intercity Bus Network providers">
+          <IntercityProviderList />
         </Section>
 
         <Section title="Location and sharing">

@@ -12,7 +12,20 @@ import { GetCatalogQueryParams,GetCatalogResponse,GetTimetableQueryParams,GetTim
 import { catalog,timetable } from "../transit/catalog";
 import { journeyLimit,planJourney,JourneyError } from "../transit/journeys";
 const router:IRouter=Router();
+import { GetIntercityProvidersResponse, GetIntercityDeparturesQueryParams, GetIntercityDeparturesResponse } from "@workspace/api-zod";
+import { intercityProviders, intercityDepartures } from "../transit/intercity/service";
 router.use("/transit",(_req,res,next)=>{res.set("Cache-Control","no-store");next();});
+router.get("/transit/intercity/providers",async(_req,res):Promise<void>=>{
+  res.json(GetIntercityProvidersResponse.parse(await intercityProviders()));
+});
+router.get("/transit/intercity/departures",async(req,res):Promise<void>=>{
+  const p=GetIntercityDeparturesQueryParams.safeParse(req.query);
+  if(!p.success){res.status(400).json({error:"Choose valid coordinates, date and time"});return;}
+  try{res.json(GetIntercityDeparturesResponse.parse(await intercityDepartures(p.data)));}
+  catch(error){if(error instanceof Error&&error.message==="Invalid intercity date or time"){
+    res.status(400).json({error:error.message});return;
+  }throw error;}
+});
 router.get("/transit/catalog",async(req,res):Promise<void>=>{
   const p=GetCatalogQueryParams.safeParse(req.query);
   if(!p.success){res.status(400).json({error:"Invalid catalog filters or page"});return;}

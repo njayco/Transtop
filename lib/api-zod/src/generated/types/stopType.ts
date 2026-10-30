@@ -12,4 +12,5 @@ export const StopType = {
   subway: 'subway',
   bus: 'bus',
   rail: 'rail',
+  intercity: 'intercity',
 } as const;

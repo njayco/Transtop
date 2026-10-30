@@ -7,6 +7,85 @@
 import * as zod from 'zod';
 
 
+export const GetIntercityProvidersResponseItem = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "status": zod.string(),
+  "description": zod.string(),
+  "url": zod.string(),
+  "checkedAt": zod.string(),
+  "terminalService": zod.string(),
+  "access": zod.string(),
+  "aliases": zod.array(zod.string()),
+  "updatedAt": zod.string().optional(),
+  "lastError": zod.string().optional()
+})
+export const GetIntercityProvidersResponse = zod.array(GetIntercityProvidersResponseItem)
+
+
+export const getIntercityDeparturesQueryLatMin = -90;
+export const getIntercityDeparturesQueryLatMax = 90;
+
+export const getIntercityDeparturesQueryLonMin = -180;
+export const getIntercityDeparturesQueryLonMax = 180;
+
+export const getIntercityDeparturesQueryDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const getIntercityDeparturesQueryFromDefault = `00:00`;
+export const getIntercityDeparturesQueryFromRegExp = new RegExp('^\\d{2}:\\d{2}$');
+
+
+export const GetIntercityDeparturesQueryParams = zod.object({
+  "lat": zod.coerce.number().min(getIntercityDeparturesQueryLatMin).max(getIntercityDeparturesQueryLatMax),
+  "lon": zod.coerce.number().min(getIntercityDeparturesQueryLonMin).max(getIntercityDeparturesQueryLonMax),
+  "provider": zod.coerce.string().optional(),
+  "date": zod.coerce.string().regex(getIntercityDeparturesQueryDateRegExp),
+  "from": zod.coerce.string().regex(getIntercityDeparturesQueryFromRegExp).default(getIntercityDeparturesQueryFromDefault)
+})
+
+export const GetIntercityDeparturesResponse = zod.object({
+  "providers": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "status": zod.string(),
+  "description": zod.string(),
+  "url": zod.string(),
+  "checkedAt": zod.string(),
+  "terminalService": zod.string(),
+  "access": zod.string(),
+  "aliases": zod.array(zod.string()),
+  "updatedAt": zod.string().optional(),
+  "lastError": zod.string().optional()
+})),
+  "departures": zod.array(zod.object({
+  "id": zod.string(),
+  "tripId": zod.string(),
+  "routeId": zod.string(),
+  "providerId": zod.string(),
+  "providerName": zod.string(),
+  "stopId": zod.string(),
+  "stopName": zod.string(),
+  "time": zod.string(),
+  "destination": zod.string(),
+  "serviceDate": zod.string(),
+  "boardingNotes": zod.string(),
+  "stops": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "sequence": zod.number().int(),
+  "time": zod.string().optional(),
+  "address": zod.string().optional(),
+  "lat": zod.number().optional(),
+  "lon": zod.number().optional()
+})),
+  "sourceUrl": zod.string(),
+  "updatedAt": zod.string()
+})),
+  "message": zod.string(),
+  "updatedAt": zod.string(),
+  "radiusMeters": zod.number().int()
+})
+
+
 export const HealthCheckResponse = zod.object({
   "status": zod.string()
 })
@@ -29,7 +108,7 @@ export const GetStopsResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "agency": zod.string(),
-  "type": zod.enum(['subway', 'bus', 'rail']),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']),
   "lat": zod.number(),
   "lon": zod.number(),
   "distance": zod.number(),
@@ -38,7 +117,7 @@ export const GetStopsResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "color": zod.string(),
-  "type": zod.enum(['subway', 'bus', 'rail']),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']),
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),
@@ -94,7 +173,7 @@ export const GetStopResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "agency": zod.string(),
-  "type": zod.enum(['subway', 'bus', 'rail']),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']),
   "lat": zod.number(),
   "lon": zod.number(),
   "distance": zod.number(),
@@ -103,7 +182,7 @@ export const GetStopResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "color": zod.string(),
-  "type": zod.enum(['subway', 'bus', 'rail']),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']),
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),
@@ -155,7 +234,7 @@ export const GetRouteResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "color": zod.string(),
-  "type": zod.enum(['subway', 'bus', 'rail']),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']),
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),
@@ -165,7 +244,7 @@ export const GetRouteResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "agency": zod.string(),
-  "type": zod.enum(['subway', 'bus', 'rail']),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']),
   "lat": zod.number(),
   "lon": zod.number(),
   "distance": zod.number(),
@@ -174,7 +253,7 @@ export const GetRouteResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "color": zod.string(),
-  "type": zod.enum(['subway', 'bus', 'rail']),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']),
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),
@@ -273,7 +352,7 @@ export const GetCatalogResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "color": zod.string(),
-  "type": zod.enum(['subway', 'bus', 'rail']),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']),
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),
@@ -283,7 +362,7 @@ export const GetCatalogResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "agency": zod.string(),
-  "type": zod.enum(['subway', 'bus', 'rail']),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']),
   "lat": zod.number(),
   "lon": zod.number(),
   "distance": zod.number(),
@@ -292,7 +371,7 @@ export const GetCatalogResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "color": zod.string(),
-  "type": zod.enum(['subway', 'bus', 'rail']),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']),
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),
@@ -471,7 +550,7 @@ export const GetNetworkResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "color": zod.string(),
-  "type": zod.enum(['subway', 'bus', 'rail']),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']),
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),
@@ -496,7 +575,7 @@ export const GetNetworkResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "color": zod.string(),
-  "type": zod.enum(['subway', 'bus', 'rail']),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']),
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),
@@ -509,7 +588,7 @@ export const GetNetworkResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "color": zod.string(),
-  "type": zod.enum(['subway', 'bus', 'rail']),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']),
   "agency": zod.string(),
   "agencyId": zod.string().optional(),
   "serviceClass": zod.enum(['local', 'express']).optional(),

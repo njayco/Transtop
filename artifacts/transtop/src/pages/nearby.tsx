@@ -7,6 +7,7 @@ import { MobileTop } from '@/components/shell';
 import { AlertRow, ErrorState, SkeletonCards, StopCard, TransitLines } from '@/components/transit';
 import { TransitMap, vehicleKind } from '@/components/transit-map';
 import { RouteBadge } from '@/components/transit';
+import { IntercityModule } from '@/components/intercity';
 import { TIMES_SQUARE, usePrefs } from '@/lib/prefs';
 import { ago } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -14,7 +15,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import type { MapViewport } from '@/components/transit-map';
 
 const FILTERS = [
-  { v: 'all', l: 'All' }, { v: 'subway', l: 'Subway' }, { v: 'bus', l: 'Bus' }, { v: 'rail', l: 'Commuter Rail' },
+  { v: 'all', l: 'All' }, { v: 'subway', l: 'Subway' }, { v: 'bus', l: 'Bus' }, { v: 'rail', l: 'Commuter Rail' }, { v: 'intercity', l: 'Intercity Bus Network' },
 ] as const;
 type Place = { lat: number; lon: number; label: string } | { q: string; label: string };
 
@@ -22,21 +23,29 @@ export default function Nearby() {
   const isMobile = useIsMobile();
   const { mode } = usePrefs();
   const [, nav] = useLocation();
-  const [place, setPlace] = useState<Place>(TIMES_SQUARE);
-  const [filter, setFilter] = useState<string>('all');
+  const [place, setPlaceRaw] = useState<Place>(TIMES_SQUARE);
+  const [provider, setProvider] = useState('');
+  const setPlace = (p: Place) => { setPlaceRaw(p); setProvider(''); };
+  const [filter, setFilterRaw] = useState<string>('all');
   const [agency, setAgency] = useState('');
   const [svc, setSvc] = useState<'all' | 'local' | 'express'>('all');
   const sources = useGetSources();
-  const agencies = useMemo(() => (sources.data ?? []).filter(s=>['subway','bus','rail'].includes(s.type||'')).sort((a,b)=>a.agency.localeCompare(b.agency)), [sources.data]);
+  const agencies = useMemo(() => (sources.data ?? []).filter(s=>(filter === 'all' ? ['subway','bus','rail','intercity'] : [filter]).includes(s.type||'')).sort((a,b)=>a.agency.localeCompare(b.agency)), [sources.data, filter]);
+  const setFilter = (f: string) => {
+    setFilterRaw(f);
+    setProvider('');
+    if (f==='intercity'||agency && !(sources.data ?? []).some((s) => s.id === agency && (f === 'all' || s.type === f))) setAgency('');
+    if (f === 'intercity' || f === 'subway') setSvc('all');
+  };
   const [view, setView] = useState<'list' | 'map'>('list');
   const [text, setText] = useState('');
   const [hover, setHover] = useState<string | null>(null);
   const [geo, setGeo] = useState<'idle' | 'explain' | 'asking' | 'denied' | 'unsupported'>('idle');
 
   const params: GetStopsParams = useMemo(() => ({
-    mode, ...(filter !== 'all' ? { type: filter } : {}), ...(agency ? { agency } : {}), ...(svc !== 'all' ? { serviceClass: svc } : {}),
+    mode, ...(filter !== 'all' ? { type: filter } : {}), ...((filter==='intercity'?provider:agency) ? { agency:filter==='intercity'?provider:agency } : {}), ...(svc !== 'all' ? { serviceClass: svc } : {}),
     ...('q' in place ? { q: place.q } : { lat: place.lat, lon: place.lon }),
-  }), [mode, filter, place, agency, svc]);
+  }), [mode, filter, place, agency, provider, svc]);
   const stops = useGetStops(params, { query: { queryKey: getGetStopsQueryKey(params), refetchInterval: 30_000, retry: 1 } });
   const alerts = useGetAlerts({ mode });
   const list = stops.data?.stops ?? [];
@@ -45,7 +54,7 @@ export default function Nearby() {
     : 'lat' in place ? place : TIMES_SQUARE;
   const [viewport, setViewport] = useState<MapViewport | null>(null);
   const onViewport = useCallback((v: MapViewport) => setViewport({ west: +v.west.toFixed(4), east: +v.east.toFixed(4), south: +v.south.toFixed(4), north: +v.north.toFixed(4), zoom: v.zoom }), []);
-  const netParams: GetNetworkParams = useMemo(() => ({ mode, ...(filter !== 'all' ? { type: filter } : {}), ...(agency ? { agency } : {}), serviceClass: svc, ...(viewport ?? { lat: center.lat, lon: center.lon, zoom: 14.5 }) }), [mode, filter, agency, svc, viewport, center.lat, center.lon]);
+  const netParams: GetNetworkParams = useMemo(() => ({ mode, ...(filter !== 'all' ? { type: filter } : {}), ...((filter==='intercity'?provider:agency) ? { agency:filter==='intercity'?provider:agency } : {}), serviceClass: svc, ...(viewport ?? { lat: center.lat, lon: center.lon, zoom: 14.5 }) }), [mode, filter, agency, provider, svc, viewport, center.lat, center.lon]);
   const networkQ = useGetNetwork(netParams, { query: { queryKey: getGetNetworkQueryKey(netParams), staleTime: 60_000, retry: 1 } });
   const mapStops = useMemo(() => (networkQ.data?.stops ?? list).map((s) => ({ id: s.id, name: s.name, lat: s.lat, lon: s.lon, type: s.type, routes: s.routes })), [networkQ.data, list]);
   const vParams: GetMapVehiclesParams = useMemo(() => ({ mode }), [mode]);
@@ -142,12 +151,12 @@ export default function Nearby() {
         ))}
       </div>
       <div className="flex flex-wrap gap-2">
-        <select value={agency} onChange={(e) => setAgency(e.target.value)} aria-label="Agency filter" data-testid="select-nearby-agency" className="h-10 rounded-xl border border-input bg-card px-3 text-sm">
+        {filter!=='intercity'&&<select value={agency} onChange={(e) => setAgency(e.target.value)} aria-label="Agency filter" data-testid="select-nearby-agency" className="h-10 rounded-xl border border-input bg-card px-3 text-sm">
           <option value="">All agencies</option>{agencies.map((a) => <option key={a.id} value={a.id}>{a.agency}</option>)}
-        </select>
-        <select value={svc} onChange={(e) => setSvc(e.target.value as 'all' | 'local' | 'express')} aria-label="Local or express" data-testid="select-nearby-class" className="h-10 rounded-xl border border-input bg-card px-3 text-sm">
+        </select>}
+        {filter !== 'intercity' && <select value={svc} onChange={(e) => setSvc(e.target.value as 'all' | 'local' | 'express')} aria-label="Local or express" data-testid="select-nearby-class" className="h-10 rounded-xl border border-input bg-card px-3 text-sm">
           <option value="all">Local + express</option><option value="local">Local only</option><option value="express">Express only</option>
-        </select>
+        </select>}
       </div>
       <div className="flex items-end justify-between gap-2">
         <div>
@@ -170,6 +179,7 @@ export default function Nearby() {
           <p className="mt-1 text-sm text-muted-foreground">Coverage may not include this area. Try another neighborhood or clear a filter, and check Settings for agency coverage.</p>
         </div>
       )}
+      {stops.data && <div className={filter === 'intercity' ? '' : 'pb-2'}><IntercityModule key={`${center.lat},${center.lon}`} center={center} provider={provider} onProvider={setProvider} compact={filter !== 'intercity'} /></div>}
       {list.map((s, i) => <StopCard key={s.id} stop={s} index={i} active={hover === s.id} onHover={setHover} />)}
       {(alerts.data?.length ?? 0) > 0 && (
         <section className="pt-4">

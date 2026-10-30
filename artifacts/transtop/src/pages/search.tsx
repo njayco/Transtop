@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'wouter';
 import { Search as SearchIcon, ArrowUpRight } from 'lucide-react';
-import { getGetCatalogQueryKey, useGetCatalog, useGetSources, type GetCatalogParams, type GetCatalogServiceClass } from '@workspace/api-client-react';
+import { getGetCatalogQueryKey, useGetCatalog, useGetSources, useGetIntercityProviders, getGetIntercityProvidersQueryKey, type GetCatalogParams, type GetCatalogServiceClass } from '@workspace/api-client-react';
 import { MobileTop } from '@/components/shell';
 import { ErrorState, ModeIcon, RouteBadge, SkeletonCards, StopCard, MODE_NAME } from '@/components/transit';
 import { Pager, apiErrorText } from '@/components/timetable';
+import { INTERCITY_LABEL, providerStatus } from '@/components/intercity';
 import { usePrefs } from '@/lib/prefs';
 import { cn } from '@/lib/utils';
 
 const SUGGEST = ['Times Square', 'Grand Central', 'Penn Station', 'Jamaica', 'M15', 'Port Washington', 'n6'];
-const TYPES = [{ v: '', l: 'All modes' }, { v: 'subway', l: 'Subway' }, { v: 'bus', l: 'Bus' }, { v: 'rail', l: 'Commuter Rail' }];
+const TYPES = [{ v: '', l: 'All modes' }, { v: 'subway', l: 'Subway' }, { v: 'bus', l: 'Bus' }, { v: 'rail', l: 'Commuter Rail' }, { v: 'intercity', l: 'Intercity Bus Network' }];
 const CLASSES: { v: GetCatalogServiceClass; l: string }[] = [{ v: 'all', l: 'Local + express' }, { v: 'local', l: 'Local' }, { v: 'express', l: 'Express' }];
 const LIMIT = 20;
 
@@ -30,7 +31,10 @@ export default function SearchPage() {
   useEffect(() => setOffset(0), [agency, type, serviceClass, mode]);
 
   const sources = useGetSources();
-  const agencies = useMemo(() => (sources.data ?? []).filter(s=>['subway','bus','rail'].includes(s.type||'')).sort((a,b)=>a.agency.localeCompare(b.agency)), [sources.data]);
+  const agencies = useMemo(() => (sources.data ?? []).filter(s=>(type ? [type] : ['subway','bus','rail','intercity']).includes(s.type||'')).sort((a,b)=>a.agency.localeCompare(b.agency)), [sources.data, type]);
+  const intercity = useGetIntercityProviders({ query: { queryKey: getGetIntercityProvidersQueryKey(), enabled: type === 'intercity' || type === '', staleTime: 300_000 } });
+  const gaps = (intercity.data ?? []).filter((p) => providerStatus(p.status).k !== 'imported');
+  const pickType = (t: string) => { setType(t); if (agency && t && !(sources.data ?? []).some((s) => s.id === agency && s.type === t)) setAgency(''); if (t === 'intercity') setServiceClass('all'); };
   const params: GetCatalogParams = { mode, offset, limit: LIMIT, serviceClass, ...(q ? { q } : {}), ...(agency ? { agency } : {}), ...(type ? { type } : {}) };
   const res = useGetCatalog(params, { query: { queryKey: getGetCatalogQueryKey(params), placeholderData: (p) => p, retry: 1 } });
   const d = res.data;
@@ -53,13 +57,20 @@ export default function SearchPage() {
               <select value={agency} onChange={(e) => setAgency(e.target.value)} aria-label="Agency" data-testid="select-catalog-agency" className={sel}>
                 <option value="">All agencies</option>{agencies.map((a) => <option key={a.id} value={a.id}>{a.agency}</option>)}
               </select>
-              <select value={type} onChange={(e) => setType(e.target.value)} aria-label="Mode" data-testid="select-catalog-type" className={sel}>
+              <select value={type} onChange={(e) => pickType(e.target.value)} aria-label="Mode" data-testid="select-catalog-type" className={sel}>
                 {TYPES.map((t) => <option key={t.v} value={t.v}>{t.l}</option>)}
               </select>
               <select value={serviceClass} onChange={(e) => setServiceClass(e.target.value as GetCatalogServiceClass)} aria-label="Service class" data-testid="select-catalog-class" className={sel}>
                 {CLASSES.map((c) => <option key={c.v} value={c.v}>{c.l}</option>)}
               </select>
             </div>
+            {type === 'intercity' && gaps.length > 0 && (
+              <details className="rounded-2xl border border-dashed border-border px-4 py-3 text-sm" data-testid="details-search-intercity-gaps">
+                <summary className="cursor-pointer font-semibold">{INTERCITY_LABEL}: {gaps.length} provider{gaps.length > 1 ? 's' : ''} without imported times</summary>
+                <p className="mt-1 text-xs text-muted-foreground">Their routes and stops will not appear in results. Use the official schedules.</p>
+                <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">{gaps.map((p) => { const st = providerStatus(p.status); return <li key={p.id} className="flex items-center justify-between gap-2"><span>{p.name} <span className={cn('text-xs font-bold', st.c)}>{st.l}</span></span>{p.url && <a href={p.url} target="_blank" rel="noreferrer" className="text-xs underline">Schedule</a>}</li>; })}</ul>
+              </details>
+            )}
             {!q && (
               <div className="flex flex-wrap gap-2">
                 {SUGGEST.map((s) => <button key={s} onClick={() => setText(s)} className="h-10 rounded-full border border-border px-4 text-sm font-semibold hover:border-white/40" data-testid={`button-suggest-${s}`}>{s}</button>)}

@@ -6,6 +6,7 @@ import { importGtfs } from "./importer";
 import { logger } from "../lib/logger";
 import { adapters } from "./adapters";
 import { maintainGenerations } from "./generations";
+import { refreshIntercity } from "./intercity/service";
 export async function startTransitJobs() {
   await seedDemo();
   for(const a of adapters) {
@@ -16,6 +17,10 @@ export async function startTransitJobs() {
   await cleanup();
   const runPoll=()=>pollRealtime().catch(()=>logger.warn("Live feed polling failed"));
   void runPoll();
+  // Small public source refresh is independent of the large regional importer.
+  const runIntercity=()=>refreshIntercity().catch(()=>logger.warn("Intercity source refresh unavailable"));
+  void runIntercity();
+  setInterval(()=>void runIntercity(),3600000).unref();
   setInterval(runPoll,30000).unref();
   setInterval(()=>void cleanup().catch(()=>logger.warn("Retention cleanup failed")),60000).unref();
   await maintainGenerations();

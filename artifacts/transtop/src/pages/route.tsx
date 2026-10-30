@@ -6,6 +6,7 @@ import { LiveIndicator } from '@/components/shell';
 import { AlertRow, Countdown, ErrorState, FavButton, MODE_NAME, RouteBadge, SkeletonCards, SourceLabel } from '@/components/transit';
 import { TransitMap } from '@/components/transit-map';
 import { TimetablePanel } from '@/components/timetable';
+import { IntercityModule } from '@/components/intercity';
 import { honest, usePrefs } from '@/lib/prefs';
 import { ago } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -124,7 +125,7 @@ export default function RoutePage() {
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">Individual riders are never shown. Updated {ago(vehicles[0]?.updatedAt)}.</p>
               </div>
-              <TimetablePanel key={d.route.id} routeId={d.route.id} direction={activeDir} color={color} title={activeDir ? `Timetable · ${activeDir}` : 'Timetable'} />
+              {d.route.type==='intercity'?<IntercityModule key={d.route.id} center={center} provider="martz" routeId={d.route.id}/>:<TimetablePanel key={d.route.id} routeId={d.route.id} direction={activeDir} color={color} title={activeDir ? `Timetable · ${activeDir}` : 'Timetable'} />}
             </aside>
           </div>
         </>

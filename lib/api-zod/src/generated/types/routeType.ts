@@ -12,4 +12,5 @@ export const RouteType = {
   subway: 'subway',
   bus: 'bus',
   rail: 'rail',
+  intercity: 'intercity',
 } as const;

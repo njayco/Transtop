@@ -13,6 +13,7 @@ import { patternLabel,resolvePattern } from "./catalog";
 import { journeyHealth } from "./journeys";
 import { stopTimesMode } from "./generations";
 import { tripIdentity } from "./bus-time";
+import { intercityCatalog, intercityArrivals, intercityRoute, intercityProviders } from "./intercity/service";
 
 let stopCache:{at:number;demo:TransitStop[];live:TransitStop[]}|undefined;
 export async function allStops(mode:Mode) {
@@ -21,7 +22,7 @@ export async function allStops(mode:Mode) {
     stopCache={at:Date.now(),demo:data.filter(s=>s.mode==="demo").map(s=>s.data as TransitStop),
       live:data.filter(s=>s.mode==="live").map(s=>s.data as TransitStop)};
   }
-  return stopCache[mode];
+  return mode==="live"?[...stopCache.live,...(await intercityCatalog()).stops]:stopCache[mode];
 }
 export function officialArrivals(stop:TransitStop,now=Date.now()) {
   const agency=stop.id.split(":")[0], raw=stop.rawId||stop.id.slice(agency.length+1);
@@ -54,6 +55,7 @@ export function officialArrivals(stop:TransitStop,now=Date.now()) {
 }
 export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<TransitStop> {
   if(mode==="demo")return demoArrivals(stop);
+  if(stop.type==="intercity")return {...stop,arrivals:await intercityArrivals(stop)};
   const {arrivals:official,excluded}=officialArrivals(stop);
   const community=deep?await communityArrivals(stop):[];
   const schedule=official.length>=3&&!deep?[]:await scheduledArrivals(stop,excluded);
@@ -65,6 +67,7 @@ export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<Tran
   return {...stop,arrivals,alerts:liveAlerts().filter(a=>stop.routes.some(r=>a.routeIds.includes(r.id)))};
 }
 const knownPlaces=[
+  {terms:["port authority","pabt"],lat:40.756143,lon:-73.990672},
   {terms:["times square","times sq","midtown","42nd street","42 st","7th avenue"],lat:40.75529,lon:-73.98749},
   {terms:["bryant park","new york public library","fifth avenue"],lat:40.7536,lon:-73.9832},
   {terms:["penn station","penn","madison square garden","34th street","moynihan"],lat:40.7506,lon:-73.9935},
@@ -90,6 +93,7 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
   if(exact&&!foundPlace){lat=exact.lat;lon=exact.lon;}
   if(q&&!foundPlace)rows=rows.filter(s=>s.name.toLowerCase().includes(q)||s.neighborhood?.toLowerCase().includes(q)||s.routes.some(r=>r.name.toLowerCase()===q||r.id.toLowerCase()===q));
   rows=rows.map(s=>{const d=distance(lat,lon,s.lat,s.lon);return {...s,distance:Math.round(d),walkingMinutes:Math.max(1,Math.round(d/75))};})
+    .filter(s=>s.type!=="intercity"||s.distance<=3000)
     .sort((a,b)=>a.distance-b.distance).slice(0,16);
   const enriched=await Promise.all(rows.map(s=>enrich(s,mode)));
   return {stops:enriched,mode,updatedAt:new Date().toISOString(),centerLat:lat,centerLon:lon,
@@ -100,6 +104,7 @@ export async function stopDetail(id:string,mode:Mode) {
   return s?enrich(s,mode,true):undefined;
 }
 export async function routeDetail(id:string,mode:Mode,direction?:string):Promise<RouteDetail|undefined> {
+  if(mode==="live"&&id.startsWith("martz:"))return intercityRoute(id);
   const [r]=await db.select().from(routes).where(and(eq(routes.id,id),eq(routes.mode,mode)));
   if(!r)return;
   const route=r.data as TransitRoute, agency=id.split(":")[0], raw=id.slice(agency.length+1);
@@ -154,7 +159,9 @@ export async function sources() {
       url:a.documentation,updatedAt:health.updatedAt||data?.importedAt||null};
   });
   const google=journeyHealth();
-  return [...result,{id:"google-routes",agency:"Google journey planning",type:"journey planner",
+  const intercity=(await intercityProviders()).map(p=>({id:p.id,agency:p.name,type:"intercity",status:p.status,
+    description:p.description,url:p.url,updatedAt:p.updatedAt||p.checkedAt,lastError:p.lastError}));
+  return [...result,...intercity,{id:"google-routes",agency:"Google journey planning",type:"journey planner",
     status:google.status,lastError:"message" in google?google.message:undefined,
     description:"On-demand Google transit itineraries, not a complete agency catalog or official live arrival feed. Requires Routes API, Google Cloud billing and a separate server key. Provider access is checked when a journey is requested.",
     url:"https://developers.google.com/maps/documentation/routes/transit-route",updatedAt:google.updatedAt}];

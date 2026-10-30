@@ -6,6 +6,7 @@ import { LiveIndicator } from '@/components/shell';
 import { AlertRow, Countdown, ErrorState, FavButton, ModeIcon, RouteBadge, SkeletonCards, SourceLabel, StatusText, TransitLines } from '@/components/transit';
 import { TransitMap } from '@/components/transit-map';
 import { TimetablePanel } from '@/components/timetable';
+import { IntercityModule } from '@/components/intercity';
 import { honest, usePrefs } from '@/lib/prefs';
 import { ago, clock } from '@/lib/format';
 
@@ -85,7 +86,7 @@ export default function StopPage() {
               </ul>
             </section>
           ))}
-          {stop && <TimetablePanel stopId={stop.id} title="Timetable for any date" />}
+          {stop?.type==='intercity'?<IntercityModule center={{lat:stop.lat,lon:stop.lon}} provider="martz" stopId={stop.id}/>:stop&&<TimetablePanel stopId={stop.id} title="Timetable for any date" />}
           {stop && <p className="text-xs text-muted-foreground">Stop data updated {ago(stop.updatedAt)}. Times refresh every 30 seconds while open.</p>}
         </div>
         <aside className="space-y-4">
