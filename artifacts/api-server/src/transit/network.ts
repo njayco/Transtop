@@ -71,7 +71,7 @@ export async function network(p: NetworkQuery) {
     lines: demoRoutes.map(route => { const shape = demoShape(route); return { route, shape, shapeId: `demo:${route.id}`, bounds: boundsOf(shape) }; }),
   } : await catalogGeometry();
   const matches = (r: TransitRoute) => (!p.type || p.type === "all" || r.type === p.type) &&
-    (!p.agency || r.id.split(":")[0] === p.agency) && (!p.routeId || r.id === p.routeId) &&
+    (!p.agency || r.id.split(":")[0] === p.agency || r.agencyId === p.agency) && (!p.routeId || r.id === p.routeId) &&
     (!p.serviceClass || p.serviceClass === "all" || r.serviceClass === p.serviceClass);
   const visible = catalog.lines.filter(l => matches(l.route) && (p.routeId || l.route.type !== "bus" || zoom >= 12) &&
     (p.routeId || overlaps(l.bounds, b) && intersects(l.shape, b)))
@@ -86,7 +86,7 @@ export async function network(p: NetworkQuery) {
     if (lines.length >= 600 || points + shape.length > 180000) continue;
     lines.push({ route: l.route, shape, shapeId: l.shapeId, vehicles: [] }); points += shape.length;
   }
-  const extra=mode==="live"?await intercityCatalog():{routes:[],stops:[]};
+  const extra=mode==="live"?await intercityCatalog():{routes:[],stops:[],coverageWarning:""};
   const localReferenceRoutes=new Set(extra.stops.filter(s=>contains(b,s.lon,s.lat)).flatMap(s=>s.routes.map(r=>r.id)));
   const ss = zoom >= 13 || p.routeId ? [...catalog.stops,...extra.stops].filter(s => !s.parent && Number.isFinite(s.lat) && Number.isFinite(s.lon) &&
     (p.routeId || contains(b, s.lon, s.lat)) && s.routes.some(matches)).map(s => ({
@@ -98,7 +98,7 @@ export async function network(p: NetworkQuery) {
     missingGeometry: [...catalog.missing,...extra.routes.filter(r=>!r.id.startsWith("ibg:")||localReferenceRoutes.has(r.id))].filter(matches), busDetailZoom: 12, stopsZoom: 13,
     generation: catalog.generation,
     message: mode === "demo" ? "Demo sample paths, not official service coverage." :
-      "Official GTFS route paths, not live movement. Bus detail at zoom 12+; stops at zoom 13+. Missing geometry lists routes with at least one unavailable pattern. Only imported operators are covered; private services and unimported operators are not included.",
+      "Official GTFS route paths, not live movement. Bus detail at zoom 12+; stops at zoom 13+. Missing geometry lists routes with at least one unavailable pattern. Only imported operators are covered; private services and unimported operators are not included."+(extra.coverageWarning?` ${extra.coverageWarning}`:""),
   };
 }
 export { mapVehicles };

@@ -1,5 +1,6 @@
 import { DateTime } from "luxon";
 import { distance, type TransitRoute, type TransitStop } from "../types";
+import { ibgLocationDecision, IBG_LOCATION_WARNING } from "./ibg-verification";
 
 export const IBG_URL="https://github.com/UTEL-UIUC/intercity-bus-gtfs";
 export const IBG_ARTICLE="https://findingspress.org/article/159284-a-gtfs-based-dataset-for-the-us-intercity-bus-network";
@@ -67,18 +68,28 @@ export function buildIbg(d:IbgData){
       m.set(route.id,route);served.set(id,m);
     }
   }
-  const stops:TransitStop[]=[];
+  const archivalStops:TransitStop[]=[];
+  const quarantinedStops=new Map<string,NonNullable<ReturnType<typeof ibgLocationDecision>>>();
   const rawStopMap=new Map(d.stops.map(s=>[s.stop_id,s]));
   for(const [key,rs] of served){
       const s=rawStopMap.get(key.split(":").at(-1)!)!;
       const rr=[...rs.values()];
-      stops.push({id:key,rawId:s.stop_id,name:`${s.stop_name} · IBG reference`,agency:rr[0].agency,type:"intercity",
+      const decision=ibgLocationDecision(d,s);
+      if(decision?.status==="quarantined")quarantinedStops.set(key,decision);
+      archivalStops.push({id:key,rawId:s.stop_id,name:`${s.stop_name} · IBG reference`,agency:rr[0].agency,type:"intercity",
         lat:Number(s.stop_lat),lon:Number(s.stop_lon),distance:0,walkingMinutes:0,accessible:false,
         updatedAt:d.importedAt,routes:rr,arrivals:[],
         alerts:[{id:`${key}:reference`,title:"Research snapshot · verify before travel",description:IBG_WARNING,
           severity:"warning",routeIds:rr.map(r=>r.id),source:"IBG research dataset"}]});
   }
-  return {routes:[...routes.values()],stops,rawRoutes,rawStopMap,tripGroups,routeMap:routes,stopMap:new Map(stops.map(s=>[s.id,s]))};
+  const affectedRoutes=new Set(archivalStops.filter(s=>quarantinedStops.has(s.id)).flatMap(s=>s.routes.map(r=>r.id)));
+  for(const r of routes.values())if(affectedRoutes.has(r.id))r.scheduleNotes!.push(IBG_LOCATION_WARNING);
+  // Only eligible points enter public catalogs and selectors. The archival map
+  // retains provider identities and untouched source coordinates for audit.
+  const stops=archivalStops.filter(s=>!quarantinedStops.has(s.id));
+  return {routes:[...routes.values()],stops,rawRoutes,rawStopMap,tripGroups,routeMap:routes,
+    stopMap:new Map(stops.map(s=>[s.id,s])),archivalStopMap:new Map(archivalStops.map(s=>[s.id,s])),
+    quarantinedStops,affectedRoutes,coverageWarning:quarantinedStops.size?IBG_LOCATION_WARNING:""};
 }
 export function nearbyIbg(stops:TransitStop[],lat:number,lon:number){
   return new Set(stops.filter(s=>distance(lat,lon,s.lat,s.lon)<=3000).flatMap(s=>s.routes.map(r=>r.agencyId!)));
@@ -99,6 +110,7 @@ export function referenceTimetable(d:IbgData,c:ReturnType<typeof buildIbg>,p:{da
     if(!serviceOn(d,t.serviceId,p.date))continue;
     for(const pt of t.points){
       const stopId=ibgStopId(route.agencyId!,pt.stopId);
+      if(!c.stopMap.has(stopId))continue;
       if(p.stopId?stopId!==p.stopId:pt!==t.points[0])continue;
       if(pt.pickup==="1")continue;
       const raw=pt.departure||pt.arrival,m=raw.match(/^(\d{1,3}):([0-5]\d):([0-5]\d)$/);
@@ -116,5 +128,5 @@ export function referenceTimetable(d:IbgData,c:ReturnType<typeof buildIbg>,p:{da
   }
   result.sort((a,b)=>a.time.localeCompare(b.time));
   return {departures:result.slice(offset,offset+limit),total:result.length,offset,limit,date:p.date,
-    message:`Historical IBG timetable only — not current travel information. Times use the archive's encoded America/New_York timezone, which may not be the original operator's local timezone. Holiday completeness is unverified. ${IBG_ARTICLE}`};
+    message:`Historical IBG timetable only — not current travel information. Times use the archive's encoded America/New_York timezone, which may not be the original operator's local timezone. Holiday completeness is unverified. ${IBG_ARTICLE}${c.coverageWarning?` ${c.coverageWarning}`:""}`};
 }

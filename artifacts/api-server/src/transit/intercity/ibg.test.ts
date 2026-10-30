@@ -1,7 +1,13 @@
-import { test } from "node:test";
+import { test, mock } from "node:test";
 import assert from "node:assert/strict";
 import { buildIbg, ibgProvider, nearbyIbg, referenceTimetable, serviceOn, type IbgData } from "./ibg-model";
 import { decodeIbg } from "./ibg-store";
+import { IBG_COMMIT, IBG_SHA, IBG_LOCATION_WARNING } from "./ibg-verification";
+import { db, pool } from "@workspace/db";
+import { primaryIbgCatalog, ibgRouteDetail, ibgTimetable } from "./ibg-browse";
+import { intercityCatalog, intercityDepartures, intercityProviders } from "./service";
+import { nearby, stopDetail } from "../service";
+import { invalidateNetwork, network } from "../network";
 
 test("changed or malformed archives fail checksum validation before publication",async()=>{
   await assert.rejects(decodeIbg(Buffer.from("not the pinned archive"),""),/checksum mismatch/);
@@ -63,4 +69,122 @@ test("extended GTFS clocks keep their service day; nonexistent and ambiguous DST
   assert.equal(referenceTimetable(d,buildIbg(d),{routeId,date:"2025-03-09"}).total,0);
   point.departure="01:30:00";
   assert.equal(referenceTimetable(d,buildIbg(d),{routeId,date:"2025-11-02"}).total,0);
+});
+
+function contradictoryFixture():IbgData {
+  const d=fixture();
+  d.version=IBG_COMMIT;d.sha256=IBG_SHA;
+  d.stops.push(
+    {stop_id:"1#2382",stop_name:"State College Regional Airport",stop_lat:"40.734062",stop_lon:"-74.165535"},
+    {stop_id:"2382",stop_name:"State College Regional Airport",stop_lat:"40.85141",stop_lon:"-77.8528"},
+    {stop_id:"newark-valid",stop_name:"State College Regional Airport",stop_lat:"40.7341",stop_lon:"-74.1656"},
+  );
+  const add=(id:string,routeId:string,stopId:string)=>d.trips.push({id,routeId,serviceId:"daily",headsign:"Archive destination",direction:"0",
+    points:[{stopId,sequence:1,arrival:"09:00:00",departure:"09:00:00",pickup:"0"}]});
+  add("bad","r1","1#2382");add("good","r1","2382");add("unrelated","r2","newark-valid");
+  // A shared raw record is still scoped separately for each serving provider.
+  add("bad-other","r2","1#2382");
+  d.routes.push({route_id:"only-bad",agency_id:"1",route_short_name:"Withheld boarding location"});
+  add("only-bad","only-bad","1#2382");
+  for(const [agency_id,agency_name] of [["3","Martz Bus"],["4","Trans-Bridge Lines, Inc."]]){
+    d.agencies.push({agency_id,agency_name});d.routes.push({route_id:`r${agency_id}`,agency_id,route_short_name:agency_name});
+    add(`preferred-${agency_id}`,`r${agency_id}`,"s1");
+  }
+  return d;
+}
+
+test("source-record quarantine preserves archival provenance without relocating or name-wide suppression",()=>{
+  const d=contradictoryFixture(),before=JSON.stringify(d),c=buildIbg(d);
+  assert.equal(JSON.stringify(d),before);
+  assert.equal(c.quarantinedStops.size,2);
+  assert.ok(!c.stops.some(s=>s.rawId==="1#2382"));
+  const archived=c.archivalStopMap.get("ibg:peter-pan:stop:1#2382")!;
+  assert.equal(archived.lat,40.734062);assert.equal(archived.lon,-74.165535);
+  assert.equal(c.rawStopMap.get("1#2382"),d.stops.find(s=>s.stop_id==="1#2382"));
+  assert.ok(c.quarantinedStops.get(archived.id)!.reason.includes("Newark"));
+  assert.ok(c.quarantinedStops.get(archived.id)!.evidence.includes("intercity-gtfs-audit"));
+  assert.equal(c.coverageWarning,IBG_LOCATION_WARNING);
+  assert.ok(c.routes.find(r=>r.id==="ibg:peter-pan:route:r1")!.scheduleNotes!.includes(IBG_LOCATION_WARNING));
+  assert.ok(!c.routes.find(r=>r.id==="ibg:martz:route:r3")!.scheduleNotes!.includes(IBG_LOCATION_WARNING));
+  assert.deepEqual([...nearbyIbg(c.stops,40.734062,-74.165535)],["ibg-2"]);
+  assert.deepEqual([...nearbyIbg(c.stops,40.85141,-77.8528)],["peter-pan"]);
+  assert.equal(c.stopMap.get("ibg:peter-pan:stop:2382")!.lon,-77.8528);
+  const p={date:"2025-08-15",routeId:"ibg:peter-pan:route:r1"};
+  assert.equal(referenceTimetable(d,c,{...p,stopId:archived.id}).total,0);
+  assert.equal(referenceTimetable(d,c,{...p,stopId:"ibg:peter-pan:stop:2382"}).total,1);
+  assert.ok(!referenceTimetable(d,c,p).departures.some(s=>s.stopId===archived.id));
+  assert.equal(referenceTimetable(d,c,{...p,date:"2026-10-30"}).total,0);
+});
+
+test("quarantine decisions do not leak to a different archive or become verified after reimport",()=>{
+  const d=contradictoryFixture();
+  d.importedAt="2027-01-01T00:00:00Z";
+  assert.equal(buildIbg(d).quarantinedStops.size,2);
+  d.version="unrelated-source";
+  assert.equal(buildIbg(d).quarantinedStops.size,0);
+  d.version=IBG_COMMIT;d.sha256="different-checksum";
+  assert.equal(buildIbg(d).quarantinedStops.size,0);
+});
+
+test("nearby, provider/location filters, network route overrides and boarding selectors cannot restore quarantined points",async()=>{
+  const d=contradictoryFixture();
+  // Exercise actual public entry points, with no database writes or downloads.
+  const query=mock.method(pool,"query",(async(sql:string)=>({
+    rows:sql.includes("id='ibg:dataset'")?[{data:d}]:[],
+  })) as any);
+  const select=mock.method(db,"select",(()=>({from:()=>({where:async()=>[]})})) as any);
+  const bad="ibg:peter-pan:stop:1#2382",good="ibg:peter-pan:stop:2382",valid="ibg:ibg-2:stop:newark-valid";
+  try {
+    const primary=await primaryIbgCatalog(),catalog=await intercityCatalog();
+    assert.ok(!primary.stops.some(s=>s.rawId==="1#2382"));
+    assert.ok(!primary.routes.some(r=>r.agencyId==="martz"||r.agencyId==="transbridge"));
+    assert.ok(catalog.stops.some(s=>s.id===good));
+    for(const agency of [undefined,"peter-pan","ibg-2","ibg"]){
+      const result=await nearby({mode:"live",type:"intercity",lat:40.734062,lon:-74.165535,agency});
+      assert.ok(!result.stops.some(s=>s.rawId==="1#2382"));
+      assert.match(result.message,/quarantined.*independently verified/);
+    }
+    const local=await nearby({mode:"live",type:"intercity",lat:40.734062,lon:-74.165535});
+    assert.ok(local.stops.some(s=>s.id===valid));
+    const pennsylvania=await nearby({mode:"live",type:"intercity",lat:40.85141,lon:-77.8528,agency:"peter-pan"});
+    assert.ok(pennsylvania.stops.some(s=>s.id===good));
+    const name=await nearby({mode:"live",type:"intercity",q:"State College Regional Airport",agency:"peter-pan"});
+    assert.deepEqual(name.stops.map(s=>s.id),[good]);
+    assert.equal(await stopDetail(bad,"live"),undefined);
+    for(const provider of [undefined,"peter-pan","ibg-2"]){
+      const result=await intercityDepartures({lat:40.734062,lon:-74.165535,date:"2026-10-30",provider});
+      assert.ok(!result.providers.some(p=>p.id==="peter-pan"));
+      assert.ok(result.providers.some(p=>p.id==="ibg-2"));
+      assert.match(result.message,/quarantined/);
+      assert.ok(!result.departures.some(s=>s.stopId===bad));
+    }
+    invalidateNetwork();
+    for(const filters of [{},{agency:"ibg"},{agency:"peter-pan"},{agency:"ibg-2"},{routeId:"ibg:peter-pan:route:r1"},{agency:"peter-pan",routeId:"ibg:peter-pan:route:r1",zoom:8}]){
+      const result=await network({mode:"live",type:"intercity",lat:40.734062,lon:-74.165535,zoom:14,...filters});
+      assert.ok(!result.stops.some(s=>s.id.endsWith(":stop:1#2382")));
+      assert.match(result.message,/quarantined/);
+    }
+    const paNetwork=await network({mode:"live",type:"intercity",lat:40.85141,lon:-77.8528,zoom:14,agency:"peter-pan"});
+    assert.ok(paNetwork.stops.some(s=>s.id===good));
+    const otherNetwork=await network({mode:"live",type:"intercity",lat:40.734062,lon:-74.165535,zoom:14,agency:"ibg-2"});
+    assert.ok(otherNetwork.stops.some(s=>s.id===valid));
+    const preferred=await network({mode:"live",type:"intercity",lat:40.756,lon:-73.990,zoom:14});
+    assert.ok(!preferred.stops.some(s=>s.id.startsWith("ibg:martz:")||s.id.startsWith("ibg:transbridge:")));
+    const detail=await ibgRouteDetail("ibg:peter-pan:route:r1");
+    assert.ok(!detail!.stops.some(s=>s.id===bad));
+    assert.ok(!detail!.timetableStops!.some(s=>s.id===bad));
+    assert.ok(detail!.timetableStops!.some(s=>s.id===good));
+    assert.ok(detail!.alerts.some(a=>a.description.includes("quarantined")));
+    const onlyBad=await ibgRouteDetail("ibg:peter-pan:route:only-bad");
+    assert.equal(onlyBad!.stops.length,0);
+    assert.equal(onlyBad!.timetableStops!.length,0);
+    assert.ok(onlyBad!.alerts.some(a=>a.description.includes("quarantined")));
+    const withheld=await ibgTimetable({date:"2025-08-15",stopId:bad});
+    assert.equal(withheld.total,0);assert.match(withheld.message,/quarantined/);
+    const providers=await intercityProviders();
+    assert.match(providers.find(p=>p.id==="peter-pan")!.description,/quarantined/);
+    assert.ok(!providers.find(p=>p.id==="martz")!.description.includes("quarantined"));
+  } finally {
+    query.mock.restore();select.mock.restore();invalidateNetwork();
+  }
 });

@@ -1,6 +1,7 @@
 import { ibgCatalog, ibgCompiled, ibgDataset } from "./ibg-store";
 import { ibgStopId, referenceTimetable } from "./ibg-model";
 import type { RouteDetail } from "../types";
+import { IBG_LOCATION_WARNING } from "./ibg-verification";
 
 export async function ibgRouteDetail(id:string,direction?:string):Promise<RouteDetail|undefined>{
   const c=await ibgCompiled();if(!c)return;
@@ -15,7 +16,10 @@ export async function ibgRouteDetail(id:string,direction?:string):Promise<RouteD
     const s=c.stopMap.get(ibgStopId(route.agencyId!,p.stopId));
     if(s&&!all.has(s.id))all.set(s.id,{id:s.id,name:s.name,sequence:all.size});
   }
-  return {route,stops,shape:[],vehicles:[],alerts:stops[0]?.alerts||[],directions:[...new Set(trips.map(directionFor))].filter(Boolean),timetableStops:[...all.values()]};
+  const alerts=[...(stops[0]?.alerts||[])];
+  if(c.affectedRoutes.has(route.id))alerts.push({id:`${route.id}:location-verification`,title:"Boarding location withheld · independent verification required",
+    description:IBG_LOCATION_WARNING,severity:"warning",routeIds:[route.id],source:"IBG source-record audit"});
+  return {route,stops,shape:[],vehicles:[],alerts,directions:[...new Set(trips.map(directionFor))].filter(Boolean),timetableStops:[...all.values()]};
 }
 export async function ibgTimetable(p:Parameters<typeof referenceTimetable>[2]){
   const [d,c]=await Promise.all([ibgDataset(),ibgCompiled()]);
@@ -27,5 +31,5 @@ export async function primaryIbgCatalog(){
   // Newer carrier schedules already exist for these operators. Do not add a
   // second set of research markers to their verified primary browsing results.
   const keep=(id?:string)=>id!=="martz"&&id!=="transbridge";
-  return {routes:c.routes.filter(r=>keep(r.agencyId)),stops:c.stops.filter(s=>s.routes.some(r=>keep(r.agencyId)))};
+  return {routes:c.routes.filter(r=>keep(r.agencyId)),stops:c.stops.filter(s=>s.routes.some(r=>keep(r.agencyId))),coverageWarning:c.coverageWarning};
 }

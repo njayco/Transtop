@@ -8,7 +8,7 @@ import { MARTZ_URL, providerInventory } from "./providers";
 import { parseMartz, holidayDate, printedInstant, type MartzDataset } from "./martz";
 import { documentCatalog,documentIntercityDepartures,nearbyDocumentProviders,documentServiceStatus,documentArrivals,documentRoute,documentTimetable,isDocumentId } from "./uploaded-service";
 import { WALL_CLOSURE,VERIFIED_AT } from "./uploaded-data";
-import { mergeIbgProviders,ibgCatalog } from "./ibg-store";
+import { mergeIbgProviders } from "./ibg-store";
 import { primaryIbgCatalog } from "./ibg-browse";
 import { isIbgId,nearbyIbg } from "./ibg-model";
 
@@ -104,7 +104,7 @@ function routeFor(t:MartzDataset["trips"][number]):TransitRoute {
 export async function intercityCatalog() {
   const data=await dataset();
   const originalDocuments=documentCatalog(),reference=await primaryIbgCatalog();
-  const documents={routes:[...originalDocuments.routes,...reference.routes],stops:[...originalDocuments.stops,...reference.stops]};
+  const documents={routes:[...originalDocuments.routes,...reference.routes],stops:[...originalDocuments.stops,...reference.stops],coverageWarning:reference.coverageWarning};
   if(!usable(data))return documents;
   const routes=data!.trips.map(routeFor);
   const stops:TransitStop[]=Object.entries(boardingPoints).flatMap(([code,p])=>{
@@ -115,7 +115,7 @@ export async function intercityCatalog() {
       neighborhood:p.address,
     }];
   });
-  return {routes:[...routes,...documents.routes],stops:[...stops,...documents.stops]};
+  return {routes:[...routes,...documents.routes],stops:[...stops,...documents.stops],coverageWarning:documents.coverageWarning};
 }
 async function martzDepartures(p:{lat:number;lon:number;provider?:string;date:string;from?:string}) {
   const data=await dataset(),allProviders=await intercityProviders();
@@ -165,7 +165,7 @@ async function martzDepartures(p:{lat:number;lon:number;provider?:string;date:st
 export async function intercityDepartures(p:{lat:number;lon:number;provider?:string;date:string;from?:string}) {
   const original=await martzDepartures(p),all=await intercityProviders();
   const extraIds=nearbyDocumentProviders(p.lat,p.lon);
-  const reference=await ibgCatalog(),referenceIds=nearbyIbg(reference.stops,p.lat,p.lon);
+  const reference=await primaryIbgCatalog(),referenceIds=nearbyIbg(reference.stops,p.lat,p.lon);
   const providers=all.filter(v=>extraIds.includes(v.id)||referenceIds.has(v.id)||original.providers.some(s=>s.id===v.id));
   const documents=documentIntercityDepartures(p);
   const departures=[...(p.provider&&p.provider!=="martz"?[]:original.departures),...documents]
@@ -177,7 +177,7 @@ export async function intercityDepartures(p:{lat:number;lon:number;provider?:str
     original.message+(transbridgeHere?` Trans-Bridge: ${notice||"Published regular and verified November 26–27 holiday schedules are imported."}`:"");
   const archiveNotice=referenceIds.size&&(!p.provider||referenceIds.has(p.provider))?
     " IBG research stops/routes and historical timetables are also available here. Their older calendars are never used as verified upcoming departures. Open a research stop or route to browse its historical timetable.":"";
-  return {...original,providers,departures,message:message+archiveNotice,updatedAt:documents.length||p.provider==="transbridge"?VERIFIED_AT:original.updatedAt};
+  return {...original,providers,departures,message:message+archiveNotice+(reference.coverageWarning?` ${reference.coverageWarning}`:""),updatedAt:documents.length||p.provider==="transbridge"?VERIFIED_AT:original.updatedAt};
 }
 export async function intercityArrivals(stop:TransitStop,now=Date.now()):Promise<Arrival[]> {
   if(isIbgId(stop.id))return [];

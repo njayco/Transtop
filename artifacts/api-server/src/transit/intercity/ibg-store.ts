@@ -5,9 +5,9 @@ import { pool } from "@workspace/db";
 import { logger } from "../../lib/logger";
 import { buildIbg, IBG_URL, IBG_ARTICLE, ibgProvider, sourceFor, type IbgData, type Row, type IbgPoint } from "./ibg-model";
 import type { Provider } from "./providers";
+import { IBG_COMMIT, IBG_SHA } from "./ibg-verification";
+export { IBG_COMMIT, IBG_SHA } from "./ibg-verification";
 
-export const IBG_COMMIT="b7df01420884a043a7e72c70d97b8a20e2c69002";
-export const IBG_SHA="6f592b96af3b5a3d0004ade84a5212aeae0fb53e963d92f52544e2aa019e15b2";
 const ROOT=`https://raw.githubusercontent.com/UTEL-UIUC/intercity-bus-gtfs/${IBG_COMMIT}/`;
 let cached:IbgData|undefined,compiled:ReturnType<typeof buildIbg>|undefined,loaded=0;
 export async function ibgDataset(){
@@ -21,7 +21,7 @@ export async function ibgDataset(){
 }
 export async function ibgCatalog(){
   const data=await ibgDataset();
-  if(!data)return {routes:[],stops:[]};
+  if(!data)return {routes:[],stops:[],coverageWarning:""};
   return compiled??=(buildIbg(data));
 }
 export async function ibgCompiled(){await ibgCatalog();return compiled;}
@@ -82,10 +82,12 @@ export async function ensureIbg(bytes?:Buffer){
 }
 export async function mergeIbgProviders(existing:Provider[]){
   const d=await ibgDataset();if(!d)return existing;
+  const catalog=await ibgCompiled();
   const result=new Map(existing.map(p=>[p.id,{...p}]));
   for(const a of d.agencies){
     const id=ibgProvider(a),source=sourceFor(d,a),base=result.get(id);
-    const note=`IBG research reference (${source?.source_date||"collection date not supplied"}); historical stops/routes/timetables only, not verified current service. ${IBG_ARTICLE}`;
+    const affected=catalog&&[...catalog.quarantinedStops.keys()].some(key=>key.startsWith(`ibg:${id}:stop:`));
+    const note=`IBG research reference (${source?.source_date||"collection date not supplied"}); historical stops/routes/timetables only, not verified current service. ${IBG_ARTICLE}${affected?` ${catalog.coverageWarning}`:""}`;
     if(base){
       if(!base.description.includes("IBG research reference"))base.description+=` ${note}`;
       if(!base.status.startsWith("imported"))base.status="research reference · current times withheld";

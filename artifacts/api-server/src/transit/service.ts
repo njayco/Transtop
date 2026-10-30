@@ -19,7 +19,7 @@ import { documentArrivals,documentRoute,isDocumentId } from "./intercity/uploade
 import { amtrakArrivals } from "./amtrak-service";
 import { amtrakHealth } from "./amtrak-live";
 import { isIbgId } from "./intercity/ibg-model";
-import { ibgRouteDetail } from "./intercity/ibg-browse";
+import { ibgRouteDetail, primaryIbgCatalog } from "./intercity/ibg-browse";
 
 let stopCache:{at:number;demo:TransitStop[];live:TransitStop[]}|undefined;
 export async function allStops(mode:Mode) {
@@ -120,8 +120,9 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
     .filter(s=>s.type!=="intercity"&&!s.id.startsWith("nj-transit:")||s.distance<=3000)
     .sort((a,b)=>a.distance-b.distance).slice(0,16);
   const enriched=await Promise.all(rows.map(s=>enrich(s,mode)));
+  const coverageWarning=mode==="live"&&(!params.type||params.type==="all"||params.type==="intercity")?(await primaryIbgCatalog()).coverageWarning:"";
   return {stops:enriched,mode,updatedAt:new Date().toISOString(),centerLat:lat,centerLon:lon,
-    message:mode==="demo"?"Demo data · illustrative arrivals, not for travel planning":rows.length?rows.some(s=>isIbgId(s.id))?"Includes labeled IBG research references, not verified current service. Confirm research stop locations and schedules with the carrier.":"Official feeds redistributed by Transtop. Predictions may be unavailable or stale.":"No matching imported stops. Integration not configured for this location or search. Try a station name or supported neighborhood."};
+    message:(mode==="demo"?"Demo data · illustrative arrivals, not for travel planning":rows.length?rows.some(s=>isIbgId(s.id))?"Includes labeled IBG research references, not verified current service. Confirm research stop locations and schedules with the carrier.":"Official feeds redistributed by Transtop. Predictions may be unavailable or stale.":"No matching imported stops. Integration not configured for this location or search. Try a station name or supported neighborhood.")+(coverageWarning?` ${coverageWarning}`:"")};
 }
 export async function stopDetail(id:string,mode:Mode) {
   const s=(await allStops(mode)).find(s=>s.id===id);
