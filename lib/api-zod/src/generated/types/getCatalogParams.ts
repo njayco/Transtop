@@ -8,6 +8,10 @@ import type { GetCatalogMode } from './getCatalogMode';
 import type { GetCatalogServiceClass } from './getCatalogServiceClass';
 
 export type GetCatalogParams = {
+/**
+ * @maxLength 300
+ */
+cursor?: string;
 mode?: GetCatalogMode;
 /**
  * @maxLength 180

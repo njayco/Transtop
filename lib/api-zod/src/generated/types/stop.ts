@@ -8,8 +8,10 @@ import type { Alert } from './alert';
 import type { Arrival } from './arrival';
 import type { Route } from './route';
 import type { StopType } from './stopType';
+import type { TransitlandInfo } from './transitlandInfo';
 
 export interface Stop {
+  transitland?: TransitlandInfo;
   id: string;
   name: string;
   agency: string;

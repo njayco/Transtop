@@ -4,9 +4,11 @@
  * Api
  * OpenAPI spec version: 0.1.0
  */
+import type { GlobalCoverage } from './globalCoverage';
 import type { Stop } from './stop';
 
 export interface StopResults {
+  globalCoverage?: GlobalCoverage;
   stops: Stop[];
   mode: string;
   updatedAt: string;

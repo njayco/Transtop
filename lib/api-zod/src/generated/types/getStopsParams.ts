@@ -8,6 +8,10 @@ import type { GetStopsMode } from './getStopsMode';
 import type { GetStopsServiceClass } from './getStopsServiceClass';
 
 export type GetStopsParams = {
+/**
+ * @maxLength 300
+ */
+cursor?: string;
 q?: string;
 mode?: GetStopsMode;
 type?: string;

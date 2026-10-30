@@ -20,6 +20,13 @@ import { amtrakArrivals } from "./amtrak-service";
 import { amtrakHealth } from "./amtrak-live";
 import { isIbgId } from "./intercity/ibg-model";
 import { ibgRouteDetail, primaryIbgCatalog } from "./intercity/ibg-browse";
+import { isTransitland } from "./transitland/model";
+import { discover, globalStop, globalRoute, unique } from "./transitland/discovery";
+import { globalEnrich } from "./transitland/departures";
+import { globalPlace } from "./transitland/places";
+import { coverage as globalCoverage, usage } from "./transitland/client";
+import { globalVehicles } from "./transitland/vehicles";
+import { globalFeedStates } from "./transitland/tracking";
 
 let stopCache:{at:number;demo:TransitStop[];live:TransitStop[]}|undefined;
 export async function allStops(mode:Mode) {
@@ -30,9 +37,9 @@ export async function allStops(mode:Mode) {
   }
   return mode==="live"?[...stopCache.live,...(await intercityCatalog()).stops]:stopCache[mode];
 }
-export async function trackedVehicles(mode:Mode="live"){
+export async function trackedVehicles(mode:Mode="live",bounds?:{west:number;east:number;south:number;north:number}){
   if(mode==="demo")return [];
-  return catalogVehicles(mapVehicles(mode),reportedStopVehicles(mode),await allStops(mode));
+  return [...await catalogVehicles(mapVehicles(mode),reportedStopVehicles(mode),await allStops(mode)),...await globalVehicles(bounds)];
 }
 export function officialArrivals(stop:TransitStop,now=Date.now()) {
   const agency=stop.id.split(":")[0], raw=stop.rawId||stop.id.slice(agency.length+1);
@@ -65,6 +72,7 @@ export function officialArrivals(stop:TransitStop,now=Date.now()) {
 }
 export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<TransitStop> {
   if(mode==="demo")return demoArrivals(stop);
+  if(isTransitland(stop.id))return deep?globalEnrich(stop):stop;
   if(stop.id.startsWith("amtrak:"))return {...stop,arrivals:await amtrakArrivals(stop)};
   if(isDocumentId(stop.id))return {...stop,arrivals:documentArrivals(stop)};
   if(stop.type==="intercity")return {...stop,arrivals:await intercityArrivals(stop)};
@@ -101,34 +109,42 @@ const knownPlaces=[
   {terms:["jamaica"],lat:40.7003,lon:-73.8087},
   {terms:["atlantic terminal","barclays"],lat:40.6843,lon:-73.9777},
 ];
-export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:number;lon?:number;agency?:string;serviceClass?:string}) {
+export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:number;lon?:number;agency?:string;serviceClass?:string;cursor?:string}) {
   const mode=params.mode||"demo", q=(params.q||"").trim().toLowerCase().slice(0,180);
   let lat=params.lat??40.75529,lon=params.lon??-73.98749;
   let foundPlace=false;
   const known=q&&!/^\d+\s+\S/.test(q)?knownPlaces.find(p=>p.terms.some(t=>q.includes(t))):undefined;
   if(known){lat=known.lat;lon=known.lon;foundPlace=true;}
-  if(q&&/^\d+\s+\S/.test(q)){
-    const point=await geocodeAddress(q);
+  const all=await allStops(mode);
+  const localExact=q?all.find(s=>s.name.toLowerCase()===q||s.routes.some(r=>r.name.toLowerCase()===q)):undefined;
+  if(q&&!foundPlace&&!localExact){
+    const point=await globalPlace(q);
     if(point){lat=point.lat;lon=point.lon;foundPlace=true;}
   }
-  let rows=(await allStops(mode)).filter(s=>!s.parent&&s.routes.length&&(!params.type||params.type==="all"||s.type===params.type)&&
+  let rows=all.filter(s=>!s.parent&&s.routes.length&&(!params.type||params.type==="all"||s.type===params.type)&&
     (!params.agency||s.id.split(":")[0]===params.agency||s.routes.some(r=>r.agencyId===params.agency))&&(!params.serviceClass||params.serviceClass==="all"||s.routes.some(r=>r.serviceClass===params.serviceClass)));
   const exact=q?rows.find(s=>s.name.toLowerCase().includes(q)):undefined;
   if(exact&&!foundPlace){lat=exact.lat;lon=exact.lon;}
+  const foreign=mode==="live"?await discover({
+    ...params,...(q&&!foundPlace&&!exact?{q}:{q:undefined,lat,lon}),
+  },unique(all.flatMap(s=>s.routes))):undefined;
+  if(foreign?.stops.length&&q&&!foundPlace&&!exact){lat=foreign.stops[0].lat;lon=foreign.stops[0].lon;}
   if(q&&!foundPlace)rows=rows.filter(s=>s.name.toLowerCase().includes(q)||s.neighborhood?.toLowerCase().includes(q)||s.routes.some(r=>r.name.toLowerCase()===q||r.id.toLowerCase()===q));
-  rows=rows.map(s=>{const d=distance(lat,lon,s.lat,s.lon);return {...s,distance:Math.round(d),walkingMinutes:Math.max(1,Math.round(d/75))};})
-    .filter(s=>s.type!=="intercity"&&!s.id.startsWith("nj-transit:")||s.distance<=3000)
+  rows=unique([...rows,...(foreign?.stops||[])]).map(s=>{const d=distance(lat,lon,s.lat,s.lon);return {...s,distance:Math.round(d),walkingMinutes:Math.max(1,Math.round(d/75))};})
+    .filter(s=>s.distance<=(s.type==="intercity"||s.id.startsWith("nj-transit:")?3000:10000))
     .sort((a,b)=>a.distance-b.distance).slice(0,16);
-  const enriched=await Promise.all(rows.map(s=>enrich(s,mode)));
+  const enriched=await Promise.all(rows.map((s,i)=>isTransitland(s.id)&&i<4?globalEnrich(s):enrich(s,mode)));
   const coverageWarning=mode==="live"&&(!params.type||params.type==="all"||params.type==="intercity")?(await primaryIbgCatalog()).coverageWarning:"";
-  return {stops:enriched,mode,updatedAt:new Date().toISOString(),centerLat:lat,centerLon:lon,
+  return {stops:enriched,mode,updatedAt:new Date().toISOString(),centerLat:lat,centerLon:lon,globalCoverage:foreign?.globalCoverage,
     message:(mode==="demo"?"Demo data · illustrative arrivals, not for travel planning":rows.length?rows.some(s=>isIbgId(s.id))?"Includes labeled IBG research references, not verified current service. Confirm research stop locations and schedules with the carrier.":"Official feeds redistributed by Transtop. Predictions may be unavailable or stale.":"No matching imported stops. Integration not configured for this location or search. Try a station name or supported neighborhood.")+(coverageWarning?` ${coverageWarning}`:"")};
 }
 export async function stopDetail(id:string,mode:Mode) {
+  if(mode==="live"&&isTransitland(id)){const s=await globalStop(id);return s?globalEnrich(s):undefined;}
   const s=(await allStops(mode)).find(s=>s.id===id);
   return s?enrich(s,mode,true):undefined;
 }
 export async function routeDetail(id:string,mode:Mode,direction?:string):Promise<RouteDetail|undefined> {
+  if(mode==="live"&&isTransitland(id))return globalRoute(id,direction);
   if(mode==="live"&&isIbgId(id))return ibgRouteDetail(id,direction);
   if(mode==="live"&&isDocumentId(id))return documentRoute(id,direction);
   if(mode==="live"&&id.startsWith("martz:"))return intercityRoute(id);
@@ -191,7 +207,14 @@ export async function sources() {
   const google=journeyHealth();
   const intercity=(await intercityProviders()).map(p=>({id:p.id,agency:p.name,type:p.id==="nj-transit"?"bus":"intercity",status:p.status,
     description:p.description,url:p.url,updatedAt:p.updatedAt||p.checkedAt,lastError:p.lastError}));
-  return [...result,...intercity,{id:"google-routes",agency:"Google journey planning",type:"journey planner",
+  const budget=await usage(),world=globalCoverage();
+  const globalFeeds=[...globalFeedStates.entries()].map(([id,v])=>({id:`tl-feed:${id}`,agency:v.name,type:"global feed",status:v.status,
+    description:"Discovered on demand this server session. License checks and realtime feed permissions are separate from schedule availability; no feed is imported wholesale.",
+    url:`https://www.transit.land/data/feeds/${encodeURIComponent(id)}`,updatedAt:v.updatedAt}));
+  return [...result,...intercity,...globalFeeds,{id:"transitland",agency:"Transitland worldwide",type:"global coverage",status:world.status,
+    description:`${world.message} ${budget.used} of ${budget.limit} app requests reserved this UTC month. Bounded on-demand coverage, not every carrier. Feed licenses are checked; unknown rights and old schedules are withheld. Credits and source dates appear with results.`,
+    url:"https://www.transit.land/terms",updatedAt:null},
+    {id:"google-routes",agency:"Google journey planning",type:"journey planner",
     status:google.status,lastError:"message" in google?google.message:undefined,
     description:"On-demand Google transit itineraries, not a complete agency catalog or official live arrival feed. Requires Routes API, Google Cloud billing and a separate server key. Provider access is checked when a journey is requested.",
     url:"https://developers.google.com/maps/documentation/routes/transit-route",updatedAt:google.updatedAt}];

@@ -4,10 +4,12 @@
  * Api
  * OpenAPI spec version: 0.1.0
  */
+import type { GlobalCoverage } from './globalCoverage';
 import type { Route } from './route';
 import type { Stop } from './stop';
 
 export interface CatalogResults {
+  globalCoverage?: GlobalCoverage;
   routes: Route[];
   stops: Stop[];
   totalRoutes: number;

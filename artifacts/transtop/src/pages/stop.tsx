@@ -10,6 +10,7 @@ import { IntercityModule, providerFor } from '@/components/intercity';
 import { honest, usePrefs } from '@/lib/prefs';
 import { ago, clock } from '@/lib/format';
 import { useFreshArrivals } from '@/lib/amtrak-arrivals';
+import { TransitlandDetails } from '@/components/global-coverage';
 
 export default function StopPage() {
   const { id = '' } = useParams<{ id: string }>();
@@ -89,7 +90,8 @@ export default function StopPage() {
               </ul>
             </section>
           ))}
-          {stop?.id.startsWith('ibg:')?<TimetablePanel stopId={stop.id} referenceDate={stop.routes[0]?.referenceDate} title="IBG research timetable"/>:stop?.type==='intercity'?<IntercityModule center={{lat:stop.lat,lon:stop.lon}} provider={providerFor(undefined, stop.id)} stopId={stop.id}/>:stop&&<TimetablePanel stopId={stop.id} title="Timetable for any date" />}
+          {stop&&<TransitlandDetails info={stop.transitland}/>}
+          {stop?.id.startsWith('ibg:')?<TimetablePanel stopId={stop.id} referenceDate={stop.routes[0]?.referenceDate} title="IBG research timetable"/>:stop?.type==='intercity'&&!stop.transitland?<IntercityModule center={{lat:stop.lat,lon:stop.lon}} provider={providerFor(undefined, stop.id)} stopId={stop.id}/>:stop&&<TimetablePanel stopId={stop.id} timezone={stop.transitland?.timezone} title="Timetable for any date" />}
           {stop && <p className="text-xs text-muted-foreground">Stop data updated {ago(stop.updatedAt)}. Times refresh every 30 seconds while open.</p>}
         </div>
         <aside className="space-y-4">

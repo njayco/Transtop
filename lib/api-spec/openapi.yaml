@@ -55,6 +55,7 @@ paths:
     get:
       operationId: getStops
       parameters:
+        - {name: cursor, in: query, schema: {type: string, maxLength: 300}}
         - {name: q, in: query, schema: {type: string}}
         - {name: mode, in: query, schema: {type: string, enum: [demo, live], default: demo}}
         - {name: type, in: query, schema: {type: string}}
@@ -106,6 +107,7 @@ paths:
     get:
       operationId: getCatalog
       parameters:
+        - {name: cursor, in: query, schema: {type: string, maxLength: 300}}
         - {name: mode, in: query, schema: {type: string, enum: [demo, live], default: live}}
         - {name: q, in: query, schema: {type: string, maxLength: 180}}
         - {name: agency, in: query, schema: {type: string}}
@@ -155,6 +157,7 @@ paths:
     get:
       operationId: getNetwork
       parameters:
+        - {name: cursor, in: query, schema: {type: string, maxLength: 300}}
         - {name: mode, in: query, schema: {type: string, enum: [demo, live], default: demo}}
         - {name: type, in: query, schema: {type: string}}
         - {name: lat, in: query, schema: {type: number}}
@@ -177,6 +180,10 @@ paths:
     get:
       operationId: getMapVehicles
       parameters:
+        - {name: west, in: query, schema: {type: number, minimum: -180, maximum: 180}}
+        - {name: east, in: query, schema: {type: number, minimum: -180, maximum: 180}}
+        - {name: south, in: query, schema: {type: number, minimum: -90, maximum: 90}}
+        - {name: north, in: query, schema: {type: number, minimum: -90, maximum: 90}}
         - {name: mode, in: query, schema: {type: string, enum: [demo, live], default: live}}
       responses:
         "200":
@@ -319,6 +326,7 @@ components:
       type: object
       required: [id, name, color, type, agency]
       properties:
+        transitland: {$ref: "#/components/schemas/TransitlandInfo"}
         id: {type: string}
         name: {type: string}
         color: {type: string}
@@ -367,6 +375,7 @@ components:
       type: object
       required: [id, name, agency, type, lat, lon, distance, walkingMinutes, routes, arrivals, alerts, accessible, updatedAt]
       properties:
+        transitland: {$ref: "#/components/schemas/TransitlandInfo"}
         id: {type: string}
         name: {type: string}
         agency: {type: string}
@@ -385,6 +394,7 @@ components:
       type: object
       required: [stops, mode, updatedAt, message]
       properties:
+        globalCoverage: {$ref: "#/components/schemas/GlobalCoverage"}
         stops: {type: array, items: {$ref: "#/components/schemas/Stop"}}
         mode: {type: string}
         updatedAt: {type: string}
@@ -395,6 +405,8 @@ components:
       type: object
       required: [id, lat, lon, source, updatedAt]
       properties:
+        vehicleType: {type: string, enum: [subway, bus, rail, intercity]}
+        color: {type: string}
         id: {type: string}
         lat: {type: number}
         lon: {type: number}
@@ -435,6 +447,7 @@ components:
       type: object
       required: [lines, stops, totalLines, totalStops, missingGeometry, truncated, busDetailZoom, stopsZoom, generation, message]
       properties:
+        globalCoverage: {$ref: "#/components/schemas/GlobalCoverage"}
         lines: {type: array, items: {$ref: "#/components/schemas/NetworkLine"}}
         stops: {type: array, items: {$ref: "#/components/schemas/MapStop"}}
         totalLines: {type: integer}
@@ -478,6 +491,7 @@ components:
       type: object
       required: [routes, stops, totalRoutes, totalStops, offset, limit]
       properties:
+        globalCoverage: {$ref: "#/components/schemas/GlobalCoverage"}
         routes: {type: array, items: {$ref: "#/components/schemas/Route"}}
         stops: {type: array, items: {$ref: "#/components/schemas/Stop"}}
         totalRoutes: {type: integer}
@@ -539,12 +553,39 @@ components:
       type: object
       required: [departures, total, offset, limit, date, message]
       properties:
+        timezone: {type: string}
+        globalCoverage: {$ref: "#/components/schemas/GlobalCoverage"}
         departures: {type: array, items: {$ref: "#/components/schemas/TimetableDeparture"}}
         total: {type: integer}
         offset: {type: integer}
         limit: {type: integer}
         date: {type: string}
         message: {type: string}
+    TransitlandInfo:
+      type: object
+      required: [feedId, fetchedAt, license, attribution, url]
+      properties:
+        feedId: {type: string}
+        fetchedAt: {type: string}
+        license: {type: string}
+        attribution: {type: string}
+        url: {type: string}
+        timezone: {type: string}
+        platform: {type: string}
+        parentStation: {type: string}
+        accessibility: {type: string}
+        modeDetail: {type: string}
+        notes: {type: array, items: {type: string}}
+    GlobalCoverage:
+      type: object
+      required: [status, message, hasMore]
+      properties:
+        status: {type: string}
+        message: {type: string}
+        hasMore: {type: boolean}
+        cursor: {type: string}
+        used: {type: integer}
+        limit: {type: integer}
     JourneyInput:
       type: object
       required: [origin, destination, timeType]

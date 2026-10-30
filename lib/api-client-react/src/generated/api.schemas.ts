@@ -75,7 +75,22 @@ export const RouteServiceClass = {
   express: 'express',
 } as const;
 
+export interface TransitlandInfo {
+  feedId: string;
+  fetchedAt: string;
+  license: string;
+  attribution: string;
+  url: string;
+  timezone?: string;
+  platform?: string;
+  parentStation?: string;
+  accessibility?: string;
+  modeDetail?: string;
+  notes?: string[];
+}
+
 export interface Route {
+  transitland?: TransitlandInfo;
   id: string;
   name: string;
   color: string;
@@ -145,6 +160,7 @@ export const StopType = {
 } as const;
 
 export interface Stop {
+  transitland?: TransitlandInfo;
   id: string;
   name: string;
   agency: string;
@@ -161,7 +177,17 @@ export interface Stop {
   neighborhood?: string;
 }
 
+export interface GlobalCoverage {
+  status: string;
+  message: string;
+  hasMore: boolean;
+  cursor?: string;
+  used?: number;
+  limit?: number;
+}
+
 export interface StopResults {
+  globalCoverage?: GlobalCoverage;
   stops: Stop[];
   mode: string;
   updatedAt: string;
@@ -170,7 +196,19 @@ export interface StopResults {
   centerLon?: number;
 }
 
+export type VehicleVehicleType = typeof VehicleVehicleType[keyof typeof VehicleVehicleType];
+
+
+export const VehicleVehicleType = {
+  subway: 'subway',
+  bus: 'bus',
+  rail: 'rail',
+  intercity: 'intercity',
+} as const;
+
 export interface Vehicle {
+  vehicleType?: VehicleVehicleType;
+  color?: string;
   id: string;
   lat: number;
   lon: number;
@@ -206,6 +244,7 @@ export interface MapStop {
 }
 
 export interface NetworkResults {
+  globalCoverage?: GlobalCoverage;
   lines: NetworkLine[];
   stops: MapStop[];
   totalLines: number;
@@ -247,6 +286,7 @@ export interface FeedSource {
 }
 
 export interface CatalogResults {
+  globalCoverage?: GlobalCoverage;
   routes: Route[];
   stops: Stop[];
   totalRoutes: number;
@@ -315,6 +355,8 @@ export interface TrainDetail {
 }
 
 export interface TimetableResults {
+  timezone?: string;
+  globalCoverage?: GlobalCoverage;
   departures: TimetableDeparture[];
   total: number;
   offset: number;
@@ -483,6 +525,10 @@ from?: string;
 };
 
 export type GetStopsParams = {
+/**
+ * @maxLength 300
+ */
+cursor?: string;
 q?: string;
 mode?: GetStopsMode;
 type?: string;
@@ -535,6 +581,10 @@ export const GetRouteMode = {
 } as const;
 
 export type GetCatalogParams = {
+/**
+ * @maxLength 300
+ */
+cursor?: string;
 mode?: GetCatalogMode;
 /**
  * @maxLength 180
@@ -604,6 +654,10 @@ export const GetTimetableMode = {
 } as const;
 
 export type GetNetworkParams = {
+/**
+ * @maxLength 300
+ */
+cursor?: string;
 mode?: GetNetworkMode;
 type?: string;
 lat?: number;
@@ -656,6 +710,26 @@ export const GetNetworkServiceClass = {
 } as const;
 
 export type GetMapVehiclesParams = {
+/**
+ * @minimum -180
+ * @maximum 180
+ */
+west?: number;
+/**
+ * @minimum -180
+ * @maximum 180
+ */
+east?: number;
+/**
+ * @minimum -90
+ * @maximum 90
+ */
+south?: number;
+/**
+ * @minimum -90
+ * @maximum 90
+ */
+north?: number;
 mode?: GetMapVehiclesMode;
 };
 

@@ -84,6 +84,7 @@ async function mountNearby(isMobile) {
     'lucide-react': icons, '@workspace/api-client-react': api,
     wouter: { useLocation: () => ['/', () => {}] },
     '@/components/regional-map': { RegionalMap: stub('RegionalMap') },
+    '@/components/global-coverage': { GlobalCoverageNotice: stub('GlobalCoverageNotice') },
     '@/components/shell': { MobileTop: stub('MobileTop') },
     '@/components/transit': Object.fromEntries(['AlertRow', 'ErrorState', 'SkeletonCards', 'StopCard', 'TransitLines', 'RouteBadge'].map((name) => [name, stub(name)])),
     '@/components/transit-map': { TransitMap: stub('TransitMap'), vehicleKind: () => 'live' },

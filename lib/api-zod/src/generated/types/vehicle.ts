@@ -4,8 +4,11 @@
  * Api
  * OpenAPI spec version: 0.1.0
  */
+import type { VehicleVehicleType } from './vehicleVehicleType';
 
 export interface Vehicle {
+  vehicleType?: VehicleVehicleType;
+  color?: string;
   id: string;
   lat: number;
   lon: number;

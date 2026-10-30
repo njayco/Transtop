@@ -2,8 +2,11 @@ import { pool } from "@workspace/db";
 import { demoRoutes } from "./demo";
 import { mapVehicles } from "./realtime";
 import type { Mode, TransitRoute, TransitStop } from "./types";
-import { boundsOf, contains, intersects, overlaps, REGION, simplify, type Bounds } from "./map-geometry";
+import { boundsOf, contains, intersects, overlaps, REGION, simplify, splitBounds, type Bounds } from "./map-geometry";
 import { intercityCatalog } from "./intercity/service";
+import { globalNetwork, unique, globalRoute } from "./transitland/discovery";
+import { isTransitland } from "./transitland/model";
+import { coverage } from "./transitland/client";
 const broadway=[[-73.9956,40.7304],[-73.9906,40.7357],[-73.989,40.7429],[-73.987,40.7496],[-73.9868,40.7547],[-73.9807,40.7647],[-73.9819,40.7681],[-73.9819,40.7756]];
 const seventh=[[-74.0021,40.7334],[-74.0002,40.7378],[-73.9959,40.7441],[-73.9911,40.7504],[-73.9875,40.7553],[-73.9841,40.7617],[-73.9819,40.7681]];
 const sixth=[[-73.9961,40.7323],[-73.9945,40.7382],[-73.9928,40.7429],[-73.9878,40.7497],[-73.9846,40.7542],[-73.9813,40.7587],[-73.9775,40.7639]];
@@ -60,10 +63,17 @@ async function catalogGeometry() {
 }
 export type NetworkQuery = Partial<Bounds> & {
   mode?: Mode; type?: string; lat?: number; lon?: number; zoom?: number;
-  agency?: string; serviceClass?: string; routeId?: string;
+  agency?: string; serviceClass?: string; routeId?: string;cursor?:string;
 };
 export async function network(p: NetworkQuery) {
   const mode = p.mode ?? "demo", zoom = p.zoom ?? 10;
+  if(mode==="live"&&isTransitland(p.routeId)){
+    const d=await globalRoute(p.routeId!);
+    return {lines:d?.shape.length?[{route:d.route,shape:d.shape,shapeId:d.route.id,vehicles:[]}]:[],
+      stops:d?.stops||[],totalLines:d?.shape.length?1:0,totalStops:d?.stops.length||0,truncated:false,
+      missingGeometry:d&&!d.shape.length?[d.route]:[],generation:"transitland",busDetailZoom:12,stopsZoom:13,
+      message:"Transitland selected published route pattern; not a vehicle path.",globalCoverage:coverage()};
+  }
   const b: Bounds = p.west != null ? p as Bounds : p.lat != null && p.lon != null
     ? { west: p.lon - .1, east: p.lon + .1, south: p.lat - .08, north: p.lat + .08 } : REGION;
   const catalog: Catalog = mode === "demo" ? {
@@ -87,15 +97,21 @@ export async function network(p: NetworkQuery) {
     lines.push({ route: l.route, shape, shapeId: l.shapeId, vehicles: [] }); points += shape.length;
   }
   const extra=mode==="live"?await intercityCatalog():{routes:[],stops:[],coverageWarning:""};
+  const globalParts=mode==="live"&&zoom>=11?await Promise.all(splitBounds(b).map(part=>globalNetwork(part,p,
+    unique([...catalog.lines.map(l=>l.route),...catalog.missing,...extra.routes])))):[];
+  const globalLines=unique(globalParts.flatMap(g=>g.lines).map(l=>({...l,id:l.shapeId})));
+  const globalStops=unique(globalParts.flatMap(g=>g.stops));
   const localReferenceRoutes=new Set(extra.stops.filter(s=>contains(b,s.lon,s.lat)).flatMap(s=>s.routes.map(r=>r.id)));
-  const ss = zoom >= 13 || p.routeId ? [...catalog.stops,...extra.stops].filter(s => !s.parent && Number.isFinite(s.lat) && Number.isFinite(s.lon) &&
+  const ss = zoom >= 13 || p.routeId ? [...catalog.stops,...extra.stops,...globalStops].filter(s => !s.parent && Number.isFinite(s.lat) && Number.isFinite(s.lon) &&
     (p.routeId || contains(b, s.lon, s.lat)) && s.routes.some(matches)).map(s => ({
       id: s.id, name: s.name, lat: s.lat, lon: s.lon, type: s.type, routes: s.routes.filter(matches),
     })) : [];
   return {
-    lines, stops: ss.slice(0, 500), totalLines: visible.length, totalStops: ss.length,
-    truncated: lines.length < visible.length || ss.length > 500,
-    missingGeometry: [...catalog.missing,...extra.routes.filter(r=>!r.id.startsWith("ibg:")||localReferenceRoutes.has(r.id))].filter(matches), busDetailZoom: 12, stopsZoom: 13,
+    lines:[...lines,...globalLines], stops: ss.slice(0, 500), totalLines: visible.length+globalLines.length, totalStops: ss.length,
+    truncated: lines.length < visible.length || ss.length > 500 || globalParts.some(g=>g.globalCoverage.hasMore||g.missing.length),
+    globalCoverage:globalParts.length>1?{...globalParts[0].globalCoverage,cursor:undefined,
+      hasMore:globalParts.some(g=>g.globalCoverage.hasMore),message:"Date-line view combines both hemispheres. Narrow to one side to page a partial source result."}:globalParts[0]?.globalCoverage,
+    missingGeometry: unique([...catalog.missing,...extra.routes.filter(r=>!r.id.startsWith("ibg:")||localReferenceRoutes.has(r.id)),...globalParts.flatMap(g=>g.missing)]).filter(matches), busDetailZoom: 12, stopsZoom: 13,
     generation: catalog.generation,
     message: mode === "demo" ? "Demo sample paths, not official service coverage." :
       "Official GTFS route paths, not live movement. Bus detail at zoom 12+; stops at zoom 13+. Missing geometry lists routes with at least one unavailable pattern. Only imported operators are covered; private services and unimported operators are not included."+(extra.coverageWarning?` ${extra.coverageWarning}`:""),

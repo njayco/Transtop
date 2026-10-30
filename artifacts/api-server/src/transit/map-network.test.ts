@@ -12,7 +12,8 @@ test("viewport validation rejects incomplete, non-finite, reversed and invalid w
   assert.equal(validBounds(viewport), true);
   const parsed = GetNetworkQueryParams.parse({ ...viewport, mode: "live", zoom: "8" });
   assert.equal(validBounds(parsed as typeof viewport), true);
-  assert.equal(validBounds({ ...viewport, east: -75 }), false);
+  assert.equal(validBounds({ ...viewport, east: -75 }), true); // West > east crosses the date line.
+  assert.equal(validBounds({ ...viewport, east: viewport.west }), false);
   assert.equal(validBounds({ ...viewport, north: Infinity }), false);
   assert.equal(validBounds({ ...viewport, south: -91 }), false);
   assert.equal(GetNetworkQueryParams.safeParse({ zoom: "30" }).success, false);

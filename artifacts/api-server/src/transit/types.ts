@@ -1,6 +1,7 @@
 export type Mode = "demo" | "live";
 export type TransitType = "subway" | "bus" | "rail" | "intercity";
-export interface TransitRoute { id:string; name:string; color:string; type:TransitType; agency:string;agencyId?:string;serviceClass?:"local"|"express";longName?:string;scheduleNotes?:string[];sourceUrl?:string;referenceDate?:string }
+export interface TransitlandInfo {feedId:string;fetchedAt:string;license:string;attribution:string;url:string;timezone?:string;platform?:string;parentStation?:string;accessibility?:string;modeDetail?:string;notes?:string[]}
+export interface TransitRoute { id:string; name:string; color:string; type:TransitType; agency:string;agencyId?:string;serviceClass?:"local"|"express";longName?:string;scheduleNotes?:string[];sourceUrl?:string;referenceDate?:string;transitland?:TransitlandInfo }
 export interface Arrival {
   id:string; routeId:string; routeName:string; color:string; direction:string; destination:string;
   minutes:number; source:"demo"|"live"|"scheduled"|"community"|"unavailable"; updatedAt:string;
@@ -13,9 +14,10 @@ export interface TransitStop {
   routes:TransitRoute[]; arrivals:Arrival[]; alerts:TransitAlert[]; accessible:boolean; updatedAt:string; neighborhood?:string;
   rawId?:string; parent?:string;
   stop_timezone?:string;
+  transitland?:TransitlandInfo;
 }
 export interface TransitVehicle {id:string; lat:number; lon:number; source:string; updatedAt:string;
-  routeId?:string;agencyId?:string;routeName?:string;trainNumber?:string;destination?:string;runId?:string;expiresAt?:string}
+  routeId?:string;agencyId?:string;routeName?:string;trainNumber?:string;destination?:string;runId?:string;expiresAt?:string;vehicleType?:TransitType;color?:string}
 export interface RouteDetail {route:TransitRoute; stops:TransitStop[]; shape:number[][]; vehicles:TransitVehicle[]; alerts:TransitAlert[]; directions:string[];
   timetableStops?:{id:string;name:string;sequence:number}[]}
 export const namespace = (agency:string, id:string) => `${agency}:${id}`;

@@ -8,6 +8,10 @@ import type { GetNetworkMode } from './getNetworkMode';
 import type { GetNetworkServiceClass } from './getNetworkServiceClass';
 
 export type GetNetworkParams = {
+/**
+ * @maxLength 300
+ */
+cursor?: string;
 mode?: GetNetworkMode;
 type?: string;
 lat?: number;

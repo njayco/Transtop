@@ -8,6 +8,7 @@ import { Pager, apiErrorText } from '@/components/timetable';
 import { INTERCITY_LABEL, providerStatus } from '@/components/intercity';
 import { usePrefs } from '@/lib/prefs';
 import { cn } from '@/lib/utils';
+import { GlobalCoverageNotice } from '@/components/global-coverage';
 
 const SUGGEST = ['Times Square', 'Grand Central', 'Penn Station', 'Jamaica', 'M15', 'Port Washington', 'n6'];
 const TYPES = [{ v: '', l: 'All modes' }, { v: 'subway', l: 'Subway' }, { v: 'bus', l: 'Bus' }, { v: 'rail', l: 'Commuter Rail' }, { v: 'intercity', l: 'Intercity Bus Network' }];
@@ -22,22 +23,28 @@ export default function SearchPage() {
   const [type, setType] = useState('');
   const [serviceClass, setServiceClass] = useState<GetCatalogServiceClass>('all');
   const [offset, setOffset] = useState(0);
+  const [cursor,setCursor]=useState('');
   const timer = useRef<number | null>(null);
   useEffect(() => {
     if (timer.current) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => { setQ(text.trim()); setOffset(0); }, 300);
     return () => { if (timer.current) window.clearTimeout(timer.current); };
   }, [text]);
-  useEffect(() => setOffset(0), [agency, type, serviceClass, mode]);
+  useEffect(() => {setOffset(0);setCursor('');}, [agency, type, serviceClass, mode,q]);
 
   const sources = useGetSources();
-  const agencies = useMemo(() => (sources.data ?? []).filter(s=>(type ? [type] : ['subway','bus','rail','intercity']).includes(s.type||'')).sort((a,b)=>a.agency.localeCompare(b.agency)), [sources.data, type]);
   const intercity = useGetIntercityProviders({ query: { queryKey: getGetIntercityProvidersQueryKey(), enabled: type === 'intercity' || type === '', staleTime: 300_000 } });
   const gaps = (intercity.data ?? []).filter((p) => providerStatus(p.status).k !== 'imported');
   const pickType = (t: string) => { setType(t); if (agency && t && !(sources.data ?? []).some((s) => s.id === agency && s.type === t)) setAgency(''); if (t === 'intercity') setServiceClass('all'); };
-  const params: GetCatalogParams = { mode, offset, limit: LIMIT, serviceClass, ...(q ? { q } : {}), ...(agency ? { agency } : {}), ...(type ? { type } : {}) };
+  const params: GetCatalogParams = { mode, offset, limit: LIMIT, serviceClass,...(cursor?{cursor}:{}), ...(q ? { q } : {}), ...(agency ? { agency } : {}), ...(type ? { type } : {}) };
   const res = useGetCatalog(params, { query: { queryKey: getGetCatalogQueryKey(params), placeholderData: (p) => p, retry: 1 } });
   const d = res.data;
+  const agencies=useMemo(()=>{
+    const all=new Map((sources.data??[]).filter(s=>(type?[type]:['subway','bus','rail','intercity']).includes(s.type||'')).map(s=>[s.id,{id:s.id,agency:s.agency}]));
+    for(const r of [...(d?.routes||[]),...(d?.stops||[]).flatMap(s=>s.routes)])if(r.transitland&&r.agencyId)all.set(r.agencyId,{id:r.agencyId,agency:r.agency});
+    if(agency&&!all.has(agency))all.set(agency,{id:agency,agency:"Selected provider · no matches on this page"});
+    return [...all.values()].sort((a,b)=>a.agency.localeCompare(b.agency));
+  },[sources.data,d,type,agency]);
   const total = Math.max(d?.totalRoutes ?? 0, d?.totalStops ?? 0);
   const sel = 'h-11 rounded-xl border border-input bg-card px-3 text-sm';
 
@@ -47,6 +54,7 @@ export default function SearchPage() {
       <div className="space-y-6 p-4 md:p-8">
         <h1 className="font-display text-4xl md:text-6xl">Where to?</h1>
         <p className="text-sm text-muted-foreground">Browse published routes, stop locations and dated timetables. <Link href="/settings" className="underline">Check agency coverage</Link>.</p>
+        <p className="text-xs text-muted-foreground">Worldwide stop/route searches are sent to Transitland. For a city, country or address, use Nearby place search, then explore its map. <Link href="/" className="underline">Open Nearby</Link>.</p>
           <>
             <div className="relative">
               <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" aria-hidden />
@@ -80,6 +88,7 @@ export default function SearchPage() {
             {res.isError && <ErrorState title="Catalog unavailable" detail={apiErrorText(res.error, 'Check Settings for feed status.')} onRetry={() => res.refetch()} />}
             {d && (
               <div className={cn('space-y-6 transition-opacity', res.isFetching && 'opacity-60')}>
+                <GlobalCoverageNotice data={d.globalCoverage} onNext={c=>{setCursor(c);setOffset(0);}} onReset={cursor?()=>{setCursor('');setOffset(0);}:undefined} />
                 <section>
                   <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground" data-testid="text-total-routes">Routes · {d.totalRoutes.toLocaleString()}</h2>
                   {d.routes.length === 0 ? <p className="text-sm text-muted-foreground">{offset > 0 && d.totalRoutes > 0 ? 'No more routes on this page.' : 'No routes match these filters.'}</p> : (

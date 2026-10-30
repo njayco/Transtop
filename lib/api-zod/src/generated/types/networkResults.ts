@@ -4,11 +4,13 @@
  * Api
  * OpenAPI spec version: 0.1.0
  */
+import type { GlobalCoverage } from './globalCoverage';
 import type { MapStop } from './mapStop';
 import type { NetworkLine } from './networkLine';
 import type { Route } from './route';
 
 export interface NetworkResults {
+  globalCoverage?: GlobalCoverage;
   lines: NetworkLine[];
   stops: MapStop[];
   totalLines: number;

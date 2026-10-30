@@ -69,6 +69,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </header>
       <main id="main" className="flex-1 pb-[calc(76px+env(safe-area-inset-bottom))] md:pb-0">{children}</main>
       <footer className="px-4 pb-24 pt-2 text-xs text-muted-foreground md:pb-3">
+        <p className="mb-1">Worldwide transit: <a href="https://www.transit.land/terms" target="_blank" rel="noreferrer" className="underline">Transitland</a> and credited source operators. Place search: <a href="https://photon.komoot.io" target="_blank" rel="noreferrer" className="underline">Photon</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="underline">OpenStreetMap contributors</a>. Availability varies; not complete global coverage.</p>
         Amtrak tracking: <a href="https://amtraker.com" target="_blank" rel="noreferrer" className="underline">Amtraker</a> · upstream Amtrak data, unofficial · <a href="https://opendatacommons.org/licenses/by/1-0/" target="_blank" rel="noreferrer" className="underline">ODC-By 1.0</a>. Coverage and freshness vary.
       </footer>
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">

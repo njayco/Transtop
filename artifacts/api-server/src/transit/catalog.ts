@@ -11,6 +11,9 @@ import { intercityCatalog, intercityTimetable } from "./intercity/service";
 import { scheduledRunId } from "./amtrak-service";
 import { isIbgId } from "./intercity/ibg-model";
 import { ibgTimetable } from "./intercity/ibg-browse";
+import { isTransitland } from "./transitland/model";
+import { discover, unique } from "./transitland/discovery";
+import { globalTimetable } from "./transitland/departures";
 type CatalogParams=z.infer<typeof GetCatalogQueryParams>;
 type TimetableParams=z.infer<typeof GetTimetableQueryParams>;
 
@@ -30,19 +33,24 @@ export async function catalog(p:CatalogParams) {
   const match=(r:TransitRoute)=> (!p.agency||r.id.split(":")[0]===p.agency||r.agencyId===p.agency)&&
     (!p.type||p.type==="all"||r.type===p.type)&&(!p.serviceClass||p.serviceClass==="all"||r.serviceClass===p.serviceClass);
   const extra=mode==="live"?(await intercityCatalog()).routes:[];
-  const rr=[...(await db.select().from(routes).where(eq(routes.mode,mode))).map(r=>r.data as TransitRoute),...extra]
+  const importedRoutes=[...(await db.select().from(routes).where(eq(routes.mode,mode))).map(r=>r.data as TransitRoute),...extra];
+  const rr=importedRoutes
     .filter(r=>match(r)&&(!q||`${r.name} ${r.longName||""} ${r.agency}`.toLowerCase().includes(q)))
     .sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
   const ss=(await allStops(mode)).filter(s=>!s.parent&&s.routes.some(match)&&
     (!q||s.name.toLowerCase().includes(q)||s.routes.some(r=>match(r)&&`${r.name} ${r.longName||""}`.toLowerCase().includes(q))))
     .sort((a,b)=>a.name.localeCompare(b.name));
-  return {routes:rr.slice(offset,offset+limit),stops:ss.slice(offset,offset+limit),totalRoutes:rr.length,totalStops:ss.length,offset,limit};
+  const foreign=mode==="live"&&(q||p.agency?.startsWith("tl:"))?await discover({...p,lat:undefined,lon:undefined},importedRoutes):undefined;
+  const combinedRoutes=unique([...rr,...(foreign?.routes||[])]),combinedStops=unique([...ss,...(foreign?.stops||[])]);
+  return {routes:combinedRoutes.slice(offset,offset+limit),stops:combinedStops.slice(offset,offset+limit),
+    totalRoutes:combinedRoutes.length,totalStops:combinedStops.length,offset,limit,globalCoverage:foreign?.globalCoverage};
 }
 
 export async function timetable(p:TimetableParams) {
   const date=DateTime.fromISO(p.date,{zone:ZONE}),from=p.from||"00:00";
   if(!date.isValid||date.toISODate()!==p.date||!/^([01]\d|2[0-3]):[0-5]\d$/.test(from))throw new Error("Invalid timetable date or time");
   if(!p.stopId&&!p.routeId)throw new Error("Select a stop or route");
+  if(p.mode!=="demo"&&(isTransitland(p.stopId)||isTransitland(p.routeId)))return globalTimetable(p);
   if(p.mode!=="demo"&&(isIbgId(p.stopId)||isIbgId(p.routeId))){
     if(p.stopId&&p.routeId&&(!isIbgId(p.stopId)||!isIbgId(p.routeId)||p.stopId.split(":")[1]!==p.routeId.split(":")[1]))
       throw new Error("Stop and route must belong to the same operator");

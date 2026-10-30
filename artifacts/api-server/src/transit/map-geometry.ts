@@ -3,13 +3,17 @@ export const REGION: Bounds = { west: -74.27, south: 40.48, east: -71.85, north:
 
 export function validBounds(b: Bounds) {
   return [b.west, b.south, b.east, b.north].every(Number.isFinite) && b.west >= -180 && b.east <= 180 &&
-    b.south >= -90 && b.north <= 90 && b.west < b.east && b.south < b.north;
+    b.west <= 180 && b.east >= -180 && b.south >= -90 && b.north <= 90 && b.west !== b.east && b.south < b.north;
+}
+export function splitBounds(b: Bounds): Bounds[] {
+  return b.west <= b.east ? [b] : [{...b,east:180},{...b,west:-180}];
 }
 export function contains(b: Bounds, lon: number, lat: number) {
-  return lon >= b.west && lon <= b.east && lat >= b.south && lat <= b.north;
+  return (b.west<=b.east?lon>=b.west&&lon<=b.east:lon>=b.west||lon<=b.east) && lat >= b.south && lat <= b.north;
 }
 /** Liang–Barsky: include lines crossing the viewport even if neither vertex is inside. */
-export function intersects(coords: number[][], b: Bounds) {
+export function intersects(coords: number[][], b: Bounds):boolean {
+  if(b.west>b.east)return splitBounds(b).some(part=>intersects(coords,part));
   for (let i = 0; i < coords.length; i++) {
     if (contains(b, coords[i][0], coords[i][1])) return true;
     if (!i) continue;
@@ -36,7 +40,8 @@ export function boundsOf(coords: number[][]): Bounds {
   }
   return b;
 }
-export function overlaps(a: Bounds, b: Bounds) {
+export function overlaps(a: Bounds, b: Bounds):boolean {
+  if(b.west>b.east)return splitBounds(b).some(part=>overlaps(a,part));
   return a.west <= b.east && a.east >= b.west && a.south <= b.north && a.north >= b.south;
 }
 /** Douglas–Peucker retains official vertices, never substitutes stop-to-stop paths. */

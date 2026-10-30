@@ -6,6 +6,7 @@ import { LiveIndicator } from '@/components/shell';
 import { AlertRow, Countdown, ErrorState, FavButton, MODE_NAME, RouteBadge, SkeletonCards, SourceLabel } from '@/components/transit';
 import { TransitMap } from '@/components/transit-map';
 import { TimetablePanel } from '@/components/timetable';
+import { TransitlandDetails } from '@/components/global-coverage';
 import { IntercityModule, providerFor } from '@/components/intercity';
 import { honest, usePrefs } from '@/lib/prefs';
 import { ago } from '@/lib/format';
@@ -73,6 +74,7 @@ export default function RoutePage() {
           )}
           <div className="mt-6 grid gap-6 md:grid-cols-[1fr_1.1fr]">
             <div className="space-y-4">
+              <TransitlandDetails info={d.route.transitland}/>
               {dirs.length > 0 && <p className="text-xs text-muted-foreground" data-testid="text-patterns">{dirs.length} service pattern{dirs.length > 1 ? 's' : ''} from the published schedule. Stops shown for {activeDir}.</p>}
               {((d.route.scheduleNotes?.length ?? 0) > 0 || d.route.sourceUrl) && (
                 <section aria-labelledby="h-published-schedule" className="rounded-2xl border border-card-border bg-card p-4 text-sm" data-testid="section-published-schedule">
@@ -136,7 +138,7 @@ export default function RoutePage() {
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">Individual riders are never shown. Updated {ago(vehicles[0]?.updatedAt)}.</p>
               </div>
-              {d.route.id.startsWith('ibg:')?<TimetablePanel key={d.route.id} routeId={d.route.id} referenceDate={d.route.referenceDate} stopOptions={d.timetableStops?.map(s=>({id:s.id,name:s.name}))} direction={activeDir} color={color} title="IBG research timetable"/>:d.route.type==='intercity'?<IntercityModule key={d.route.id} center={center} provider={providerFor(d.route.agencyId, d.route.id)} routeId={d.route.id}/>:<TimetablePanel key={d.route.id} routeId={d.route.id} stopOptions={d.timetableStops?.map((s) => ({ id: s.id, name: s.name }))} direction={activeDir} color={color} title={activeDir ? `Timetable · ${activeDir}` : 'Timetable'} />}
+              {d.route.id.startsWith('ibg:')?<TimetablePanel key={d.route.id} routeId={d.route.id} referenceDate={d.route.referenceDate} stopOptions={d.timetableStops?.map(s=>({id:s.id,name:s.name}))} direction={activeDir} color={color} title="IBG research timetable"/>:d.route.type==='intercity'&&!d.route.transitland?<IntercityModule key={d.route.id} center={center} provider={providerFor(d.route.agencyId, d.route.id)} routeId={d.route.id}/>:<TimetablePanel key={d.route.id} routeId={d.route.id} timezone={d.route.transitland?.timezone} stopOptions={d.route.transitland?d.stops.map(s=>({id:s.id,name:s.name})):d.timetableStops?.map((s) => ({ id: s.id, name: s.name }))} direction={activeDir} color={color} title={activeDir ? `Timetable · ${activeDir}` : 'Timetable'} />}
             </aside>
           </div>
         </>

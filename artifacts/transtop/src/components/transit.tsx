@@ -113,6 +113,7 @@ export function StopCard({ stop, active, onHover, index = 0 }: { stop: Stop; act
           <div className="mt-2 flex flex-wrap gap-1">
             {stop.routes.slice(0, 10).map((r) => <RouteBadge key={r.id} name={r.name} color={r.color} size="sm" />)}
           </div>
+          {stop.transitland&&<p className="mt-2 text-xs text-muted-foreground">Transitland · {stop.transitland.attribution} · source {stop.transitland.fetchedAt.slice(0,10)||'date unknown'}. Open for availability and source details.</p>}
         </div>
         <FavButton active={isFavStop(stop.id)} onClick={() => toggleStop(stop)} label={stop.name} />
       </div>

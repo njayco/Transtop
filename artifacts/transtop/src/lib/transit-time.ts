@@ -1,12 +1,14 @@
 /** All timetable controls use New York time, regardless of the browser's zone. */
-function parts(at:Date) {
+function parts(at:Date,zone='America/New_York') {
   return Object.fromEntries(new Intl.DateTimeFormat('en-US',{
-    timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',
+    timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',
     hour:'2-digit',minute:'2-digit',hourCycle:'h23',
   }).formatToParts(at).map(p=>[p.type,p.value]));
 }
-export function newYorkDate(at=new Date()) {const p=parts(at);return `${p.year}-${p.month}-${p.day}`;}
-export function newYorkTime(at=new Date()) {const p=parts(at);return `${p.hour}:${p.minute}`;}
+export function newYorkDate(at=new Date()) {return zonedDate(at,'America/New_York');}
+export function newYorkTime(at=new Date()) {return zonedTime(at,'America/New_York');}
+export function zonedDate(at=new Date(),zone='America/New_York') {const p=parts(at,zone);return `${p.year}-${p.month}-${p.day}`;}
+export function zonedTime(at=new Date(),zone='America/New_York') {const p=parts(at,zone);return `${p.hour}:${p.minute}`;}
 export function newYorkInstant(date:string,time:string) {
   const [y,m,d]=date.split('-').map(Number),[h,min]=time.split(':').map(Number);
   const wall=Date.UTC(y,m-1,d,h,min);

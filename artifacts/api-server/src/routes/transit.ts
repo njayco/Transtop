@@ -16,6 +16,12 @@ import { GetIntercityProvidersResponse, GetIntercityDeparturesQueryParams, GetIn
 import { intercityProviders, intercityDepartures } from "../transit/intercity/service";
 import { amtrakTrainDetail } from "../transit/amtrak-service";
 import { GetTrainResponse } from "@workspace/api-zod";
+import { TransitlandError } from "../transit/transitland/client";
+function sourceFailure(error:unknown,res:import("express").Response){
+  if(error instanceof TransitlandError){res.status(503).json({error:error.message});return true;}
+  if(error instanceof Error&&error.message==="Invalid Transitland identity"){res.status(400).json({error:error.message});return true;}
+  return false;
+}
 router.use("/transit",(_req,res,next)=>{res.set("Cache-Control","no-store");next();});
 router.get("/transit/trains/:id",async(req,res):Promise<void>=>{
   if(typeof req.params.id!=="string"||req.params.id.length>180){res.status(400).json({error:"Invalid train identity"});return;}
@@ -64,14 +70,14 @@ router.get("/transit/stops",async(req,res):Promise<void>=>{
 router.get("/transit/stops/:id",async(req,res):Promise<void>=>{
   const p=GetStopParams.safeParse(req.params),q=GetStopQueryParams.safeParse(req.query);
   if(!p.success||!q.success){res.status(400).json({error:"Invalid stop request"});return;}
-  const s=await stopDetail(p.data.id,q.data.mode||"demo");
+  let s;try{s=await stopDetail(p.data.id,q.data.mode||"demo");}catch(error){if(sourceFailure(error,res))return;throw error;}
   if(!s){res.status(404).json({error:"Stop unavailable in this data mode"});return;}
   res.json(GetStopResponse.parse(s));
 });
 router.get("/transit/routes/:id",async(req,res):Promise<void>=>{
   const p=GetRouteParams.safeParse(req.params),q=GetRouteQueryParams.safeParse(req.query);
   if(!p.success||!q.success){res.status(400).json({error:"Invalid route request"});return;}
-  const r=await routeDetail(p.data.id,q.data.mode||"demo",q.data.direction);
+  let r;try{r=await routeDetail(p.data.id,q.data.mode||"demo",q.data.direction);}catch(error){if(sourceFailure(error,res))return;throw error;}
   if(!r){res.status(404).json({error:"Route unavailable in this data mode"});return;}
   res.json(GetRouteResponse.parse(r));
 });
@@ -89,7 +95,9 @@ router.get("/transit/network",async(req,res):Promise<void>=>{
 router.get("/transit/map-vehicles",async(req,res):Promise<void>=>{
   const p=GetMapVehiclesQueryParams.safeParse(req.query);
   if(!p.success){res.status(400).json({error:"Invalid data mode"});return;}
-  res.json(GetMapVehiclesResponse.parse(await trackedVehicles(p.data.mode)));
+  const b=p.data,count=[b.west,b.east,b.south,b.north].filter(v=>v!=null).length;
+  if(count!==0&&(count!==4||!validBounds(b as {west:number;east:number;south:number;north:number}))){res.status(400).json({error:"Supply valid vehicle map bounds"});return;}
+  res.json(GetMapVehiclesResponse.parse(await trackedVehicles(p.data.mode,count===4?b as {west:number;east:number;south:number;north:number}:undefined)));
 });
 router.get("/transit/alerts",async(req,res):Promise<void>=>{
   const p=GetAlertsQueryParams.safeParse(req.query);

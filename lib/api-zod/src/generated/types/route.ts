@@ -6,8 +6,10 @@
  */
 import type { RouteServiceClass } from './routeServiceClass';
 import type { RouteType } from './routeType';
+import type { TransitlandInfo } from './transitlandInfo';
 
 export interface Route {
+  transitland?: TransitlandInfo;
   id: string;
   name: string;
   color: string;

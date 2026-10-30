@@ -4,7 +4,7 @@ export function trackedVehicleVisible(v:{lat:number;lon:number;routeId?:string;a
 },route?:{type:string;serviceClass?:string},agencyType?:string){
   const agency=v.agencyId||v.routeId?.split(':')[0];
   const type=route?.type||agencyType||(agency==='amtrak'?'rail':undefined);
-  return Number.isFinite(v.lat)&&Number.isFinite(v.lon)&&v.lon>=p.west&&v.lon<=p.east&&v.lat>=p.south&&v.lat<=p.north&&
+  return Number.isFinite(v.lat)&&Number.isFinite(v.lon)&&(p.west<=p.east?v.lon>=p.west&&v.lon<=p.east:v.lon>=p.west||v.lon<=p.east)&&v.lat>=p.south&&v.lat<=p.north&&
     (!p.agency||p.agency===agency)&&(!p.type||p.type==='all'||p.type===type)&&(!p.routeId||p.routeId===v.routeId)&&
     (!p.serviceClass||p.serviceClass==='all'||route?.serviceClass===p.serviceClass);
 }

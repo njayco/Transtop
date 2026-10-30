@@ -5,7 +5,7 @@ import { getGetTimetableQueryKey, useGetTimetable, type GetTimetableParams } fro
 import { ErrorState } from '@/components/transit';
 import { clock } from '@/lib/format';
 import { usePrefs } from '@/lib/prefs';
-import { newYorkDate,newYorkTime } from '@/lib/transit-time';
+import { newYorkDate,newYorkTime,zonedDate,zonedTime } from '@/lib/transit-time';
 
 export function apiErrorText(err: unknown, fallback: string) {
   const d = (err as { data?: { error?: unknown; message?: unknown } } | null)?.data;
@@ -20,10 +20,13 @@ export function nowHM() { return newYorkTime(); }
 const LIMIT = 25;
 
 /** Published (scheduled) timetable for a stop or route. Not realtime. */
-export function TimetablePanel({ stopId, routeId, direction, color, title = 'Published timetable', stopOptions, referenceDate }: { referenceDate?: string; stopOptions?: { id: string; name: string }[]; stopId?: string; routeId?: string; direction?: string; color?: string; title?: string }) {
+export function TimetablePanel({ stopId, routeId, direction, color, title = 'Published timetable', stopOptions, referenceDate, timezone }: { timezone?:string; referenceDate?: string; stopOptions?: { id: string; name: string }[]; stopId?: string; routeId?: string; direction?: string; color?: string; title?: string }) {
   const { mode } = usePrefs();
-  const [date, setDate] = useState(()=>referenceDate||todayISO());
-  const [from, setFrom] = useState(()=>referenceDate?'00:00':nowHM());
+  const international=!!(stopId?.startsWith('tl:')||routeId?.startsWith('tl:'));
+  const zone=timezone||(international?'UTC':'America/New_York');
+  const [date, setDate] = useState(()=>referenceDate||zonedDate(new Date(),zone));
+  const [from, setFrom] = useState(()=>referenceDate?'00:00':zonedTime(new Date(),zone));
+  useEffect(()=>{setDate(referenceDate||zonedDate(new Date(),zone));setFrom(referenceDate?'00:00':zonedTime(new Date(),zone));setOffset(0);},[zone,referenceDate,stopId,routeId]);
   const [offset, setOffset] = useState(0);
   const [pick, setPick] = useState('');
   useEffect(()=>setPick(''),[routeId,direction]);
@@ -62,8 +65,9 @@ export function TimetablePanel({ stopId, routeId, direction, color, title = 'Pub
               </select>
             </label>
           )}
-          <button onClick={() => { setDate(todayISO()); setFrom(nowHM()); setOffset(0); }} className="h-11 rounded-full border border-border px-4 text-sm font-semibold text-muted-foreground hover:text-foreground" data-testid="button-timetable-now">Now</button>
+          <button onClick={() => { setDate(zonedDate(new Date(),zone)); setFrom(zonedTime(new Date(),zone)); setOffset(0); }} className="h-11 rounded-full border border-border px-4 text-sm font-semibold text-muted-foreground hover:text-foreground" data-testid="button-timetable-now">Now</button>
         </div>
+        <p className="text-xs text-muted-foreground">{international&&!timezone?'Source timezone unavailable; controls show UTC until verified. No clocks are guessed.':`Date and From use ${zone}. Departures show their supplied local timezone.`}</p>
       </header>
       <div aria-live="polite">
         {q.isLoading && <div className="space-y-2 p-4">{[0, 1, 2, 3].map((i) => <div key={i} className="skel h-10" />)}</div>}

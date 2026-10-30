@@ -4,9 +4,12 @@
  * Api
  * OpenAPI spec version: 0.1.0
  */
+import type { GlobalCoverage } from './globalCoverage';
 import type { TimetableDeparture } from './timetableDeparture';
 
 export interface TimetableResults {
+  timezone?: string;
+  globalCoverage?: GlobalCoverage;
   departures: TimetableDeparture[];
   total: number;
   offset: number;

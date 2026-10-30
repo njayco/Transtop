@@ -7,5 +7,25 @@
 import type { GetMapVehiclesMode } from './getMapVehiclesMode';
 
 export type GetMapVehiclesParams = {
+/**
+ * @minimum -180
+ * @maximum 180
+ */
+west?: number;
+/**
+ * @minimum -180
+ * @maximum 180
+ */
+east?: number;
+/**
+ * @minimum -90
+ * @maximum 90
+ */
+south?: number;
+/**
+ * @minimum -90
+ * @maximum 90
+ */
+north?: number;
 mode?: GetMapVehiclesMode;
 };

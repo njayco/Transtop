@@ -10,6 +10,7 @@ import { MODE_COLOR, MODE_NAME, RouteBadge } from '@/components/transit';
 import { usePrefs } from '@/lib/prefs';
 import { cn } from '@/lib/utils';
 import { trackedVehicleVisible } from '@/lib/vehicle-visibility';
+import { GlobalCoverageNotice } from './global-coverage';
 
 export const REGION_BOUNDS = { west: -74.27, south: 40.48, east: -71.75, north: 42.15 };
 const REGION_CENTER = { lat: 41.32, lon: -73.01 };
@@ -19,19 +20,21 @@ type Mode = (typeof MODES)[number];
 type Viewport = { west: number; south: number; east: number; north: number; zoom: number };
 const r3 = (n: number) => Math.round(n * 1000) / 1000;
 
-export function RegionalMap({ onClose }: { onClose?: () => void }) {
+export function RegionalMap({ onClose,initialCenter }: { onClose?: () => void;initialCenter?:{lat:number;lon:number} }) {
   const { mode } = usePrefs();
-  const [vp, setVp] = useState<Viewport>({ ...REGION_BOUNDS, zoom: REGION_ZOOM });
+  const [vp, setVp] = useState<Viewport>(initialCenter?{west:Math.max(-180,initialCenter.lon-.03),east:Math.min(180,initialCenter.lon+.03),south:Math.max(-90,initialCenter.lat-.02),north:Math.min(90,initialCenter.lat+.02),zoom:14}:{ ...REGION_BOUNDS, zoom: REGION_ZOOM });
   const [modes, setModes] = useState<Set<Mode>>(new Set(MODES));
   const [agency, setAgency] = useState('');
+  const [cursor,setCursor]=useState('');
   const [svc, setSvc] = useState<'all' | 'local' | 'express'>('all');
   const [legendQ, setLegendQ] = useState('');
   const [selLine, setSelLine] = useState<string | null>(null);
   const [selStop, setSelStop] = useState<string | null>(null);
-  const [fitKey, setFitKey] = useState(1);
+  const [fitKey, setFitKey] = useState(initialCenter?0:1);
   const [showCoverage, setShowCoverage] = useState(false);
 
   const onViewport = useCallback((v: Viewport) => {
+    setCursor('');
     setVp((p) => {
       const n = { west: r3(v.west), south: r3(v.south), east: r3(v.east), north: r3(v.north), zoom: Math.round(v.zoom) };
       return p.west === n.west && p.south === n.south && p.east === n.east && p.north === n.north && p.zoom === n.zoom ? p : n;
@@ -40,14 +43,14 @@ export function RegionalMap({ onClose }: { onClose?: () => void }) {
 
   const single = modes.size === 1 ? [...modes][0] : null;
   const params: GetNetworkParams = useMemo(() => ({
-    mode, ...(single ? { type: single } : {}), ...(agency ? { agency } : {}), ...(svc !== 'all' ? { serviceClass: svc } : {}),
+    mode,...(cursor?{cursor}:{}), ...(single ? { type: single } : {}), ...(agency ? { agency } : {}), ...(svc !== 'all' ? { serviceClass: svc } : {}),
     west: vp.west, south: vp.south, east: vp.east, north: vp.north, zoom: vp.zoom,
-  }), [mode, single, agency, svc, vp]);
+  }), [mode, single, agency, svc, vp,cursor]);
   const net = useGetNetwork(params, { query: { queryKey: getGetNetworkQueryKey(params), placeholderData: (previous,query) => {
     const old=query?.queryKey[1] as GetNetworkParams|undefined;
     return old?.mode===params.mode&&old?.type===params.type&&old?.agency===params.agency&&old?.serviceClass===params.serviceClass?previous:undefined;
   }, staleTime: 60_000, refetchInterval: 300_000, retry: 1 } });
-  const vParams: GetMapVehiclesParams = useMemo(() => ({ mode }), [mode]);
+  const vParams: GetMapVehiclesParams = useMemo(() => ({ mode,west:vp.west,east:vp.east,south:vp.south,north:vp.north }), [mode,vp]);
   const veh = useGetMapVehicles(vParams, { query: { queryKey: getGetMapVehiclesQueryKey(vParams), refetchInterval: 30_000, retry: 1 } });
   const sources = useGetSources();
 
@@ -78,15 +81,18 @@ export function RegionalMap({ onClose }: { onClose?: () => void }) {
   })), [shownStops, vp.zoom]);
   const vehicles = useMemo(() => (veh.data ?? [])
     .filter((v) => {
-      const r=routeIndex.get(v.routeId||''),type=r?.type||sources.data?.find(s=>s.id===(v.agencyId||v.routeId?.split(':')[0]))?.type;
+      const r=routeIndex.get(v.routeId||''),type=r?.type||v.vehicleType||sources.data?.find(s=>s.id===(v.agencyId||v.routeId?.split(':')[0]))?.type;
       return vehicleKind(v.source)!=='demo'&&!!type&&modes.has(type as Mode)&&
         trackedVehicleVisible(v,{...vp,agency,serviceClass:svc,routeId:selLine||undefined},r,type);
     })
-    .map((v) => { const r = routeIndex.get(v.routeId||''); return { ...v, vehicleType:r?.type||sources.data?.find(s=>s.id===(v.agencyId||v.routeId?.split(':')[0]))?.type, color: r?.color||'#1769AA', routeName: r?.name||v.routeName }; }), [veh.data, routeIndex,modes,vp,agency,svc,selLine,sources.data]);
+    .map((v) => { const r = routeIndex.get(v.routeId||''); return { ...v, vehicleType:r?.type||v.vehicleType||sources.data?.find(s=>s.id===(v.agencyId||v.routeId?.split(':')[0]))?.type, color: r?.color||v.color||'#1769AA', routeName: r?.name||v.routeName }; }), [veh.data, routeIndex,modes,vp,agency,svc,selLine,sources.data]);
 
   const line = selLine ? routeIndex.get(selLine) ?? (data?.lines.find((l) => l.route.id === selLine)?.route) : undefined;
   const stop = selStop ? shownStops.find((s) => s.id === selStop) : undefined;
-  const agencies = useMemo(() => (sources.data ?? []).filter((s) => modes.has(s.type as Mode)).sort((a, b) => a.agency.localeCompare(b.agency)), [sources.data, modes]);
+  const agencies = useMemo(() => [...new Map([...(sources.data ?? []),
+    ...shownLines.map(l=>({id:l.route.agencyId||'',agency:l.route.agency,type:l.route.type,status:'Transitland on demand'})),
+    ...shownStops.flatMap(s=>s.routes.map(r=>({id:r.agencyId||'',agency:r.agency,type:r.type,status:'Transitland on demand'}))),
+  ].filter((s)=>s.id&&modes.has(s.type as Mode)).map(s=>[s.id,s])).values()].sort((a,b)=>a.agency.localeCompare(b.agency)),[sources.data,modes,shownLines,shownStops]);
   const toggle = (m: Mode) => {
     const n = new Set(modes); if (n.has(m)) { if (n.size > 1) n.delete(m); } else n.add(m);
     setModes(n);
@@ -103,11 +109,11 @@ export function RegionalMap({ onClose }: { onClose?: () => void }) {
     <section className="space-y-4" aria-label="Regional transit map" data-testid="section-regional-map">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Regional map</p>
-          <h2 className="font-display text-2xl md:text-3xl">NYC, Long Island and Connecticut</h2>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Worldwide map</p>
+          <h2 className="font-display text-2xl md:text-3xl">Explore available transit worldwide</h2>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setFitKey((k) => k + 1)} data-testid="button-fit-region" className="inline-flex h-11 items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold hover:bg-white/5"><Crosshair className="h-4 w-4" />Fit region</button>
+          <button onClick={() => setFitKey((k) => k + 1)} data-testid="button-fit-region" className="inline-flex h-11 items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold hover:bg-white/5"><Crosshair className="h-4 w-4" />Fit NY / CT region</button>
           {onClose && <button onClick={onClose} data-testid="button-close-regional" className="inline-flex h-11 items-center gap-2 rounded-full bg-foreground px-4 text-sm font-bold text-background"><X className="h-4 w-4" />Back to nearby</button>}
         </div>
       </div>
@@ -133,8 +139,8 @@ export function RegionalMap({ onClose }: { onClose?: () => void }) {
       <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0 space-y-2">
           <div className="relative">
-            <TransitMap center={REGION_CENTER} zoom={REGION_ZOOM} network={mapLines} stops={mapStops} vehicles={vehicles} activeId={selStop}
-              onRoute={pickLine} onSelect={pickStop} onViewport={onViewport} fitBounds={REGION_BOUNDS} fitKey={fitKey}
+            <TransitMap center={initialCenter||REGION_CENTER} zoom={initialCenter?14:REGION_ZOOM} network={mapLines} stops={mapStops} vehicles={vehicles} activeId={selStop}
+              onRoute={pickLine} onSelect={pickStop} onViewport={onViewport} fitBounds={fitKey?REGION_BOUNDS:undefined} fitKey={fitKey}
               label="Regional transit map" className="h-[58dvh] min-h-[340px] w-full overflow-hidden rounded-2xl border border-border lg:h-[620px]" />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground" aria-live="polite">
@@ -156,6 +162,7 @@ export function RegionalMap({ onClose }: { onClose?: () => void }) {
             </details>
           )}
           {data?.message && <p className="text-xs text-muted-foreground">{data.message}</p>}
+          <GlobalCoverageNotice data={data?.globalCoverage} credits={shownLines.map(l=>l.route.transitland?.attribution)} onNext={setCursor} onReset={cursor?()=>setCursor(''):undefined} />
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span><span className="mr-1.5 inline-block h-2.5 w-2.5 rotate-45 bg-foreground align-middle" />Official vehicle position</span>
             <span><span className="mr-1.5 inline-block h-3 w-3 rounded-full border-2 border-foreground align-middle" />Stop or station at its published location</span>
@@ -244,7 +251,7 @@ export function RegionalMap({ onClose }: { onClose?: () => void }) {
                     <span className="min-w-0 truncate">{s.agency}</span>
                     <span className="shrink-0 text-xs text-muted-foreground tabular">
                       <span className={cn('mr-1.5 inline-block h-2 w-2 rounded-full', s.status === 'ok' || s.status === 'live' ? 'bg-[hsl(var(--ok))]' : 'bg-[hsl(var(--warn))]')} />
-                      {s.status}{s.routeCount != null ? ` · ${s.routeCount} routes` : ''}{s.stopCount != null ? ` · ${s.stopCount} stops` : ''}
+                      {s.status}
                     </span>
                   </li>
                 ))}
