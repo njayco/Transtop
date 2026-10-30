@@ -5,9 +5,10 @@ import { MODE_COLOR } from './transit';
 import { DARK_ROADMAP } from '@/lib/map-style';
 import { useLocation } from 'wouter';
 import { vehicleFresh } from '@/lib/vehicle-visibility';
+import { MapOverlays } from '@/lib/map-overlays';
 
 export type MapStop = { id: string; name: string; lat: number; lon: number; type: string; color?: string; label?: boolean; routes?: {id:string;name:string;color:string}[] };
-export type MapVehicle = { id: string; lat: number; lon: number; source: string; updatedAt?: string; color?: string; routeId?: string; routeName?: string;agencyId?:string;trainNumber?:string;destination?:string;runId?:string;expiresAt?:string };
+export type MapVehicle = { id: string; lat: number; lon: number; source: string; updatedAt?: string; color?: string; routeId?: string; routeName?: string;agencyId?:string;vehicleType?:string;trainNumber?:string;destination?:string;runId?:string;expiresAt?:string };
 export type MapLine = { id: string; name: string; color: string; coords: number[][]; shapeId?: string; type?: string; agency?: string };
 export type MapBounds = { west: number; south: number; east: number; north: number };
 export type MapViewport = MapBounds & { zoom: number };
@@ -65,6 +66,7 @@ export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehi
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
   const libraries = useRef<Awaited<ReturnType<typeof loadGoogleMaps>> | null>(null);
+  const layers = useRef<MapOverlays | null>(null);
   const [ready, setReady] = useState(false);
   const [tilesReady, setTilesReady] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -192,107 +194,28 @@ export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehi
   }, [center.lat, center.lon, ready, failed, fitBounds]);
 
   useEffect(() => {
-    const m = map.current;
-    if (!m || !ready || failed) return;
-    const paths: google.maps.Polyline[] = [];
-    const listeners: google.maps.MapsEventListener[] = [];
-    for (const line of network ?? []) {
-      if (line.coords.length < 2) continue;
-      const path = line.coords.map(([lng, lat]) => ({ lat, lng }));
-      paths.push(new google.maps.Polyline({ map: m, path, strokeColor: MODE_COLOR[line.type ?? ''] ?? line.color, strokeWeight: 9, strokeOpacity: 0.4, clickable: false, zIndex: 1 }));
-      const visible = new google.maps.Polyline({ map: m, path, strokeColor: line.color, strokeWeight: line.type === 'rail' ? 5 : 3, strokeOpacity: line.type === 'bus' ? .35 : .95, zIndex: line.type === 'subway' ? 3 : 2,
-        icons: line.type === 'bus' ? [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 2 }, offset: '0', repeat: '14px' }] : undefined });
-      paths.push(visible);
-      listeners.push(visible.addListener('click', () => callbacks.current.onRoute?.(line.id)));
-    }
-    if (shape && shape.coords.length > 1) {
-      const path = shape.coords.map(([lng, lat]) => ({ lat, lng }));
-      paths.push(new google.maps.Polyline({ map: m, path, strokeColor: shape.color, strokeWeight: 11, strokeOpacity: 0.2, clickable: false, zIndex: 3 }));
-      paths.push(new google.maps.Polyline({ map: m, path, strokeColor: shape.color, strokeWeight: 4, strokeOpacity: 1, clickable: false, zIndex: 4 }));
-    }
-    return () => {
-      listeners.forEach((l) => l.remove());
-      paths.forEach((p) => p.setMap(null));
-    };
-  }, [network, shape, ready, failed]);
+    const m=map.current,libs=libraries.current;
+    if(!m||!libs||!ready||failed)return;
+    const controller=new MapOverlays(m,libs[1].Marker,libs[0].InfoWindow,
+      id=>callbacks.current.onSelect?.(id),id=>callbacks.current.onRoute?.(id),
+      id=>navigate(`/trains/${encodeURIComponent(id)}`));
+    layers.current=controller;
+    return()=>{controller.dispose();if(layers.current===controller)layers.current=null;};
+  },[ready,failed,attempt]);
+
+  useEffect(()=>{layers.current?.setLines(network??[],shape);},[network,shape,ready,failed,attempt]);
+  useEffect(()=>{layers.current?.setStops(stops,activeId,labelStops);},[stops,activeId,labelStops,ready,failed,attempt]);
+  useEffect(()=>{layers.current?.setVehicles(visibleVehicles);},[visibleVehicles,ready,failed,attempt]);
 
   // Fit only when route geometry changes, not on each vehicle refresh.
   useEffect(() => {
     if (!map.current || !ready || failed || !shape || shape.coords.length < 2) return;
-    if (lastShapeFit.current === shape) return;
+    if (lastShapeFit.current && lastShapeFit.current.color===shape.color&&JSON.stringify(lastShapeFit.current.coords)===JSON.stringify(shape.coords)) return;
     lastShapeFit.current = shape;
     const bounds = new google.maps.LatLngBounds();
     shape.coords.forEach(([lng, lat]) => bounds.extend({ lat, lng }));
     map.current.fitBounds(bounds, 48);
   }, [shape, ready, failed]);
-
-  useEffect(() => {
-    const m = map.current, libs = libraries.current;
-    if (!m || !libs || !ready || failed) return;
-    const [{ InfoWindow }, { Marker }] = libs;
-    const popup = new InfoWindow();
-    const markers: google.maps.Marker[] = [];
-    const listeners: google.maps.MapsEventListener[] = [];
-    for (const [index, s] of stops.entries()) {
-      const active = s.id === activeId;
-      const color = s.color ?? MODE_COLOR[s.type] ?? '#888';
-      const marker = new Marker({ map: m, position: { lat: s.lat, lng: s.lon }, title: `${s.name} stop${s.routes?.length ? ` · ${s.routes.map(r => r.name).join(', ')}` : ''}`,
-        zIndex: active ? 100 : 20, optimized: false,
-        icon: { path: google.maps.SymbolPath.CIRCLE, scale: labelStops ? 12 : active ? 11 : 7, fillColor: color, fillOpacity: 1, strokeColor: '#fff', strokeWeight: active ? 3 : 1.5 },
-        label: labelStops ? { text: String(index + 1), color: '#111', fontSize: '11px', fontWeight: '800' } : s.label || active ? { text: s.name, color: '#fff', fontSize: '12px', className: 'map-stop-label' } : undefined });
-      listeners.push(marker.addListener('click', () => {
-        const content = document.createElement('div');
-        content.style.cssText = 'color:#111;font:600 13px Arial,sans-serif;max-width:240px';
-        const name = document.createElement('p'); name.textContent = s.name; content.append(name);
-        if (s.routes?.length) { const lines = document.createElement('p'); lines.textContent = `Lines: ${s.routes.map(r => r.name).join(', ')}`; content.append(lines); }
-        if (callbacks.current.onSelect) {
-          const button = document.createElement('button'); button.type = 'button'; button.textContent = 'Select stop for details';
-          button.style.cssText = 'text-decoration:underline;padding:8px 0'; button.onclick = () => callbacks.current.onSelect?.(s.id); content.append(button);
-        }
-        popup.setContent(content); popup.open({ map: m, anchor: marker });
-        callbacks.current.onSelect?.(s.id);
-      }));
-      markers.push(marker);
-    }
-    for (const v of visibleVehicles) {
-      const kind = vehicleKind(v.source), color = v.color ?? '#f4f1ea';
-      if (kind === 'official' && !vehicleFresh(v)) continue;
-      const title = `${v.trainNumber?`Train ${v.trainNumber} · ${v.routeName} · to ${v.destination}`:v.routeName ? `Route ${v.routeName} vehicle` : 'Vehicle'} · ${sourceText(v.source)} · ${agoText(v.updatedAt)}`;
-      const marker = new Marker({ map: m, position: { lat: v.lat, lng: v.lon }, title, zIndex: 40,
-        ...(v.trainNumber?{label:{text:v.trainNumber,color:'#111',fontSize:'11px',fontWeight:'bold'}}:{}),
-        icon: { path: kind === 'community' ? google.maps.SymbolPath.CIRCLE : v.trainNumber?'M -16,-12 16,-12 16,12 -16,12 z':'M 0,-8 8,0 0,8 -8,0 z',
-          scale: kind === 'community' ? 14 : 1, fillColor: color, fillOpacity: kind === 'community' ? .15 : 1,
-          strokeColor: kind === 'community' ? '#5cc2f2' : '#fff', strokeWeight: 2 } });
-      listeners.push(marker.addListener('click', () => {
-        const content = document.createElement('div');
-        content.style.cssText = 'color:#111;font:600 13px Arial,sans-serif;max-width:240px;';
-        const text = document.createElement('p');
-        text.textContent = title;
-        content.append(text);
-        if(v.runId){
-          const button=document.createElement('button');button.type='button';button.textContent='View train and ordered stops';
-          button.style.cssText='text-decoration:underline;padding:8px 0;cursor:pointer';
-          button.onclick=()=>navigate(`/trains/${encodeURIComponent(v.runId!)}`);content.append(button);
-        }
-        if (v.routeId) {
-          const button = document.createElement('button');
-          button.type = 'button';
-          button.textContent = 'View route';
-          button.style.cssText = 'text-decoration:underline;padding:8px 0;cursor:pointer;';
-          button.onclick = () => callbacks.current.onRoute?.(v.routeId!);
-          content.append(button);
-        }
-        popup.setContent(content);
-        popup.open({ map: m, anchor: marker });
-      }));
-      markers.push(marker);
-    }
-    return () => {
-      popup.close();
-      listeners.forEach((l) => l.remove());
-      markers.forEach((marker) => marker.setMap(null));
-    };
-  }, [stops, visibleVehicles, activeId, ready, failed, labelStops]);
 
   return (
     <div className={`flex flex-col ${className ?? ''}`}>

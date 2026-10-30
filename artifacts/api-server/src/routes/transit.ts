@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { GetStopsQueryParams, GetStopsResponse, GetStopParams, GetStopQueryParams, GetStopResponse, GetRouteParams, GetRouteQueryParams, GetRouteResponse, GetSourcesResponse, GetAlertsQueryParams, GetAlertsResponse } from "@workspace/api-zod";
-import { nearby, stopDetail, routeDetail, sources } from "../transit/service";
+import { nearby, stopDetail, routeDetail, sources, trackedVehicles } from "../transit/service";
 import { demoAlerts } from "../transit/demo";
 import { liveAlerts } from "../transit/realtime";
 import { contributionLimit, start, authorize, end, sample, report } from "../transit/rides";
@@ -89,7 +89,7 @@ router.get("/transit/network",async(req,res):Promise<void>=>{
 router.get("/transit/map-vehicles",async(req,res):Promise<void>=>{
   const p=GetMapVehiclesQueryParams.safeParse(req.query);
   if(!p.success){res.status(400).json({error:"Invalid data mode"});return;}
-  res.json(GetMapVehiclesResponse.parse(mapVehicles(p.data.mode)));
+  res.json(GetMapVehiclesResponse.parse(await trackedVehicles(p.data.mode)));
 });
 router.get("/transit/alerts",async(req,res):Promise<void>=>{
   const p=GetAlertsQueryParams.safeParse(req.query);

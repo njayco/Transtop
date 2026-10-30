@@ -10,7 +10,7 @@ import { RouteBadge } from '@/components/transit';
 import { IntercityModule } from '@/components/intercity';
 import { TIMES_SQUARE, usePrefs } from '@/lib/prefs';
 import { ago } from '@/lib/format';
-import { amtrakVisible } from '@/lib/vehicle-visibility';
+import { trackedVehicleVisible } from '@/lib/vehicle-visibility';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { MapViewport } from '@/components/transit-map';
@@ -54,9 +54,12 @@ export default function Nearby() {
     ? { lat: stops.data.centerLat, lon: stops.data.centerLon }
     : 'lat' in place ? place : TIMES_SQUARE;
   const [viewport, setViewport] = useState<MapViewport | null>(null);
-  const onViewport = useCallback((v: MapViewport) => setViewport({ west: +v.west.toFixed(4), east: +v.east.toFixed(4), south: +v.south.toFixed(4), north: +v.north.toFixed(4), zoom: v.zoom }), []);
+  const onViewport = useCallback((v: MapViewport) => setViewport(p=>{const n={ west: +v.west.toFixed(4), east: +v.east.toFixed(4), south: +v.south.toFixed(4), north: +v.north.toFixed(4), zoom: v.zoom };return p&&JSON.stringify(p)===JSON.stringify(n)?p:n;}), []);
   const netParams: GetNetworkParams = useMemo(() => ({ mode, ...(filter !== 'all' ? { type: filter } : {}), ...((filter==='intercity'?provider:agency) ? { agency:filter==='intercity'?provider:agency } : {}), serviceClass: svc, ...(viewport ?? { lat: center.lat, lon: center.lon, zoom: 14.5 }) }), [mode, filter, agency, provider, svc, viewport, center.lat, center.lon]);
-  const networkQ = useGetNetwork(netParams, { query: { queryKey: getGetNetworkQueryKey(netParams), staleTime: 60_000, retry: 1 } });
+  const networkQ = useGetNetwork(netParams, { query: { queryKey: getGetNetworkQueryKey(netParams), placeholderData: (previous,query) => {
+    const old=query?.queryKey[1] as GetNetworkParams|undefined;
+    return old?.mode===netParams.mode&&old?.type===netParams.type&&old?.agency===netParams.agency&&old?.serviceClass===netParams.serviceClass?previous:undefined;
+  }, staleTime: 60_000, retry: 1 } });
   const mapStops = useMemo(() => (networkQ.data?.stops ?? list).map((s) => ({ id: s.id, name: s.name, lat: s.lat, lon: s.lon, type: s.type, routes: s.routes })), [networkQ.data, list]);
   const vParams: GetMapVehiclesParams = useMemo(() => ({ mode }), [mode]);
   const vehQ = useGetMapVehicles(vParams, { query: { queryKey: getGetMapVehiclesQueryKey(vParams), refetchInterval: 30_000, retry: 1 } });
@@ -66,9 +69,10 @@ export default function Nearby() {
   const lines = useMemo(() => (network.data ?? []).map((l) => ({ id: l.route.id, shapeId: l.shapeId, type: l.route.type, agency: l.route.agency, name: l.route.name, color: hoverRoutes.size && !hoverRoutes.has(l.route.id) ? '#55555c' : l.route.color, coords: l.shape })), [network.data, hoverRoutes]);
   const legendRoutes = useMemo(() => { const m = new Map<string, NonNullable<typeof network.data>[number]['route']>(); (network.data ?? []).forEach((l) => { if (!m.has(l.route.id)) m.set(l.route.id, l.route); }); return [...m.values()]; }, [network.data]);
   const vehicles = useMemo(() => { const byId = new Map(legendRoutes.map((r) => [r.id, r])); return (vehQ.data ?? [])
-    .filter((v) => vehicleKind(v.source) !== 'demo'&&(v.agencyId==='amtrak'?
-      amtrakVisible(v,{...(viewport||{west:center.lon-.1,east:center.lon+.1,south:center.lat-.08,north:center.lat+.08}),type:filter,agency,serviceClass:svc}):byId.has(v.routeId||'')))
-    .map((v) => ({ ...v, color: byId.get(v.routeId||'')?.color||'#CAE4F1', routeName: byId.get(v.routeId||'')?.name||v.routeName })); }, [vehQ.data, legendRoutes, mode,viewport,center,filter,agency,svc]);
+    .filter((v) => vehicleKind(v.source) !== 'demo'&&trackedVehicleVisible(v,{
+      ...(viewport||{west:center.lon-.1,east:center.lon+.1,south:center.lat-.08,north:center.lat+.08}),type:filter,agency:filter==='intercity'?provider:agency,serviceClass:svc},
+      byId.get(v.routeId||''),sources.data?.find(s=>s.id===(v.agencyId||v.routeId?.split(':')[0]))?.type))
+    .map((v) => ({ ...v, vehicleType:byId.get(v.routeId||'')?.type||sources.data?.find(s=>s.id===(v.agencyId||v.routeId?.split(':')[0]))?.type, color: byId.get(v.routeId||'')?.color||'#1769AA', routeName: byId.get(v.routeId||'')?.name||v.routeName })); }, [vehQ.data, legendRoutes, mode,viewport,center,filter,agency,provider,svc,sources.data]);
   const goRoute = (id: string) => nav(`/routes/${encodeURIComponent(id)}`);
   const legend = (
     <div className="space-y-1.5">
@@ -78,7 +82,7 @@ export default function Nearby() {
         ))}
       </div>
       <p className="text-[11px] text-muted-foreground">
-        Diamonds are agency-reported positions; dashed circles are approximate community areas.{' '}
+        Moving badges identify routes. Station reports are labeled “not GPS”; only GPS observations animate. Schedule-only services have no live vehicle marker.{' '}
         {network.isError ? 'Route lines unavailable right now.' : 'Positions refresh every 30 seconds.'}
       </p>
       {networkQ.data?.truncated && <p className="text-xs text-muted-foreground">Map limit reached: zoom in or filter an operator. Not every visible path/stop is shown.</p>}

@@ -65,6 +65,7 @@ async function mountMap() {
     '@/lib/map-style': { DARK_ROADMAP: [] },
     'wouter': { useLocation: () => ['/', () => {}] },
     '@/lib/vehicle-visibility': { vehicleFresh },
+    '@/lib/map-overlays': { MapOverlays: class { setLines() {} setStops() {} setVehicles() {} dispose() {} } },
   };
   const source = await readFile(new URL('../src/components/transit-map.tsx', import.meta.url), 'utf8');
   const { outputText } = ts.transpileModule(source, {

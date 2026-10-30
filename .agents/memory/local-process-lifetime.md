@@ -1,4 +1,10 @@
 ---
+
+Managed workflows can report a port conflict after a merge even while an older process tree is still serving the preview.
+
+**Why:** Reconciliation left older frontend/API processes listening while replacement workflow starts failed with address-in-use errors.
+
+**How to apply:** Verify process ownership and command lines first. Stop only confirmed stale service processes, then restart the exact managed workflows; do not change ports or create replacement workflows to bypass the conflict.
 name: Local process lifetime
 description: Disposable process lifetime and side effects of temporary package/tool installations.
 ---

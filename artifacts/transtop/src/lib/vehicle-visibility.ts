@@ -1,4 +1,13 @@
 /** Train positions are gated by their own coordinates, not by GTFS shape availability. */
+export function trackedVehicleVisible(v:{lat:number;lon:number;routeId?:string;agencyId?:string},p:{
+  type?:string;agency?:string;serviceClass?:string;routeId?:string;west:number;east:number;south:number;north:number;
+},route?:{type:string;serviceClass?:string},agencyType?:string){
+  const agency=v.agencyId||v.routeId?.split(':')[0];
+  const type=route?.type||agencyType||(agency==='amtrak'?'rail':undefined);
+  return Number.isFinite(v.lat)&&Number.isFinite(v.lon)&&v.lon>=p.west&&v.lon<=p.east&&v.lat>=p.south&&v.lat<=p.north&&
+    (!p.agency||p.agency===agency)&&(!p.type||p.type==='all'||p.type===type)&&(!p.routeId||p.routeId===v.routeId)&&
+    (!p.serviceClass||p.serviceClass==='all'||route?.serviceClass===p.serviceClass);
+}
 export function amtrakVisible(v:{lat:number;lon:number;routeId?:string},p:{
   type?:string;agency?:string;serviceClass?:string;routeId?:string;
   west?:number;east?:number;south?:number;north?:number;

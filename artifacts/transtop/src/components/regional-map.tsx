@@ -9,7 +9,7 @@ import { TransitMap, vehicleKind } from '@/components/transit-map';
 import { MODE_COLOR, MODE_NAME, RouteBadge } from '@/components/transit';
 import { usePrefs } from '@/lib/prefs';
 import { cn } from '@/lib/utils';
-import { amtrakVisible } from '@/lib/vehicle-visibility';
+import { trackedVehicleVisible } from '@/lib/vehicle-visibility';
 
 export const REGION_BOUNDS = { west: -74.27, south: 40.48, east: -71.75, north: 42.15 };
 const REGION_CENTER = { lat: 41.32, lon: -73.01 };
@@ -43,7 +43,10 @@ export function RegionalMap({ onClose }: { onClose?: () => void }) {
     mode, ...(single ? { type: single } : {}), ...(agency ? { agency } : {}), ...(svc !== 'all' ? { serviceClass: svc } : {}),
     west: vp.west, south: vp.south, east: vp.east, north: vp.north, zoom: vp.zoom,
   }), [mode, single, agency, svc, vp]);
-  const net = useGetNetwork(params, { query: { queryKey: getGetNetworkQueryKey(params), staleTime: 60_000, refetchInterval: 300_000, retry: 1 } });
+  const net = useGetNetwork(params, { query: { queryKey: getGetNetworkQueryKey(params), placeholderData: (previous,query) => {
+    const old=query?.queryKey[1] as GetNetworkParams|undefined;
+    return old?.mode===params.mode&&old?.type===params.type&&old?.agency===params.agency&&old?.serviceClass===params.serviceClass?previous:undefined;
+  }, staleTime: 60_000, refetchInterval: 300_000, retry: 1 } });
   const vParams: GetMapVehiclesParams = useMemo(() => ({ mode }), [mode]);
   const veh = useGetMapVehicles(vParams, { query: { queryKey: getGetMapVehiclesQueryKey(vParams), refetchInterval: 30_000, retry: 1 } });
   const sources = useGetSources();
@@ -74,9 +77,12 @@ export function RegionalMap({ onClose }: { onClose?: () => void }) {
     label: vp.zoom >= 15, routes: s.routes.map((r) => ({ id: r.id, name: r.name, color: r.color })),
   })), [shownStops, vp.zoom]);
   const vehicles = useMemo(() => (veh.data ?? [])
-    .filter((v) => vehicleKind(v.source) !== 'demo'&&(v.agencyId==='amtrak'?
-      modes.has('rail')&&amtrakVisible(v,{...vp,agency,serviceClass:svc,routeId:selLine||undefined}):routeIndex.has(v.routeId||'')))
-    .map((v) => { const r = routeIndex.get(v.routeId||''); return { ...v, color: r?.color||'#CAE4F1', routeName: r?.name||v.routeName }; }), [veh.data, routeIndex,modes,vp,agency,svc,selLine]);
+    .filter((v) => {
+      const r=routeIndex.get(v.routeId||''),type=r?.type||sources.data?.find(s=>s.id===(v.agencyId||v.routeId?.split(':')[0]))?.type;
+      return vehicleKind(v.source)!=='demo'&&!!type&&modes.has(type as Mode)&&
+        trackedVehicleVisible(v,{...vp,agency,serviceClass:svc,routeId:selLine||undefined},r,type);
+    })
+    .map((v) => { const r = routeIndex.get(v.routeId||''); return { ...v, vehicleType:r?.type||sources.data?.find(s=>s.id===(v.agencyId||v.routeId?.split(':')[0]))?.type, color: r?.color||'#1769AA', routeName: r?.name||v.routeName }; }), [veh.data, routeIndex,modes,vp,agency,svc,selLine,sources.data]);
 
   const line = selLine ? routeIndex.get(selLine) ?? (data?.lines.find((l) => l.route.id === selLine)?.route) : undefined;
   const stop = selStop ? shownStops.find((s) => s.id === selStop) : undefined;
