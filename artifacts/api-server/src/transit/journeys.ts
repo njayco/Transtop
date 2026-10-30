@@ -4,10 +4,15 @@ import { PlanJourneyBody, PlanJourneyResponse } from "@workspace/api-zod";
 
 type JourneyInput=z.infer<typeof PlanJourneyBody>;
 type JourneyResults=z.infer<typeof PlanJourneyResponse>;
+// This release was explicitly approved with agency schedules only.
+// Retain the integration for a future, separately authorized activation.
+const JOURNEY_PLANNING_ENABLED=false;
+const DEFERRED_MESSAGE="Google journey planning is unavailable in this schedules-only release. Browse agency routes and dated timetables instead. Existing Google Maps displays are unaffected.";
 const buckets=new Map<string,{count:number;expires:number}>();
 let inFlight=0,windowStart=Date.now(),windowRequests=0;
 let lastCheck:{status:string;message?:string;updatedAt:string}|undefined;
 export function journeyHealth(){
+  if(!JOURNEY_PLANNING_ENABLED)return {status:"deferred · schedules-only release",message:DEFERRED_MESSAGE,updatedAt:null};
   return !process.env.GOOGLE_MAPS_ROUTES_API_KEY?{status:"awaiting credentials",updatedAt:null}:
     lastCheck||{status:"configured · verify API access",updatedAt:null};
 }
@@ -36,6 +41,7 @@ export class JourneyError extends Error {
   constructor(public status:number,message:string){super(message);}
 }
 export async function planJourney(input:JourneyInput):Promise<JourneyResults> {
+  if(!JOURNEY_PLANNING_ENABLED)return {journeys:[],configured:false,provider:"Google Maps",message:DEFERRED_MESSAGE};
   const key=process.env.GOOGLE_MAPS_ROUTES_API_KEY;
   if(!key)return {journeys:[],configured:false,provider:"Google Maps",message:"Google trip planning is not configured. Enable Routes API with billing and add a separate server credential named GOOGLE_MAPS_ROUTES_API_KEY in Replit Secrets. Agency routes and timetables remain available."};
   const when=input.time?input.time.getTime():Date.now()+60000;

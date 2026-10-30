@@ -4,7 +4,6 @@ import { Search as SearchIcon, ArrowUpRight } from 'lucide-react';
 import { getGetCatalogQueryKey, useGetCatalog, useGetSources, type GetCatalogParams, type GetCatalogServiceClass } from '@workspace/api-client-react';
 import { MobileTop } from '@/components/shell';
 import { ErrorState, ModeIcon, RouteBadge, SkeletonCards, StopCard, MODE_NAME } from '@/components/transit';
-import { JourneyPlanner } from '@/components/journey';
 import { Pager, apiErrorText } from '@/components/timetable';
 import { usePrefs } from '@/lib/prefs';
 import { cn } from '@/lib/utils';
@@ -16,7 +15,6 @@ const LIMIT = 20;
 
 export default function SearchPage() {
   const { mode } = usePrefs();
-  const [tab, setTab] = useState<'browse' | 'plan'>('browse');
   const [text, setText] = useState('');
   const [q, setQ] = useState('');
   const [agency, setAgency] = useState('');
@@ -44,14 +42,7 @@ export default function SearchPage() {
       <MobileTop />
       <div className="space-y-6 p-4 md:p-8">
         <h1 className="font-display text-4xl md:text-6xl">Where to?</h1>
-        <div className="inline-flex rounded-full border border-border bg-card p-0.5" role="tablist" aria-label="Search mode">
-          {(['browse', 'plan'] as const).map((t) => (
-            <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} data-testid={`tab-search-${t}`}
-              className={cn('h-10 rounded-full px-5 text-sm font-semibold', tab === t ? 'bg-white/10' : 'text-muted-foreground')}>{t === 'browse' ? 'Routes and stops' : 'Plan a trip'}</button>
-          ))}
-        </div>
-
-        {tab === 'plan' ? <JourneyPlanner /> : (
+        <p className="text-sm text-muted-foreground">Browse published routes, stop locations and dated timetables. <Link href="/settings" className="underline">Check agency coverage</Link>.</p>
           <>
             <div className="relative">
               <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground" aria-hidden />
@@ -105,7 +96,6 @@ export default function SearchPage() {
               </div>
             )}
           </>
-        )}
       </div>
     </div>
   );
