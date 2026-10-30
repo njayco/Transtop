@@ -185,7 +185,7 @@ export default function Nearby() {
           <p className="mt-1 text-sm text-muted-foreground">Coverage may not include this area. Try another neighborhood or clear a filter, and check Settings for agency coverage.</p>
         </div>
       )}
-      {stops.data && <div className={filter === 'intercity' ? '' : 'pb-2'}><IntercityModule key={`${center.lat},${center.lon}`} center={center} provider={provider} onProvider={setProvider} compact={filter !== 'intercity'} /></div>}
+      {stops.data && (filter === 'all' || filter === 'intercity') && <div className={filter === 'intercity' ? '' : 'pb-2'}><IntercityModule key={`${center.lat},${center.lon}`} center={center} provider={provider} onProvider={setProvider} compact={filter !== 'intercity'} /></div>}
       {list.map((s, i) => <StopCard key={s.id} stop={s} index={i} active={hover === s.id} onHover={setHover} />)}
       {(alerts.data?.length ?? 0) > 0 && (
         <section className="pt-4">
