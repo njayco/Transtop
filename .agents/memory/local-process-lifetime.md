@@ -5,6 +5,12 @@ Managed workflows can report a port conflict after a merge even while an older p
 **Why:** Reconciliation left older frontend/API processes listening while replacement workflow starts failed with address-in-use errors.
 
 **How to apply:** Verify process ownership and command lines first. Stop only confirmed stale service processes, then restart the exact managed workflows; do not change ports or create replacement workflows to bypass the conflict.
+
+Avoid `tsx --input-type=module` for one-off checks importing the server logger.
+
+**Why:** Pino's worker inherits that Node flag but starts from a file, causing `ERR_INPUT_TYPE_NOT_ALLOWED` even when the stdin program itself is valid.
+
+**How to apply:** Run a real TypeScript CLI file or use `tsx -e` with an async wrapper instead; do not misdiagnose the worker failure as an application import error.
 name: Local process lifetime
 description: Disposable process lifetime and side effects of temporary package/tool installations.
 ---

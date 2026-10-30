@@ -16,6 +16,7 @@ export function nyNow() {
 /** Descriptive provider status: imported / link-only / access required / service unverified. */
 export function providerStatus(s: string) {
   const v = s.toLowerCase();
+  if (/reference/.test(v)) return { k: 'reference', l: 'Research reference', c: 'text-[hsl(var(--warn))]', dot: 'bg-[hsl(var(--warn))]' };
   if (/import/.test(v)) return { k: 'imported', l: 'Times imported', c: 'text-[hsl(var(--ok))]', dot: 'bg-[hsl(var(--ok))]' };
   if (/access|permission|credential/.test(v)) return { k: 'access', l: 'Access required', c: 'text-[hsl(var(--warn))]', dot: 'bg-[hsl(var(--warn))]' };
   if (/unverif/.test(v)) return { k: 'unverified', l: 'Service unverified', c: 'text-muted-foreground', dot: 'bg-muted-foreground' };
@@ -25,6 +26,7 @@ export function providerStatus(s: string) {
 
 /** Provider id from an agency id or an id prefix such as "transbridge:..." or "martz-...". */
 export function providerFor(agencyId: string | undefined, id: string) {
+  if (!agencyId && id.startsWith('ibg:')) return id.split(':')[1];
   const raw = (agencyId || id.split(/[:_-]/)[0] || '').toLowerCase();
   if (raw.includes('transbridge') || raw.includes('trans-bridge')) return 'transbridge';
   if (raw.includes('martz')) return 'martz';
@@ -87,7 +89,7 @@ export function ProviderGaps({ providers }: { providers: IntercityProvider[] }) 
               <p className="font-semibold">{p.name} <span className={cn('ml-1 text-xs font-bold', st.c)}>{st.l}</span></p>
               <p className="text-xs text-muted-foreground">Coverage gap: Transtop has no departure times for this provider. Check the official schedule.</p>
             </div>
-            {p.url && <a href={p.url} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-1 text-xs underline underline-offset-2">Schedule <ExternalLink className="h-3 w-3" /></a>}
+            {p.url && <a href={p.url} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-1 text-xs underline underline-offset-2">Source <ExternalLink className="h-3 w-3" /></a>}
           </li>
         ); })}
       </ul>
@@ -138,7 +140,7 @@ export function IntercityModule({ center, provider, onProvider, compact, routeId
       {q.isError && <div className="rounded-2xl border border-[hsl(var(--bad)/.35)] bg-card p-4 text-sm" role="alert">Intercity departures unavailable. <button onClick={() => q.refetch()} className="font-semibold underline" data-testid="button-intercity-retry">Try again</button></div>}
       {q.data?.message && <p className="rounded-xl border border-border bg-card/60 px-3 py-2 text-sm text-muted-foreground" role="status">{q.data.message}</p>}
       {q.data && deps.length === 0 && !compact && (
-        <div className="flex items-center gap-3 rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground"><RouteIcon className="h-6 w-6 shrink-0" /><span data-testid="text-intercity-empty">{provider ? `No ${candidates.find((p) => p.id === provider)?.name ?? provider} departures are scheduled for ${date} from ${from || 'start of day'}. This provider is still covered; there is simply no service in this window.` : 'No imported intercity departures near here for this date and time. Intercity results only cover boarding points within 3 km.'}</span></div>
+        <div className="flex items-center gap-3 rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground"><RouteIcon className="h-6 w-6 shrink-0" /><span data-testid="text-intercity-empty">{provider ? `No verified ${candidates.find((p) => p.id === provider)?.name ?? provider} departure times are available here for ${date} from ${from || 'start of day'}. This does not establish that no service runs. Research references do not supply current departures; check the carrier.` : 'No verified intercity departures near here for this date and time. Results cover boarding points within 3 km. Research stops and routes are labeled separately.'}</span></div>
       )}
       {shown.length > 0 && <ol className="space-y-2">{shown.map((d, i) => <DepartureRow key={d.id} d={d} index={i} />)}</ol>}
       {compact && deps.length > shown.length && <p className="text-xs text-muted-foreground">{deps.length - shown.length} more. Choose {INTERCITY_LABEL} above to see all.</p>}

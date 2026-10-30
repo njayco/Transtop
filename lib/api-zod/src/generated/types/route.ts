@@ -18,4 +18,6 @@ export interface Route {
   longName?: string;
   scheduleNotes?: string[];
   sourceUrl?: string;
+  /** Suggested historical service date for research-reference routes only */
+  referenceDate?: string;
 }

@@ -163,7 +163,8 @@ export const GetStopsResponse = zod.object({
   "serviceClass": zod.enum(['local', 'express']).optional(),
   "longName": zod.string().optional(),
   "scheduleNotes": zod.array(zod.string()).optional(),
-  "sourceUrl": zod.string().optional()
+  "sourceUrl": zod.string().optional(),
+  "referenceDate": zod.string().optional().describe('Suggested historical service date for research-reference routes only')
 })),
   "arrivals": zod.array(zod.object({
   "id": zod.string(),
@@ -235,7 +236,8 @@ export const GetStopResponse = zod.object({
   "serviceClass": zod.enum(['local', 'express']).optional(),
   "longName": zod.string().optional(),
   "scheduleNotes": zod.array(zod.string()).optional(),
-  "sourceUrl": zod.string().optional()
+  "sourceUrl": zod.string().optional(),
+  "referenceDate": zod.string().optional().describe('Suggested historical service date for research-reference routes only')
 })),
   "arrivals": zod.array(zod.object({
   "id": zod.string(),
@@ -294,7 +296,8 @@ export const GetRouteResponse = zod.object({
   "serviceClass": zod.enum(['local', 'express']).optional(),
   "longName": zod.string().optional(),
   "scheduleNotes": zod.array(zod.string()).optional(),
-  "sourceUrl": zod.string().optional()
+  "sourceUrl": zod.string().optional(),
+  "referenceDate": zod.string().optional().describe('Suggested historical service date for research-reference routes only')
 }),
   "stops": zod.array(zod.object({
   "id": zod.string(),
@@ -315,7 +318,8 @@ export const GetRouteResponse = zod.object({
   "serviceClass": zod.enum(['local', 'express']).optional(),
   "longName": zod.string().optional(),
   "scheduleNotes": zod.array(zod.string()).optional(),
-  "sourceUrl": zod.string().optional()
+  "sourceUrl": zod.string().optional(),
+  "referenceDate": zod.string().optional().describe('Suggested historical service date for research-reference routes only')
 })),
   "arrivals": zod.array(zod.object({
   "id": zod.string(),
@@ -437,7 +441,8 @@ export const GetCatalogResponse = zod.object({
   "serviceClass": zod.enum(['local', 'express']).optional(),
   "longName": zod.string().optional(),
   "scheduleNotes": zod.array(zod.string()).optional(),
-  "sourceUrl": zod.string().optional()
+  "sourceUrl": zod.string().optional(),
+  "referenceDate": zod.string().optional().describe('Suggested historical service date for research-reference routes only')
 })),
   "stops": zod.array(zod.object({
   "id": zod.string(),
@@ -458,7 +463,8 @@ export const GetCatalogResponse = zod.object({
   "serviceClass": zod.enum(['local', 'express']).optional(),
   "longName": zod.string().optional(),
   "scheduleNotes": zod.array(zod.string()).optional(),
-  "sourceUrl": zod.string().optional()
+  "sourceUrl": zod.string().optional(),
+  "referenceDate": zod.string().optional().describe('Suggested historical service date for research-reference routes only')
 })),
   "arrivals": zod.array(zod.object({
   "id": zod.string(),
@@ -647,7 +653,8 @@ export const GetNetworkResponse = zod.object({
   "serviceClass": zod.enum(['local', 'express']).optional(),
   "longName": zod.string().optional(),
   "scheduleNotes": zod.array(zod.string()).optional(),
-  "sourceUrl": zod.string().optional()
+  "sourceUrl": zod.string().optional(),
+  "referenceDate": zod.string().optional().describe('Suggested historical service date for research-reference routes only')
 }),
   "shape": zod.array(zod.array(zod.number())),
   "vehicles": zod.array(zod.object({
@@ -681,7 +688,8 @@ export const GetNetworkResponse = zod.object({
   "serviceClass": zod.enum(['local', 'express']).optional(),
   "longName": zod.string().optional(),
   "scheduleNotes": zod.array(zod.string()).optional(),
-  "sourceUrl": zod.string().optional()
+  "sourceUrl": zod.string().optional(),
+  "referenceDate": zod.string().optional().describe('Suggested historical service date for research-reference routes only')
 }))
 })),
   "totalLines": zod.number().int(),
@@ -696,7 +704,8 @@ export const GetNetworkResponse = zod.object({
   "serviceClass": zod.enum(['local', 'express']).optional(),
   "longName": zod.string().optional(),
   "scheduleNotes": zod.array(zod.string()).optional(),
-  "sourceUrl": zod.string().optional()
+  "sourceUrl": zod.string().optional(),
+  "referenceDate": zod.string().optional().describe('Suggested historical service date for research-reference routes only')
 })),
   "truncated": zod.boolean(),
   "busDetailZoom": zod.number().int(),

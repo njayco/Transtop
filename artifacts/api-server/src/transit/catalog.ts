@@ -9,6 +9,8 @@ import type { z } from "zod";
 import { stopTimesMode } from "./generations";
 import { intercityCatalog, intercityTimetable } from "./intercity/service";
 import { scheduledRunId } from "./amtrak-service";
+import { isIbgId } from "./intercity/ibg-model";
+import { ibgTimetable } from "./intercity/ibg-browse";
 type CatalogParams=z.infer<typeof GetCatalogQueryParams>;
 type TimetableParams=z.infer<typeof GetTimetableQueryParams>;
 
@@ -25,7 +27,7 @@ export function resolvePattern(patterns:string[],requested?:string) {
 }
 export async function catalog(p:CatalogParams) {
   const mode=(p.mode||"live") as Mode, q=(p.q||"").trim().toLowerCase(),offset=p.offset||0,limit=p.limit||20;
-  const match=(r:TransitRoute)=> (!p.agency||r.id.split(":")[0]===p.agency)&&
+  const match=(r:TransitRoute)=> (!p.agency||r.id.split(":")[0]===p.agency||r.agencyId===p.agency)&&
     (!p.type||p.type==="all"||r.type===p.type)&&(!p.serviceClass||p.serviceClass==="all"||r.serviceClass===p.serviceClass);
   const extra=mode==="live"?(await intercityCatalog()).routes:[];
   const rr=[...(await db.select().from(routes).where(eq(routes.mode,mode))).map(r=>r.data as TransitRoute),...extra]
@@ -41,6 +43,11 @@ export async function timetable(p:TimetableParams) {
   const date=DateTime.fromISO(p.date,{zone:ZONE}),from=p.from||"00:00";
   if(!date.isValid||date.toISODate()!==p.date||!/^([01]\d|2[0-3]):[0-5]\d$/.test(from))throw new Error("Invalid timetable date or time");
   if(!p.stopId&&!p.routeId)throw new Error("Select a stop or route");
+  if(p.mode!=="demo"&&(isIbgId(p.stopId)||isIbgId(p.routeId))){
+    if(p.stopId&&p.routeId&&(!isIbgId(p.stopId)||!isIbgId(p.routeId)||p.stopId.split(":")[1]!==p.routeId.split(":")[1]))
+      throw new Error("Stop and route must belong to the same operator");
+    return ibgTimetable(p);
+  }
   if(p.mode!=="demo"&&[p.stopId,p.routeId].some(id=>id&&/^(martz|transbridge|nj-transit):/.test(id))){
     if(p.stopId&&p.routeId&&p.stopId.split(":")[0]!==p.routeId.split(":")[0])throw new Error("Stop and route must belong to the same operator");
     return intercityTimetable(p);

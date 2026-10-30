@@ -329,6 +329,7 @@ components:
         longName: {type: string}
         scheduleNotes: {type: array, items: {type: string}}
         sourceUrl: {type: string}
+        referenceDate: {type: string, description: Suggested historical service date for research-reference routes only}
     Arrival:
       type: object
       required: [id, routeId, routeName, color, direction, destination, minutes, source, updatedAt, status, scheduledAt]

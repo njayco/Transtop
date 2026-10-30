@@ -136,7 +136,7 @@ export default function RoutePage() {
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">Individual riders are never shown. Updated {ago(vehicles[0]?.updatedAt)}.</p>
               </div>
-              {d.route.type==='intercity'?<IntercityModule key={d.route.id} center={center} provider={providerFor(d.route.agencyId, d.route.id)} routeId={d.route.id}/>:<TimetablePanel key={d.route.id} routeId={d.route.id} stopOptions={d.timetableStops?.map((s) => ({ id: s.id, name: s.name }))} direction={activeDir} color={color} title={activeDir ? `Timetable · ${activeDir}` : 'Timetable'} />}
+              {d.route.id.startsWith('ibg:')?<TimetablePanel key={d.route.id} routeId={d.route.id} referenceDate={d.route.referenceDate} stopOptions={d.timetableStops?.map(s=>({id:s.id,name:s.name}))} direction={activeDir} color={color} title="IBG research timetable"/>:d.route.type==='intercity'?<IntercityModule key={d.route.id} center={center} provider={providerFor(d.route.agencyId, d.route.id)} routeId={d.route.id}/>:<TimetablePanel key={d.route.id} routeId={d.route.id} stopOptions={d.timetableStops?.map((s) => ({ id: s.id, name: s.name }))} direction={activeDir} color={color} title={activeDir ? `Timetable · ${activeDir}` : 'Timetable'} />}
             </aside>
           </div>
         </>

@@ -18,6 +18,8 @@ import { intercityCatalog, intercityArrivals, intercityRoute, intercityProviders
 import { documentArrivals,documentRoute,isDocumentId } from "./intercity/uploaded-service";
 import { amtrakArrivals } from "./amtrak-service";
 import { amtrakHealth } from "./amtrak-live";
+import { isIbgId } from "./intercity/ibg-model";
+import { ibgRouteDetail } from "./intercity/ibg-browse";
 
 let stopCache:{at:number;demo:TransitStop[];live:TransitStop[]}|undefined;
 export async function allStops(mode:Mode) {
@@ -110,7 +112,7 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
     if(point){lat=point.lat;lon=point.lon;foundPlace=true;}
   }
   let rows=(await allStops(mode)).filter(s=>!s.parent&&s.routes.length&&(!params.type||params.type==="all"||s.type===params.type)&&
-    (!params.agency||s.id.split(":")[0]===params.agency)&&(!params.serviceClass||params.serviceClass==="all"||s.routes.some(r=>r.serviceClass===params.serviceClass)));
+    (!params.agency||s.id.split(":")[0]===params.agency||s.routes.some(r=>r.agencyId===params.agency))&&(!params.serviceClass||params.serviceClass==="all"||s.routes.some(r=>r.serviceClass===params.serviceClass)));
   const exact=q?rows.find(s=>s.name.toLowerCase().includes(q)):undefined;
   if(exact&&!foundPlace){lat=exact.lat;lon=exact.lon;}
   if(q&&!foundPlace)rows=rows.filter(s=>s.name.toLowerCase().includes(q)||s.neighborhood?.toLowerCase().includes(q)||s.routes.some(r=>r.name.toLowerCase()===q||r.id.toLowerCase()===q));
@@ -119,13 +121,14 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
     .sort((a,b)=>a.distance-b.distance).slice(0,16);
   const enriched=await Promise.all(rows.map(s=>enrich(s,mode)));
   return {stops:enriched,mode,updatedAt:new Date().toISOString(),centerLat:lat,centerLon:lon,
-    message:mode==="demo"?"Demo data · illustrative arrivals, not for travel planning":rows.length?"Official feeds redistributed by Transtop. Predictions may be unavailable or stale.":"No matching imported stops. Integration not configured for this location or search. Try a station name or supported neighborhood."};
+    message:mode==="demo"?"Demo data · illustrative arrivals, not for travel planning":rows.length?rows.some(s=>isIbgId(s.id))?"Includes labeled IBG research references, not verified current service. Confirm research stop locations and schedules with the carrier.":"Official feeds redistributed by Transtop. Predictions may be unavailable or stale.":"No matching imported stops. Integration not configured for this location or search. Try a station name or supported neighborhood."};
 }
 export async function stopDetail(id:string,mode:Mode) {
   const s=(await allStops(mode)).find(s=>s.id===id);
   return s?enrich(s,mode,true):undefined;
 }
 export async function routeDetail(id:string,mode:Mode,direction?:string):Promise<RouteDetail|undefined> {
+  if(mode==="live"&&isIbgId(id))return ibgRouteDetail(id,direction);
   if(mode==="live"&&isDocumentId(id))return documentRoute(id,direction);
   if(mode==="live"&&id.startsWith("martz:"))return intercityRoute(id);
   const [r]=await db.select().from(routes).where(and(eq(routes.id,id),eq(routes.mode,mode)));

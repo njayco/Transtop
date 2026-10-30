@@ -87,6 +87,7 @@ export async function network(p: NetworkQuery) {
     lines.push({ route: l.route, shape, shapeId: l.shapeId, vehicles: [] }); points += shape.length;
   }
   const extra=mode==="live"?await intercityCatalog():{routes:[],stops:[]};
+  const localReferenceRoutes=new Set(extra.stops.filter(s=>contains(b,s.lon,s.lat)).flatMap(s=>s.routes.map(r=>r.id)));
   const ss = zoom >= 13 || p.routeId ? [...catalog.stops,...extra.stops].filter(s => !s.parent && Number.isFinite(s.lat) && Number.isFinite(s.lon) &&
     (p.routeId || contains(b, s.lon, s.lat)) && s.routes.some(matches)).map(s => ({
       id: s.id, name: s.name, lat: s.lat, lon: s.lon, type: s.type, routes: s.routes.filter(matches),
@@ -94,7 +95,7 @@ export async function network(p: NetworkQuery) {
   return {
     lines, stops: ss.slice(0, 500), totalLines: visible.length, totalStops: ss.length,
     truncated: lines.length < visible.length || ss.length > 500,
-    missingGeometry: [...catalog.missing,...extra.routes].filter(matches), busDetailZoom: 12, stopsZoom: 13,
+    missingGeometry: [...catalog.missing,...extra.routes.filter(r=>!r.id.startsWith("ibg:")||localReferenceRoutes.has(r.id))].filter(matches), busDetailZoom: 12, stopsZoom: 13,
     generation: catalog.generation,
     message: mode === "demo" ? "Demo sample paths, not official service coverage." :
       "Official GTFS route paths, not live movement. Bus detail at zoom 12+; stops at zoom 13+. Missing geometry lists routes with at least one unavailable pattern. Only imported operators are covered; private services and unimported operators are not included.",

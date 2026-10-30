@@ -89,7 +89,7 @@ export default function StopPage() {
               </ul>
             </section>
           ))}
-          {stop?.type==='intercity'?<IntercityModule center={{lat:stop.lat,lon:stop.lon}} provider={providerFor(undefined, stop.id)} stopId={stop.id}/>:stop&&<TimetablePanel stopId={stop.id} title="Timetable for any date" />}
+          {stop?.id.startsWith('ibg:')?<TimetablePanel stopId={stop.id} referenceDate={stop.routes[0]?.referenceDate} title="IBG research timetable"/>:stop?.type==='intercity'?<IntercityModule center={{lat:stop.lat,lon:stop.lon}} provider={providerFor(undefined, stop.id)} stopId={stop.id}/>:stop&&<TimetablePanel stopId={stop.id} title="Timetable for any date" />}
           {stop && <p className="text-xs text-muted-foreground">Stop data updated {ago(stop.updatedAt)}. Times refresh every 30 seconds while open.</p>}
         </div>
         <aside className="space-y-4">

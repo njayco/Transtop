@@ -20,10 +20,10 @@ export function nowHM() { return newYorkTime(); }
 const LIMIT = 25;
 
 /** Published (scheduled) timetable for a stop or route. Not realtime. */
-export function TimetablePanel({ stopId, routeId, direction, color, title = 'Published timetable', stopOptions }: { stopOptions?: { id: string; name: string }[]; stopId?: string; routeId?: string; direction?: string; color?: string; title?: string }) {
+export function TimetablePanel({ stopId, routeId, direction, color, title = 'Published timetable', stopOptions, referenceDate }: { referenceDate?: string; stopOptions?: { id: string; name: string }[]; stopId?: string; routeId?: string; direction?: string; color?: string; title?: string }) {
   const { mode } = usePrefs();
-  const [date, setDate] = useState(todayISO);
-  const [from, setFrom] = useState(nowHM);
+  const [date, setDate] = useState(()=>referenceDate||todayISO());
+  const [from, setFrom] = useState(()=>referenceDate?'00:00':nowHM());
   const [offset, setOffset] = useState(0);
   const [pick, setPick] = useState('');
   useEffect(()=>setPick(''),[routeId,direction]);
@@ -40,7 +40,7 @@ export function TimetablePanel({ stopId, routeId, direction, color, title = 'Pub
       <header className="space-y-3 border-b border-white/5 p-4">
         <div className="flex items-baseline justify-between gap-2">
           <h2 className="text-xl font-bold tracking-tight">{title}</h2>
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">Scheduled · not realtime</span>
+          <span className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">{referenceDate?'Historical reference · not for current travel':'Scheduled · not realtime'}</span>
         </div>
         <div className="flex flex-wrap gap-2">
           <label className="inline-flex h-11 items-center gap-2 rounded-xl border border-input bg-background px-3 text-sm">

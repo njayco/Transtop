@@ -21,6 +21,12 @@ Do not confuse the University of Illinois Intercity Bus GTFS (IBG) project with 
 
 **How to apply:** Use IBG to discover carriers and upstream sources, then revalidate current departures, precise boarding points and holiday exceptions separately. Establish dataset/carrier reuse terms rather than assuming the article's license automatically covers all source data.
 
+When adding IBG to the app, keep it a labeled research-reference source isolated from current predictions. Newer verified Martz and Trans-Bridge records take precedence in primary browsing.
+
+**Why:** The actual archive contains calendars spanning 2010–2035 despite much older collection dates, and its processing can alter timezones, one-day service and geometry. Import time cannot establish source freshness.
+
+**How to apply:** Preserve historical dates and source attribution; do not shift encoded schedules into today or create moving vehicles. Revalidation is required before any subset becomes a current timetable source.
+
 For printed timetables, omit ambiguous footnotes, continuation destinations, uncertain boarding locations and unverified holiday overrides rather than guessing.
 
 **Why:** Official Martz pages contain special trips, downtown continuation notes, weekday boarding relocations and a Sunday overnight meridiem inconsistency. A generic route pattern would give riders the wrong remaining stops.

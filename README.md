@@ -131,6 +131,27 @@ The provider inventory audits the supplied Midtown terminal directory, including
 
 **Martz:** recurring public timetables refresh daily. A validated snapshot is usable for at most 72 hours; stale/changed/unavailable sources cause times to be withheld. Queries are limited to the effective date through the next 30 days. Special/ambiguous rows and unverified holidays are not extrapolated from a generic route.
 
+#### IBG national research-reference dataset
+
+Transtop also includes the University of Illinois **Intercity Bus GTFS (IBG)** research dataset: **72 source agencies, 1,044 routes, 3,919 source stops and 3,673 trips**. These are reference records, not a claim that every service still operates. Matching brand aliases share provider filters; the combined carrier inventory currently has 82 entries. Existing verified Martz and Trans-Bridge records take precedence in primary browsing rather than receiving duplicate research markers.
+
+- Select **Intercity Bus Network** and a provider to find research stops near the selected location. Research stops and routes carry **IBG reference / IBG ref** labels and warnings.
+- Open a research stop or route to browse its **historical timetable**, preselected to a sample encoded service date. Direction, stop, date, time and pagination filters apply. Service exceptions, extended-hour GTFS clocks and drop-off-only restrictions are retained; ambiguous/nonexistent daylight-saving clocks are withheld.
+- **No IBG records become current arrival predictions or vehicle markers.** Dates after January 4, 2026 are withheld even where an old calendar ends in 2035. Most source metadata dates from 2025, with some January 2026 records. Research times use the archive's encoded New York timezone; actual local timezones, current boarding coordinates and holiday completeness need carrier confirmation.
+- The archive's 119 MB road-geometry table is not imported as verified paths: research processing can synthesize geometry and adjust stop locations. Missing road geometry is disclosed instead of inventing route paths.
+- Data is normalized into one complete PostgreSQL snapshot under a separate **reference** namespace. It cannot replace live GTFS, newer PDF timetables or realtime reports. The original 42 MB ZIP is not committed to Git or retained as an application asset.
+- First startup provisions the pinned reference snapshot in the background when missing. An explicit, repeatable import is also available:
+
+  ```bash
+  pnpm --filter @workspace/api-server exec tsx src/transit/intercity/import-ibg-cli.ts
+  # Optional local archive; it must match the pinned SHA-256:
+  pnpm --filter @workspace/api-server exec tsx src/transit/intercity/import-ibg-cli.ts /path/to/Merged_GTFS_Feed.zip
+  ```
+
+Downloads are fixed to a repository revision, bounded in size and verified against SHA-256 before atomic publication. A failed download or validation leaves the previous complete snapshot intact. The article's license is not presented as independent permission for all underlying carrier feeds.
+
+**Attribution:** Ahammed, Dewan T., Bo-Jyun Shih and Lewis Lehe (2026), “[A GTFS-Based Dataset for the US Intercity Bus Network](https://doi.org/10.32866/001c.159284).” [Dataset, processing notes and source metadata](https://github.com/UTEL-UIUC/intercity-bus-gtfs).
+
 #### Trans-Bridge regular and holiday schedules
 
 All **15 supplied PDFs** are recorded with official carrier URLs and SHA-256 source hashes:

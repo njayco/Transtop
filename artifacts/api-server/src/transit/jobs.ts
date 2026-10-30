@@ -8,7 +8,9 @@ import { adapters } from "./adapters";
 import { maintainGenerations } from "./generations";
 import { refreshIntercity } from "./intercity/service";
 import { pollAmtrak } from "./amtrak-live";
+import { ensureIbg } from "./intercity/ibg-store";
 export async function startTransitJobs() {
+  void ensureIbg().catch(error=>logger.warn({err:error},"IBG reference dataset unavailable; existing transit coverage retained"));
   await seedDemo();
   for(const a of adapters) {
     const data={name:a.name,documentation:a.documentation,staticUrl:a.staticUrl,realtimeUrls:a.realtimeUrls,status:a.status,setup:a.setup};
