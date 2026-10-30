@@ -1,10 +1,9 @@
-import { useState } from 'react';
 import { Link } from 'wouter';
 import { ExternalLink, Trash2, Play, Radio } from 'lucide-react';
 import { useGetSources } from '@workspace/api-client-react';
 import { MobileTop, ModeSwitch } from '@/components/shell';
 import { ErrorState, SourceLabel } from '@/components/transit';
-import { Intro } from '@/components/intro';
+import { useEntry } from '@/components/intro';
 import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { usePrefs } from '@/lib/prefs';
@@ -36,12 +35,11 @@ export default function Settings() {
   const sources = useGetSources();
   const ride = useActiveRide();
   const { toast } = useToast();
-  const [intro, setIntro] = useState(false);
+  const { replay } = useEntry();
 
   return (
     <div className="mx-auto max-w-3xl">
       <MobileTop />
-      {intro && <Intro onDone={() => { setIntro(false); prefs.set({ introSeen: true }); }} />}
       <div className="space-y-10 p-4 md:p-8">
         <h1 className="font-display text-4xl md:text-6xl">Settings</h1>
 
@@ -108,7 +106,7 @@ export default function Settings() {
               <span className="font-semibold">Larger text</span>
               <Switch checked={prefs.largeText} onCheckedChange={(v) => prefs.set({ largeText: v })} data-testid="switch-large-text" />
             </label>
-            <button onClick={() => setIntro(true)} className="flex min-h-[60px] w-full items-center gap-2 px-4 text-left font-semibold" data-testid="button-play-intro"><Play className="h-4 w-4" />Play the intro</button>
+            <button onClick={replay} className="flex min-h-[60px] w-full items-center gap-2 px-4 text-left font-semibold" data-testid="button-play-intro"><Play className="h-4 w-4" />Replay the MetroCard entry</button>
           </div>
         </Section>
 

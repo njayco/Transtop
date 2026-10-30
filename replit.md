@@ -42,6 +42,7 @@ Nearby, Search, Stop/Route details, Favorites, Ride, Settings; NYC Subway, LIRR 
 
 - Preserve the user's original Transtop black background, large white typography and angular multicolored transit identity; do not reproduce the HTC frame.
 - Focus on buses and trains, no unauthorized MetroCard balance, ferry/air are future only.
+- The entry homepage must recreate the user's original Transtop artwork on mobile and desktop, including its five transport icons and MetroCard swipe. Require a right-to-left swipe (or keyboard equivalent) before entering; no skip button or automatic entry.
 
 ## Gotchas
 

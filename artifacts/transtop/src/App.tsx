@@ -7,6 +7,7 @@ import NotFound from '@/pages/not-found';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 import { PrefsProvider } from '@/lib/prefs';
 import { Shell } from '@/components/shell';
+import { EntryGate } from '@/components/intro';
 import Nearby from '@/pages/nearby';
 import SearchPage from '@/pages/search';
 import StopPage from '@/pages/stop';
@@ -46,11 +47,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <PrefsProvider>
         <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-            <Shell>
-              <Router />
-            </Shell>
-          </WouterRouter>
+          <EntryGate>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+              <Shell>
+                <Router />
+              </Shell>
+            </WouterRouter>
+          </EntryGate>
           <Toaster />
         </TooltipProvider>
       </PrefsProvider>

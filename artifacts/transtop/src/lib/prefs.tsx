@@ -4,15 +4,18 @@ import type { Route, Stop } from '@workspace/api-client-react';
 export type DataMode = 'demo' | 'live';
 export type FavStop = { id: string; name: string; type: Stop['type']; agency: string; routes: Pick<Route, 'id' | 'name' | 'color'>[]; savedAt: string };
 export type FavRoute = { id: string; name: string; color: string; type: Route['type']; agency: string; savedAt: string };
-export type Prefs = { mode: DataMode; reduceMotion: boolean; largeText: boolean; introSeen: boolean; favStops: FavStop[]; favRoutes: FavRoute[] };
+export type Prefs = { mode: DataMode; reduceMotion: boolean; largeText: boolean; favStops: FavStop[]; favRoutes: FavRoute[] };
 
 const KEY = 'transtop.prefs.v1';
-const DEFAULTS: Prefs = { mode: 'demo', reduceMotion: false, largeText: false, introSeen: false, favStops: [], favRoutes: [] };
+const DEFAULTS: Prefs = { mode: 'demo', reduceMotion: false, largeText: false, favStops: [], favRoutes: [] };
 
 function load(): Prefs {
   try {
     const raw = localStorage.getItem(KEY);
-    return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : DEFAULTS;
+    if (!raw) return DEFAULTS;
+    const { introSeen: _legacy, ...rest } = JSON.parse(raw);
+    void _legacy;
+    return { ...DEFAULTS, ...rest };
   } catch {
     return DEFAULTS;
   }
