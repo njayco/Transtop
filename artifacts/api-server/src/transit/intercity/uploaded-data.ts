@@ -1,13 +1,15 @@
 import type { TransitType } from "../types";
+import { transbridgeTrips,transbridgeRoutes,TRANSBRIDGE_HOLIDAY_DATES } from "./transbridge";
+import { transbridgeLocatedStops,transbridgeAddressStops } from "./transbridge-stops";
 
 export type PublishedStop = { id:string; name:string; address:string; lat?:number; lon?:number };
-export type PublishedPoint = { stopId:string; minutes?:number; pickup:boolean; dropoff:boolean };
+export type PublishedPoint = { stopId:string; minutes?:number; pickup:boolean; dropoff:boolean;reservationOnly?:boolean;boardingStopIds?:string[];timeUnverified?:boolean };
 export type DocumentTrip = { id:string; routeId:string; providerId:string; number:string; direction:string; days:number[];
-  effectiveDate:string; points:PublishedPoint[]; note:string };
+  effectiveDate:string; points:PublishedPoint[]; note:string;sourceUrl?:string;serviceDates?:string[] };
 export type DocumentRoute = { id:string; name:string; providerId:string; agency:string; type:TransitType; color:string;
-  notes:string[]; sourceUrl:string };
-export const VERIFIED_AT="2026-10-30T19:10:00.000Z";
-export const WALL_CLOSED_DATES=["2026-11-26","2026-11-27"];
+  notes:string[]; sourceUrl:string;longName?:string };
+export const VERIFIED_AT="2026-10-30T19:33:28.000Z";
+export const WALL_CLOSED_DATES=TRANSBRIDGE_HOLIDAY_DATES;
 export const WALL_CLOSURE="No Trans-Bridge Wall Street service eastbound or westbound on Thanksgiving, Thursday November 26, or Black Friday, Friday November 27, 2026. Confirmed by the supplied service notice.";
 export const NJT_SOURCE="https://www.njtransit.com/bus-to";
 export const WALL_SOURCE="https://transbridgelines.com/wp-content/uploads/2025/07/Wall-Street-Schedule-7-25-25.pdf";
@@ -41,6 +43,10 @@ wallStop("BRI","Bridge Street","Bridge Street, Manhattan; confirm exact boarding
 wallStop("TRI","Trinity at Rector","Trinity Place at Rector Street, Manhattan");
 wallStop("CMU","Church and Murray","Church Street at Murray Street, Manhattan; map location not yet verified");
 wallStop("CRE","Church and Reade","Church Street at Reade Street, Manhattan; map location not yet verified");
+// Replace older address-only records where the carrier now supplies a verified
+// map target. Stable IDs keep existing favorites intact.
+const located=new Map([...documentStops,...transbridgeLocatedStops,...transbridgeAddressStops].map(s=>[s.id,s]));
+documentStops.splice(0,documentStops.length,...located.values());
 
 const njNotes=[
   "Uploaded NJ TRANSIT brochure T1890, issued July 11, 2026: local weekday routes 890 (South Main Street) and 891 (Heckman), operated by Delaware River Coach Lines under contract with NJ TRANSIT. Not an intercity or Port Authority service.",
@@ -54,6 +60,7 @@ const njNotes=[
   "Timepoints: "+localNames.map((n,i)=>`${i+1} ${n}`).join(" · "),
 ];
 export const documentRoutes:DocumentRoute[]=[
+  ...transbridgeRoutes,
   ...["890","891"].map(name=>({id:`nj-transit:${name}`,name,providerId:"nj-transit",agency:"NJ TRANSIT · Delaware River Coach",type:"bus" as const,
     color:"#e28035",notes:njNotes,sourceUrl:NJT_SOURCE})),
   ...["east","west"].map(dir=>({id:`transbridge:wall-${dir}`,name:`Wall Street ${dir==="east"?"Eastbound":"Westbound"}`,providerId:"transbridge",
@@ -131,6 +138,7 @@ function wallTrip(number:string,east:boolean):DocumentTrip {
       pickup:east?i<3:i<5,dropoff:east?i>=3:i>=5})),note:east?"Manhattan stops are discharge-only. Clock times after Varick & North Moore are not published.":"Manhattan street boarding; William Penn Highway is discharge-only."};
 }
 export const documentTrips:DocumentTrip[]=[
+  ...transbridgeTrips,
   ...outbound.map(r=>localTrip("out",r)),...inbound.map(r=>localTrip("in",r)),
   wallTrip("401",true),wallTrip("407",true),wallTrip("400",false),wallTrip("404",false),
 ];

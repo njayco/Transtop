@@ -80,9 +80,9 @@ export function refreshIntercity() {
 }
 export async function intercityProviders() {
   const data=await dataset();
-  return providerInventory.map(p=>p.id==="transbridge"?{...p,status:"imported · Wall Street only",updatedAt:VERIFIED_AT,
-    access:"User-supplied published Wall Street timetable and explicit holiday closure notice.",
-    description:"Four published Wall Street runs, including Monday–Thursday restrictions. "+WALL_CLOSURE+" Other Trans-Bridge corridors are not yet imported."}:
+  return providerInventory.map(p=>p.id==="transbridge"?{...p,status:"imported · schedules + verified holidays",updatedAt:VERIFIED_AT,
+    access:"15 user-supplied carrier PDFs checked against current official schedules, holiday notices and stop-location links.",
+    description:"Allentown/Clinton/NYC, Doylestown/Flemington/NYC, Newark Airport, Wind Creek and Wall Street. Regular weekday/weekend calendars and exact November 26–27, 2026 holiday replacements; duplicate airport/casino extracts do not create extra buses. "+WALL_CLOSURE}:
     p.id==="nj-transit"?{...p,status:"imported · local routes 890/891 only",updatedAt:VERIFIED_AT,
       access:"User-supplied NJ TRANSIT T1890 brochure; no developer credentials or private feeds used.",
       terminalService:"These local NJ/PA routes do not serve Port Authority.",
@@ -168,8 +168,8 @@ export async function intercityDepartures(p:{lat:number;lon:number;provider?:str
   const transbridgeHere=extraIds.includes("transbridge")||providers.some(v=>v.id==="transbridge");
   const notice=transbridgeHere?documentServiceStatus("transbridge",p.date):"";
   const message=p.provider==="transbridge"||extraIds.length>0&&original.providers.length===0?
-    (notice||"Trans-Bridge Wall Street timetable only. Other corridors, including Port Authority services, are not yet imported. Drop-off-only and unpublished times are not boardable departures."):
-    original.message+(transbridgeHere?` Trans-Bridge: ${notice||"Wall Street service is imported; other corridors remain unavailable."}`:"");
+    (notice||"Trans-Bridge published schedules: Allentown/Clinton, Doylestown/Flemington, Newark Airport, Wind Creek and Wall Street. Weekday/weekend calendars and verified November 26–27 replacements. Drop-off-only and untimed/reservation-only stops are not boarding predictions. Confirm gates and terminal pickup locations."):
+    original.message+(transbridgeHere?` Trans-Bridge: ${notice||"Published regular and verified November 26–27 holiday schedules are imported."}`:"");
   return {...original,providers,departures,message,updatedAt:documents.length||p.provider==="transbridge"?VERIFIED_AT:original.updatedAt};
 }
 export async function intercityArrivals(stop:TransitStop,now=Date.now()):Promise<Arrival[]> {

@@ -24,7 +24,7 @@ test("Wall Street drop-offs do not become boardable departures or invented clock
   assert.equal(documentTimetable({stopId:"transbridge:WPH",routeId:"transbridge:wall-west",date:"2026-11-02"}).total,0);
   const ny=documentIntercityDepartures({lat:40.703284765181,lon:-74.010092405239,date:"2026-11-02"});
   assert.equal(ny.length,2);assert.ok(ny.every(d=>d.tripId.endsWith("400")||d.tripId.endsWith("404")));
-  const pa=documentIntercityDepartures({lat:40.651253803009,lon:-75.43007448804,date:"2026-11-02"});
+  const pa=documentIntercityDepartures({lat:40.651834,lon:-75.441415,date:"2026-11-02"}).filter(d=>d.routeId.startsWith("transbridge:wall-"));
   assert.equal(pa.length,2);assert.equal(pa[0].stops.at(-1)?.name,"Water and Wall");
   assert.equal(pa[0].stops.at(-1)?.time,undefined);
 });

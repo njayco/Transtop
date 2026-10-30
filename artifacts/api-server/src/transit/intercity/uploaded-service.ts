@@ -9,7 +9,7 @@ const routeById=new Map(documentRoutes.map(r=>[r.id,r]));
 export const isDocumentId=(id?:string)=>!!id&&(id.startsWith("transbridge:")||id.startsWith("nj-transit:"));
 const routeRecord=(r:typeof documentRoutes[number]):TransitRoute=>({
   id:r.id,name:r.name,agency:r.agency,agencyId:r.providerId,type:r.type,color:r.color,serviceClass:r.type==="bus"?"local":undefined,
-  longName:r.providerId==="nj-transit"?`${r.name} · Easton–Phillipsburg–Pohatcong`:`${r.name} · published Wall Street service`,
+  longName:r.longName||(r.providerId==="nj-transit"?`${r.name} · Easton–Phillipsburg–Pohatcong`:`${r.name} · published Wall Street service`),
   scheduleNotes:r.notes,sourceUrl:r.sourceUrl,
 });
 export function documentCatalog() {
@@ -24,20 +24,25 @@ export function documentCatalog() {
   });
   return {routes,stops};
 }
-export function documentServiceStatus(provider:string,date:string) {
-  if(provider==="transbridge"&&WALL_CLOSED_DATES.includes(date))return WALL_CLOSURE;
+export function documentServiceStatus(provider:string,date:string,routeId?:string) {
+  if(provider==="transbridge"&&WALL_CLOSED_DATES.includes(date))return !routeId||!routeId.startsWith("transbridge:wall-")?
+    `Verified November 26–27, 2026 holiday replacement schedules for Allentown/Clinton, Doylestown/Flemington, Newark Airport and Wind Creek. ${WALL_CLOSURE}`:WALL_CLOSURE;
   if(holidayDate(date))return `Special holiday service is not verified for ${provider==="nj-transit"?"NJ TRANSIT 890/891":"Trans-Bridge Wall Street"} on ${date}; regular times are withheld.`;
   return "";
 }
 export function activeDocumentTrip(t:DocumentTrip,date:string) {
   const day=DateTime.fromISO(date,{zone:ZONE});
-  return day.isValid&&date>=t.effectiveDate&&t.days.includes(day.weekday)&&!documentServiceStatus(t.providerId,date);
+  if(!day.isValid||date<t.effectiveDate||!t.days.includes(day.weekday))return false;
+  if(t.serviceDates)return t.serviceDates.includes(date);
+  if(t.providerId==="transbridge"&&WALL_CLOSED_DATES.includes(date))return false;
+  return !holidayDate(date);
 }
 function pointsFor(t:DocumentTrip,date:string,index:number) {
-  return t.points.slice(index).map((pt,sequence)=>{
+  return t.points.slice(index).filter(pt=>!pt.boardingStopIds||pt.boardingStopIds.includes(t.points[index].stopId)).map((pt,sequence)=>{
     const stop=stopById.get(pt.stopId)!;
-    return {id:stop.id,name:stop.name,sequence,address:stop.address+(!pt.pickup?" · drop-off only":""),
-      ...(stop.lat==null?{}:{lat:stop.lat,lon:stop.lon}),...(pt.minutes==null?{}:{time:printedInstant(date,pt.minutes)})};
+    return {id:stop.id,name:stop.name,sequence,address:stop.address+(!pt.pickup?" · drop-off only":"")+
+      (pt.timeUnverified?" · conflicting printed arrival times: withheld pending carrier confirmation":""),
+      ...(stop.lat==null?{}:{lat:stop.lat,lon:stop.lon}),...(pt.minutes==null||pt.timeUnverified?{}:{time:printedInstant(date,pt.minutes)})};
   });
 }
 function departureFor(t:DocumentTrip,date:string,index:number) {
@@ -46,7 +51,7 @@ function departureFor(t:DocumentTrip,date:string,index:number) {
   const stops=pointsFor(t,date,index);
   return {id:`${t.id}:${date}:${stop.id}`,tripId:t.id,routeId:t.routeId,providerId:t.providerId,providerName:route.agency,
     stopId:stop.id,stopName:stop.name,time:printedInstant(date,pt.minutes),destination:stops.at(-1)!.name,stops,
-    serviceDate:date,sourceUrl:route.sourceUrl,updatedAt:VERIFIED_AT,
+    serviceDate:date,sourceUrl:t.sourceUrl||route.sourceUrl,updatedAt:VERIFIED_AT,
     boardingNotes:`${stop.address}. Run ${t.number}. ${t.note} Scheduled, not live. Dates and restrictions follow the uploaded document.`};
 }
 export function nearbyDocumentProviders(lat:number,lon:number) {
@@ -72,13 +77,13 @@ export function documentTimetable(p:{stopId?:string;routeId?:string;direction?:s
   if(!day.isValid||day.toISODate()!==p.date||!/^([01]\d|2[0-3]):[0-5]\d$/.test(from))throw new Error("Invalid service date or time");
   const after=DateTime.fromISO(`${p.date}T${from}`,{zone:ZONE}).toMillis();
   const departures=documentTrips.filter(t=>(!p.routeId||t.routeId===p.routeId)&&(!p.direction||p.direction===t.direction)&&activeDocumentTrip(t,p.date)).flatMap(t=>{
-    const index=p.stopId?t.points.findIndex(pt=>pt.stopId===p.stopId):0,pt=t.points[index];
+    const index=p.stopId?t.points.findIndex(pt=>pt.stopId===p.stopId):t.points.findIndex(pt=>pt.pickup&&pt.minutes!=null),pt=t.points[index];
     if(!pt||pt.minutes==null||!pt.pickup)return [];
     const d=departureFor(t,p.date,index),r=routeById.get(t.routeId)!;
     return Date.parse(d.time)<after?[]:[{id:d.id,tripId:d.tripId,stopId:d.stopId,stopName:d.stopName,routeId:d.routeId,
       routeName:r.name,destination:d.destination,direction:`${t.direction} · ${t.note}`,time:d.time}];
   }).sort((a,b)=>Date.parse(a.time)-Date.parse(b.time));
-  const provider=(p.routeId||p.stopId||"").split(":")[0],status=documentServiceStatus(provider,p.date);
+  const provider=(p.routeId||p.stopId||"").split(":")[0],status=documentServiceStatus(provider,p.date,p.routeId);
   return {departures:departures.slice(p.offset||0,(p.offset||0)+(p.limit||40)),total:departures.length,offset:p.offset||0,limit:p.limit||40,date:p.date,
     message:status||"Uploaded published timetable · America/New_York · only boardable, explicitly timed departures. Blank, drop-off-only and unpublished weekend/holiday times are not invented."};
 }
