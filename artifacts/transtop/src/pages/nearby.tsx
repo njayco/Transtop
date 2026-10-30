@@ -56,7 +56,7 @@ export default function Nearby() {
   const lines = useMemo(() => (network.data ?? []).map((l) => ({ id: l.route.id, shapeId: l.shapeId, type: l.route.type, agency: l.route.agency, name: l.route.name, color: hoverRoutes.size && !hoverRoutes.has(l.route.id) ? '#55555c' : l.route.color, coords: l.shape })), [network.data, hoverRoutes]);
   const legendRoutes = useMemo(() => { const m = new Map<string, NonNullable<typeof network.data>[number]['route']>(); (network.data ?? []).forEach((l) => { if (!m.has(l.route.id)) m.set(l.route.id, l.route); }); return [...m.values()]; }, [network.data]);
   const vehicles = useMemo(() => { const byId = new Map(legendRoutes.map((r) => [r.id, r])); return (vehQ.data ?? [])
-    .filter((v) => byId.has(v.routeId) && (mode === 'demo' ? true : vehicleKind(v.source) !== 'demo'))
+    .filter((v) => byId.has(v.routeId) && vehicleKind(v.source) !== 'demo')
     .map((v) => ({ ...v, color: byId.get(v.routeId)!.color, routeName: byId.get(v.routeId)!.name })); }, [vehQ.data, legendRoutes, mode]);
   const goRoute = (id: string) => nav(`/routes/${encodeURIComponent(id)}`);
   const legend = (
@@ -67,7 +67,7 @@ export default function Nearby() {
         ))}
       </div>
       <p className="text-[11px] text-muted-foreground">
-        {mode === 'demo' ? 'Demo data: lines and vehicle positions are samples, not real service. ' : 'Diamonds are agency-reported positions; dashed circles are approximate community areas. '}
+        Diamonds are agency-reported positions; dashed circles are approximate community areas.{' '}
         {network.isError ? 'Route lines unavailable right now.' : 'Positions refresh every 30 seconds.'}
       </p>
       {networkQ.data?.truncated && <p className="text-xs text-muted-foreground">Map limit reached: zoom in or filter an operator. Not every visible path/stop is shown.</p>}
@@ -163,11 +163,11 @@ export default function Nearby() {
   const results = (
     <div className="space-y-3" aria-live="polite">
       {stops.isLoading && <SkeletonCards />}
-      {stops.isError && <ErrorState onRetry={() => stops.refetch()} detail={mode === 'live' ? 'Live feeds may not be configured. Check Settings for feed status, or switch to Demo.' : undefined} />}
+      {stops.isError && <ErrorState onRetry={() => stops.refetch()} detail="Check your connection and try again. Settings shows feed status and agency coverage." />}
       {stops.data && list.length === 0 && (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center">
           <p className="font-display text-xl">No stops found here</p>
-          <p className="mt-1 text-sm text-muted-foreground">{mode === 'live' ? 'Live integrations may not cover this area yet. Demo data never fills in for live results.' : 'Try another neighborhood, or switch the filter to All.'}</p>
+          <p className="mt-1 text-sm text-muted-foreground">Coverage may not include this area. Try another neighborhood or clear a filter, and check Settings for agency coverage.</p>
         </div>
       )}
       {list.map((s, i) => <StopCard key={s.id} stop={s} index={i} active={hover === s.id} onHover={setHover} />)}

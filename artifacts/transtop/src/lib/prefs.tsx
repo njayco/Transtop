@@ -1,13 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Route, Stop } from '@workspace/api-client-react';
 
-export type DataMode = 'demo' | 'live';
+export type DataMode = 'live';
 export type FavStop = { id: string; name: string; type: Stop['type']; agency: string; routes: Pick<Route, 'id' | 'name' | 'color'>[]; savedAt: string };
 export type FavRoute = { id: string; name: string; color: string; type: Route['type']; agency: string; savedAt: string };
 export type Prefs = { mode: DataMode; reduceMotion: boolean; largeText: boolean; favStops: FavStop[]; favRoutes: FavRoute[] };
 
 const KEY = 'transtop.prefs.v1';
-const DEFAULTS: Prefs = { mode: 'demo', reduceMotion: false, largeText: false, favStops: [], favRoutes: [] };
+const DEFAULTS: Prefs = { mode: 'live', reduceMotion: false, largeText: false, favStops: [], favRoutes: [] };
 
 function load(): Prefs {
   try {
@@ -15,7 +15,7 @@ function load(): Prefs {
     if (!raw) return DEFAULTS;
     const { introSeen: _legacy, ...rest } = JSON.parse(raw);
     void _legacy;
-    return { ...DEFAULTS, ...rest };
+    return { ...DEFAULTS, ...rest, mode: 'live' };
   } catch {
     return DEFAULTS;
   }
@@ -39,7 +39,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
     document.documentElement.classList.toggle('large-text', prefs.largeText);
   }, [prefs]);
 
-  const set = useCallback((patch: Partial<Prefs>) => setPrefs((p) => ({ ...p, ...patch })), []);
+  const set = useCallback((patch: Partial<Prefs>) => setPrefs((p) => ({ ...p, ...patch, mode: 'live' })), []);
   const toggleStop = useCallback((s: Stop) => setPrefs((p) => p.favStops.some((f) => f.id === s.id)
     ? { ...p, favStops: p.favStops.filter((f) => f.id !== s.id) }
     : { ...p, favStops: [{ id: s.id, name: s.name, type: s.type, agency: s.agency, routes: s.routes.map((r) => ({ id: r.id, name: r.name, color: r.color })), savedAt: new Date().toISOString() }, ...p.favStops] }), []);
@@ -80,9 +80,9 @@ export function useOnline() {
   return online;
 }
 
-/** In live mode, never show demo-sourced arrivals even if a server returns them. */
-export function honest<T extends { source: string }>(items: T[], mode: DataMode): T[] {
-  return mode === 'live' ? items.filter((a) => a.source !== 'demo') : items;
+/** Never show demo-sourced results, including decorated vehicle source names. */
+export function honest<T extends { source: string }>(items: T[], _mode?: DataMode): T[] {
+  return items.filter((a) => !a.source.toLowerCase().includes('demo'));
 }
 
 export const TIMES_SQUARE = { lat: 40.758, lon: -73.9855, label: 'Times Square' };

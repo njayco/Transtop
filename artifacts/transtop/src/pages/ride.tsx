@@ -3,8 +3,8 @@ import { useSearch } from 'wouter';
 import { Radio, ShieldCheck, Square, Check, Search, AlertTriangle } from 'lucide-react';
 import { getGetRouteQueryKey, getGetStopQueryKey, getGetStopsQueryKey, useGetRoute, useGetStop, useGetStops, useStartRide, type ReportInputKind } from '@workspace/api-client-react';
 import { MobileTop } from '@/components/shell';
-import { ModeIcon, RouteBadge, SourceLabel, TransitLines } from '@/components/transit';
-import { usePrefs } from '@/lib/prefs';
+import { ModeIcon, RouteBadge, TransitLines } from '@/components/transit';
+import { honest, usePrefs } from '@/lib/prefs';
 import { beginRide, pendingEndCount, report, retryPendingEnds, stopRide, useActiveRide, useShareState } from '@/lib/ride';
 import { ago, clock } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -40,7 +40,7 @@ function RideSetup() {
   const rParams = { mode };
   const route = useGetRoute(routeId ?? '', rParams, { query: { queryKey: getGetRouteQueryKey(routeId ?? '', rParams), enabled: !!routeId } });
   const routeObj = stop.data?.routes.find((r) => r.id === routeId) ?? route.data?.route;
-  const trips = useMemo(() => (stop.data?.arrivals ?? []).filter((a) => a.routeId === routeId && a.direction === direction && a.tripId && a.source !== (mode === 'live' ? 'demo' : '')), [stop.data, routeId, direction, mode]);
+  const trips = useMemo(() => honest(stop.data?.arrivals ?? []).filter((a) => a.routeId === routeId && a.direction === direction && a.tripId), [stop.data, routeId, direction]);
   const start = useStartRide();
   useEffect(() => { setDirection(null); setTripId(null); }, [routeId]);
 
@@ -71,7 +71,6 @@ function RideSetup() {
           <Radio className="h-8 w-8 text-[hsl(var(--community))]" />
           <h1 className="mt-3 font-display text-4xl">I'm on board</h1>
           <p className="mt-2 max-w-md text-muted-foreground">Optional. While this page is open, your phone can anonymously help estimate arrivals for riders waiting down the line.</p>
-          {mode === 'demo' && <p className="mt-3"><SourceLabel source="demo" /> <span className="ml-1 text-xs text-muted-foreground">Contributions in Demo mode are marked demo and never mix with live data.</span></p>}
         </div>
       </div>
       {pending > 0 && (
@@ -188,7 +187,7 @@ function ActiveRide() {
   const [sent, setSent] = useState<string | null>(null);
   const [, tick] = useState(0);
   useEffect(() => { const t = window.setInterval(() => tick((n) => n + 1), 15_000); return () => window.clearInterval(t); }, []);
-  const rParams = { mode: ride.mode, direction: ride.direction };
+  const rParams = { mode: 'live' as const, direction: ride.direction };
   const route = useGetRoute(ride.routeId, rParams, { query: { queryKey: getGetRouteQueryKey(ride.routeId, rParams) } });
   const stops = route.data?.stops ?? [];
   const idx = stops.findIndex((s) => s.id === ride.stopId);
@@ -210,7 +209,6 @@ function ActiveRide() {
         <div className="flex items-center gap-3">
           <span className="relative flex h-4 w-4"><span className="absolute inset-0 rounded-full bg-[hsl(var(--community))] pulse-dot" /></span>
           <p className="flex-1 font-extrabold uppercase tracking-wider text-[hsl(var(--community))]">{share.stale ? 'Sharing paused' : share.samples > 0 ? 'Sharing location' : 'Sharing on, nothing stored yet'}</p>
-          {ride.mode === 'demo' && <SourceLabel source="demo" />}
         </div>
         <p className="mt-2 text-sm text-muted-foreground">
           {share.stale ? 'No recent updates. Keep this page open and in front to keep contributing.' : share.lastSentAt ? `Last update stored ${ago(share.lastSentAt)} · ${share.samples} stored` : 'Waiting for your first location fix...'}

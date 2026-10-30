@@ -5,7 +5,6 @@ import { TransitMap, type MapStop } from '@/components/transit-map';
 import { apiErrorText, nowHM, todayISO } from '@/components/timetable';
 import { clock } from '@/lib/format';
 import { newYorkInstant } from '@/lib/transit-time';
-import { usePrefs } from '@/lib/prefs';
 import { cn } from '@/lib/utils';
 
 const MODES: { v: JourneyInputModesItem; l: string }[] = [
@@ -15,7 +14,6 @@ const mins = (s: number) => { const m = Math.round(s / 60); return m < 60 ? `${m
 const isWalk = (m: string) => /walk/i.test(m);
 
 export function JourneyPlanner() {
-  const { mode } = usePrefs();
   const plan = usePlanJourney();
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
@@ -28,13 +26,6 @@ export function JourneyPlanner() {
   const [result, setResult] = useState<JourneyResults | null>(null);
   const [sel, setSel] = useState(0);
   const [timeError,setTimeError] = useState('');
-
-  if (mode === 'demo') return (
-    <div className="rounded-2xl border border-dashed border-border p-6" data-testid="notice-journey-demo">
-      <p className="font-display text-xl">Journey planning is off in Demo</p>
-      <p className="mt-1 text-sm text-muted-foreground">Trip plans come only from Google's real transit directions and are never mixed with demo feeds. Switch to Live to plan a trip. The catalog below still works in either mode.</p>
-    </div>
-  );
 
   const valid = origin.trim().length >= 2 && destination.trim().length >= 2;
   const submit = (e: React.FormEvent) => {

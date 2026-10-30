@@ -23,7 +23,10 @@ function read(): ActiveRide | null {
     const raw = sessionStorage.getItem(KEY);
     if (!raw) return null;
     const r = JSON.parse(raw) as ActiveRide;
-    return new Date(r.expiresAt).getTime() > Date.now() ? r : null;
+    // Return legacy non-live rides for immediate revocation, even if expired.
+    if (r.mode !== 'live' || new Date(r.expiresAt).getTime() > Date.now()) return r;
+    sessionStorage.removeItem(KEY);
+    return null;
   } catch { return null; }
 }
 function emit() { listeners.forEach((l) => l()); }
@@ -44,6 +47,7 @@ function markStaleLater() {
 }
 
 export function beginRide(r: ActiveRide) {
+  if (r.mode !== 'live') { void revokeRide(r); return; }
   current = r;
   sessionStorage.setItem(KEY, JSON.stringify(r));
   share = { lastSentAt: null, samples: 0, error: null, stale: false };
@@ -53,14 +57,14 @@ export function beginRide(r: ActiveRide) {
 
 export function startWatching() {
   const r = current;
-  if (!r || watchId !== null || !('geolocation' in navigator)) return;
+  if (!r || r.mode !== 'live' || watchId !== null || !('geolocation' in navigator)) return;
   const ms = new Date(r.expiresAt).getTime() - Date.now();
   if (ms <= 0) { void stopRide('expired'); return; }
   expiryTimer = window.setTimeout(() => void stopRide('expired'), ms);
   watchId = navigator.geolocation.watchPosition(
     (pos) => {
       const active = current;
-      if (!active || document.visibilityState !== 'visible') return;
+      if (!active || active.mode !== 'live' || document.visibilityState !== 'visible') return;
       if (Date.now() - lastSampleAt < 5000) return;
       lastSampleAt = Date.now();
       if (pos.coords.accuracy > 100) { setShare({ error: 'Location too imprecise right now; not sent.' }); return; }
@@ -102,12 +106,17 @@ export async function stopRide(_reason: 'user' | 'expired' = 'user'): Promise<'r
   const r = current;
   clearLocal();
   if (!r) return 'revoked';
+  return revokeRide(r);
+}
+
+async function revokeRide(r: Pick<ActiveRide, 'id' | 'token'>): Promise<'revoked' | 'pending'> {
   try {
     await endRide(r.id, headers(r.token));
     return 'revoked';
   } catch {
-    const list = JSON.parse(sessionStorage.getItem(PENDING) || '[]') as { id: string; token: string }[];
-    list.push({ id: r.id, token: r.token });
+    let list: { id: string; token: string }[] = [];
+    try { list = JSON.parse(sessionStorage.getItem(PENDING) || '[]'); } catch { /* replace corrupt queue */ }
+    if (!list.some((p) => p.id === r.id)) list.push({ id: r.id, token: r.token });
     sessionStorage.setItem(PENDING, JSON.stringify(list));
     emit();
     return 'pending';
@@ -128,11 +137,14 @@ export async function retryPendingEnds() {
 
 export function report(kind: ReportInputKind) {
   const r = current;
-  if (!r) return Promise.reject(new Error('No active ride'));
+  if (!r || r.mode !== 'live') return Promise.reject(new Error('No active live ride'));
   return submitReport(r.id, { kind, stopId: r.stopId }, headers(r.token));
 }
 
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => void retryPendingEnds());
-  if (current) startWatching();
+  // Clear synchronously before React can read the store; never watch or fetch
+  // details for a legacy demo ride. Revocation failures use the normal retry queue.
+  if (current && current.mode !== 'live') void stopRide();
+  else if (current) startWatching();
 }

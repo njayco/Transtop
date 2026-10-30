@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link, useParams } from 'wouter';
 import { ArrowLeft, Accessibility, Radio } from 'lucide-react';
 import { getGetStopQueryKey, useGetStop, type Arrival } from '@workspace/api-client-react';
-import { ModeSwitch } from '@/components/shell';
+import { LiveIndicator } from '@/components/shell';
 import { AlertRow, Countdown, ErrorState, FavButton, ModeIcon, RouteBadge, SkeletonCards, SourceLabel, StatusText, TransitLines } from '@/components/transit';
 import { TransitMap } from '@/components/transit-map';
 import { TimetablePanel } from '@/components/timetable';
@@ -33,7 +33,7 @@ export default function StopPage() {
         <div className="relative space-y-4 p-4 md:p-8">
           <div className="flex items-center justify-between">
             <Link href="/" className="inline-flex h-11 items-center gap-2 rounded-full pr-3 text-sm font-semibold text-muted-foreground hover:text-foreground" data-testid="link-back"><ArrowLeft className="h-5 w-5" />Nearby</Link>
-            <div className="md:hidden"><ModeSwitch compact /></div>
+            <div className="md:hidden"><LiveIndicator compact /></div>
           </div>
           {q.isLoading && <div className="space-y-3"><div className="skel h-10 w-2/3" /><div className="skel h-6 w-1/3" /></div>}
           {stop && (
@@ -61,7 +61,7 @@ export default function StopPage() {
           {stop && groups.length === 0 && (
             <div className="rounded-2xl border border-dashed border-border p-8 text-center">
               <p className="font-display text-xl">No departures to show</p>
-              <p className="mt-1 text-sm text-muted-foreground">{mode === 'live' ? 'No fresh live, community or scheduled data for this stop. Transtop will not show demo times in Live mode.' : 'Nothing scheduled soon.'}</p>
+              <p className="mt-1 text-sm text-muted-foreground">No official predictions, community estimates or scheduled departures are available for this stop right now. Check Settings for feed status.</p>
             </div>
           )}
           {groups.map((g, gi) => (

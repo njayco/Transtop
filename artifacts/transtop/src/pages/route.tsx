@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useParams, useSearch } from 'wouter';
 import { ArrowLeft, ArrowRight, ArrowUpDown, X } from 'lucide-react';
 import { getGetNetworkQueryKey, getGetRouteQueryKey, useGetNetwork, useGetRoute, type GetNetworkParams } from '@workspace/api-client-react';
-import { ModeSwitch } from '@/components/shell';
+import { LiveIndicator } from '@/components/shell';
 import { AlertRow, Countdown, ErrorState, FavButton, MODE_NAME, RouteBadge, SkeletonCards, SourceLabel } from '@/components/transit';
 import { TransitMap } from '@/components/transit-map';
 import { TimetablePanel } from '@/components/timetable';
@@ -23,7 +23,7 @@ export default function RoutePage() {
   const dirs = d?.directions ?? [];
   const activeDir = direction ?? dirs[0];
   const color = d?.route.color ?? '#888';
-  const vehicles = useMemo(() => honest(d?.vehicles ?? [], mode).filter((v) => mode === 'demo' || !v.source.toLowerCase().includes('demo')).map((v) => ({ ...v, color, routeName: d?.route.name })), [d, mode, color]);
+  const vehicles = useMemo(() => honest(d?.vehicles ?? []).map((v) => ({ ...v, color, routeName: d?.route.name })), [d, color]);
   const netParams: GetNetworkParams = useMemo(() => ({ mode, routeId, zoom: 14 }), [mode, routeId]);
   const net = useGetNetwork(netParams, { query: { queryKey: getGetNetworkQueryKey(netParams), staleTime: 60_000, retry: 1 } });
   const [selStop, setSelStop] = useState<string | null>(null);
@@ -46,7 +46,7 @@ export default function RoutePage() {
     <div className="mx-auto max-w-6xl p-4 md:p-8">
       <div className="flex items-center justify-between">
         <button onClick={() => history.back()} className="inline-flex h-11 items-center gap-2 pr-3 text-sm font-semibold text-muted-foreground hover:text-foreground" data-testid="button-back"><ArrowLeft className="h-5 w-5" />Back</button>
-        <div className="md:hidden"><ModeSwitch compact /></div>
+        <div className="md:hidden"><LiveIndicator compact /></div>
       </div>
       {q.isLoading && <SkeletonCards n={2} />}
       {q.isError && <ErrorState title="Could not load this route" onRetry={() => q.refetch()} />}
@@ -119,7 +119,7 @@ export default function RoutePage() {
                   </ul>
                 )}
                 <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                  <span><span className="mr-1.5 inline-block h-2.5 w-2.5 rotate-45 bg-foreground align-middle" />Agency or demo position</span>
+                  <span><span className="mr-1.5 inline-block h-2.5 w-2.5 rotate-45 bg-foreground align-middle" />Agency-reported position</span>
                   <span><span className="mr-1.5 inline-block h-3 w-3 rounded-full border border-dashed border-[hsl(var(--community))] align-middle" />Approximate community area</span>
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">Individual riders are never shown. Updated {ago(vehicles[0]?.updatedAt)}.</p>

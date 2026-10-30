@@ -30,7 +30,7 @@ const keyAct = (fn: () => void) => (e: KeyboardEvent) => { if (e.key === 'Enter'
 
 function srcText(source: string) {
   const s = source.toLowerCase();
-  return s.includes('demo') ? 'Demo data' : s.includes('community') ? 'Approximate community position' : 'Live agency data';
+  return s.includes('community') ? 'Approximate community position' : 'Live agency data';
 }
 function ago(iso?: string) {
   if (!iso) return 'update time unknown';
@@ -38,7 +38,8 @@ function ago(iso?: string) {
   return Number.isNaN(m) ? 'update time unknown' : m < 1 ? 'updated just now' : `updated ${m} min ago`;
 }
 
-export function SchematicMap({ center, stops, activeId, onSelect, shape, vehicles, network, onRoute, className, label }: Props) {
+export function SchematicMap({ center, stops, activeId, onSelect, shape, vehicles: allVehicles, network, onRoute, className, label }: Props) {
+  const vehicles = useMemo(() => allVehicles.filter((v) => !v.source.toLowerCase().includes('demo')), [allVehicles]);
   const [view, setView] = useState({ k: 1, x: 0, y: 0 });
   const drag = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -124,7 +125,7 @@ export function SchematicMap({ center, stops, activeId, onSelect, shape, vehicle
                 <title>{`${v.routeName ? `Route ${v.routeName}` : 'Vehicle'} · ${src} · ${ago(v.updatedAt)}`}</title>
                 {community
                   ? <circle r={16} fill="rgba(92,194,242,.15)" stroke="#5cc2f2" strokeDasharray="4 3" strokeWidth={2} />
-                  : <rect x={-7} y={-7} width={14} height={14} transform="rotate(45)" fill={v.color ?? '#f4f1ea'} stroke={src === 'Demo data' ? '#f5b82e' : '#f4f1ea'} strokeWidth={2} />}
+                  : <rect x={-7} y={-7} width={14} height={14} transform="rotate(45)" fill={v.color ?? '#f4f1ea'} stroke="#f4f1ea" strokeWidth={2} />}
               </g>
             );
           })}

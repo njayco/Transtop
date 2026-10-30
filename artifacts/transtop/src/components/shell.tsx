@@ -2,7 +2,7 @@ import { type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import { MapPin, Search, Heart, Radio, Settings, WifiOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useOnline, usePrefs } from '@/lib/prefs';
+import { useOnline } from '@/lib/prefs';
 import { useActiveRide } from '@/lib/ride';
 
 const NAV = [
@@ -21,33 +21,22 @@ export function Wordmark({ className }: { className?: string }) {
   );
 }
 
-export function ModeSwitch({ compact }: { compact?: boolean }) {
-  const { mode, set } = usePrefs();
+export function LiveIndicator({ compact }: { compact?: boolean }) {
   return (
-    <div role="radiogroup" aria-label="Data mode" className="inline-flex rounded-full border border-border bg-card p-0.5 text-xs font-bold uppercase tracking-wider">
-      {(['demo', 'live'] as const).map((m) => (
-        <button key={m} role="radio" aria-checked={mode === m} onClick={() => set({ mode: m })} data-testid={`button-mode-${m}`}
-          className={cn('rounded-full px-3 transition-colors', compact ? 'h-8' : 'h-9', mode === m ? (m === 'demo' ? 'bg-primary text-primary-foreground' : 'bg-[hsl(var(--live))] text-black') : 'text-muted-foreground hover:text-foreground')}>
-          {m === 'demo' ? 'Demo' : 'Live'}
-        </button>
-      ))}
-    </div>
+    <span data-testid="indicator-live" title="Real transit data. Individual estimates are labeled by source."
+      className={cn('inline-flex shrink-0 items-center rounded-full border border-border bg-[hsl(var(--live))] px-3 text-xs font-bold uppercase tracking-wider text-black', compact ? 'h-8' : 'h-9')}>
+      Live<span className="sr-only"> data · agency, scheduled and community sources</span>
+    </span>
   );
 }
 
 function StatusBar() {
-  const { mode } = usePrefs();
   const online = useOnline();
   return (
     <>
       {!online && (
         <div className="flex items-center justify-center gap-2 bg-[hsl(var(--bad))] px-4 py-1.5 text-center text-xs font-bold text-white" role="status" data-testid="status-offline">
           <WifiOff className="h-3.5 w-3.5" />Offline — arrivals shown earlier are not current
-        </div>
-      )}
-      {mode === 'demo' && (
-        <div className="bg-primary px-4 py-1 text-center text-[11px] font-extrabold uppercase tracking-[0.18em] text-primary-foreground" role="status" data-testid="status-demo">
-          Demo data · sample arrivals, not real service
         </div>
       )}
     </>
@@ -74,7 +63,7 @@ export function Shell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-3">
-          <ModeSwitch />
+          <LiveIndicator />
           <Link href="/settings" aria-label="Settings" data-testid="link-settings" className={cn('inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10', isActive('/settings') && 'bg-white/10')}><Settings className="h-5 w-5" /></Link>
         </div>
       </header>
@@ -106,7 +95,7 @@ export function MobileTop({ title, right }: { title?: ReactNode; right?: ReactNo
       {title ?? <Wordmark />}
       <div className="ml-auto flex items-center gap-2">
         {right}
-        <ModeSwitch compact />
+        <LiveIndicator compact />
         <Link href="/settings" aria-label="Settings" data-testid="link-settings-mobile" className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-white/10"><Settings className="h-5 w-5" /></Link>
       </div>
     </div>

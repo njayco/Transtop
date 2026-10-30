@@ -16,7 +16,7 @@ export function vehicleKind(source: string): 'official' | 'demo' | 'community' {
 }
 function sourceText(source: string) {
   const k = vehicleKind(source);
-  return k === 'demo' ? 'Demo data' : k === 'community' ? 'Approximate community position' : source.toLowerCase() === 'live' ? 'Live agency data' : source;
+  return k === 'community' ? 'Approximate community position' : source.toLowerCase() === 'live' ? 'Live agency data' : source;
 }
 function agoText(iso?: string) {
   const minutes = iso ? Math.round((Date.now() - new Date(iso).getTime()) / 60000) : NaN;
@@ -73,6 +73,7 @@ export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehi
     return () => window.clearInterval(id);
   }, [vehicles.length]);
   const visibleVehicles = useMemo(() => vehicles.filter(v => {
+    if (vehicleKind(v.source) === 'demo') return false;
     const age = v.updatedAt ? clock - new Date(v.updatedAt).getTime() : Infinity;
     return vehicleKind(v.source) !== 'official' || Number.isFinite(age) && age <= 60000 && age >= -30000;
   }), [vehicles, clock]);
@@ -264,7 +265,7 @@ export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehi
       const marker = new Marker({ map: m, position: { lat: v.lat, lng: v.lon }, title, zIndex: 40,
         icon: { path: kind === 'community' ? google.maps.SymbolPath.CIRCLE : 'M 0,-8 8,0 0,8 -8,0 z',
           scale: kind === 'community' ? 14 : 1, fillColor: color, fillOpacity: kind === 'community' ? .15 : 1,
-          strokeColor: kind === 'demo' ? '#f5b82e' : kind === 'community' ? '#5cc2f2' : '#fff', strokeWeight: 2 } });
+          strokeColor: kind === 'community' ? '#5cc2f2' : '#fff', strokeWeight: 2 } });
       listeners.push(marker.addListener('click', () => {
         const content = document.createElement('div');
         content.style.cssText = 'color:#111;font:600 13px Arial,sans-serif;max-width:240px;';

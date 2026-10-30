@@ -100,11 +100,6 @@ export function RegionalMap({ onClose }: { onClose?: () => void }) {
         </div>
       </div>
 
-      {mode === 'demo' && (
-        <p role="status" data-testid="text-regional-demo" className="rounded-xl border border-[hsl(var(--demo))]/50 bg-[hsl(var(--demo))]/10 px-3 py-2 text-sm">
-          <span className="font-bold">Sample data.</span> Demo mode shows illustrative lines and stops, not real service. Vehicle positions appear only from official live feeds.
-        </p>
-      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <div role="group" aria-label="Modes shown" className="flex flex-wrap gap-1.5">

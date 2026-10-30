@@ -40,10 +40,10 @@ const SRC: Record<string, string> = {
   live: 'border-[hsl(var(--live)/.5)] text-[hsl(var(--live))]',
   community: 'border-[hsl(var(--community)/.5)] text-[hsl(var(--community))] border-dashed',
   scheduled: 'border-[hsl(var(--scheduled)/.4)] text-[hsl(var(--scheduled))]',
-  demo: 'border-[hsl(var(--demo)/.55)] text-[hsl(var(--demo))]',
   unavailable: 'border-border text-muted-foreground',
 };
 export function SourceLabel({ source, updatedAt, className }: { source: string; updatedAt?: string | null; className?: string }) {
+  if (source.toLowerCase().includes('demo')) return null;
   return (
     <span className={cn('inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide', SRC[source] ?? SRC.unavailable, className)}
       data-testid={`label-source-${source}`}>
@@ -117,7 +117,7 @@ export function StopCard({ stop, active, onHover, index = 0 }: { stop: Stop; act
       </div>
       <div className="mt-3 divide-y divide-white/5 border-t border-white/5">
         {arrivals.length === 0 && (
-          <p className="pt-3 text-sm text-muted-foreground">{mode === 'live' ? 'No live or scheduled departures available right now.' : 'No upcoming departures.'}</p>
+          <p className="pt-3 text-sm text-muted-foreground">No official predictions, community estimates or scheduled departures available right now.</p>
         )}
         {arrivals.map((a) => (
           <div key={a.id} className="flex items-center gap-3 py-2.5">

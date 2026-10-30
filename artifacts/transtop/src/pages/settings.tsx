@@ -1,7 +1,7 @@
 import { Link } from 'wouter';
 import { ExternalLink, Trash2, Play, Radio } from 'lucide-react';
 import { useGetSources, type FeedSource } from '@workspace/api-client-react';
-import { MobileTop, ModeSwitch } from '@/components/shell';
+import { MobileTop, LiveIndicator } from '@/components/shell';
 import { ErrorState, SourceLabel } from '@/components/transit';
 import { useEntry } from '@/components/intro';
 import { Switch } from '@/components/ui/switch';
@@ -25,7 +25,7 @@ function statusStyle(s: string) {
   if (/(stale|degrad|delay)/.test(v)) return { c: 'text-[hsl(var(--warn))]', l: 'Stale' };
   if (/(credential|await|not.?config)/.test(v)) return { c: 'text-[hsl(var(--warn))]', l: 'Integration not configured' };
   if (/(unsupport|planned)/.test(v)) return { c: 'text-muted-foreground', l: 'Planned coverage' };
-  if (/(demo)/.test(v)) return { c: 'text-primary', l: 'Demo' };
+  if (/demo/.test(v)) return { c: 'text-muted-foreground', l: 'Unavailable' };
   return { c: 'text-[hsl(var(--bad))]', l: s };
 }
 
@@ -87,8 +87,8 @@ export default function Settings() {
 
         <Section title="Data mode">
           <div className="space-y-3 rounded-2xl border border-card-border bg-card p-4">
-            <div className="flex items-center justify-between gap-3"><p className="font-semibold">Show arrivals from</p><ModeSwitch /></div>
-            <p className="text-sm text-muted-foreground">Demo uses realistic sample data and is always labeled. Live only shows real agency, community or scheduled data. If a live feed is not configured, Transtop says so; it never fills the gap with demo times.</p>
+            <div className="flex items-center justify-between gap-3"><p className="font-semibold">Transit data</p><LiveIndicator /></div>
+            <p className="text-sm text-muted-foreground">Transtop uses real agency, community and scheduled data only. Live does not mean every result is a real-time prediction: check each estimate’s source label. Missing or failed feeds are shown as unavailable, without replacement times.</p>
           </div>
         </Section>
 
@@ -98,7 +98,6 @@ export default function Settings() {
               ['live', 'Fresh predictions from an official agency feed. Always preferred.'],
               ['community', 'Derived from several recent opt-in riders on the same trip. Shown as a range with a heuristic confidence label.'],
               ['scheduled', 'From the published timetable. Not adjusted for real-time conditions.'],
-              ['demo', 'Sample data for review only. Not real service.'],
             ].map(([s, d]) => <div key={s} className="rounded-2xl border border-card-border bg-card p-4"><SourceLabel source={s} /><p className="mt-2 text-sm text-muted-foreground">{d}</p></div>)}
           </div>
         </Section>

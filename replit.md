@@ -1,6 +1,6 @@
 # Transtop
 
-A mobile-first NYC and Long Island transit app with explicit demo/live modes, nearby arrivals, maps, local favorites, and opt-in rider contributions.
+A mobile-first NYC and Long Island transit app using real agency, scheduled and community data only, with nearby arrivals, maps, local favorites, and opt-in rider contributions.
 
 ## Run & Operate
 
@@ -47,7 +47,7 @@ Nearby, Search, Stop/Route details, Favorites, Ride, Settings; NYC Subway, LIRR 
 ## Gotchas
 
 - Read README limitations before claiming production readiness or complete agency coverage.
-- Demo and live data must remain separate. Never expose raw contributions.
+- The rider app is Live-only; backend demo compatibility is retained for development/testing. Never expose raw contributions.
 
 ## Pointers
 
