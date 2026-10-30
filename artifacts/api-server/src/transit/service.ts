@@ -12,6 +12,7 @@ import { ZONE } from "./time";
 import { patternLabel,resolvePattern } from "./catalog";
 import { journeyHealth } from "./journeys";
 import { stopTimesMode } from "./generations";
+import { tripIdentity } from "./bus-time";
 
 let stopCache:{at:number;demo:TransitStop[];live:TransitStop[]}|undefined;
 export async function allStops(mode:Mode) {
@@ -29,6 +30,7 @@ export function officialArrivals(stop:TransitStop,now=Date.now()) {
     if(!fresh(f,now))continue;
     for(const e of f.entities){
       const t=e.tripUpdate;if(!t?.trip)continue;
+      if(agency==="mta-bus"&&(!t.timestamp||now-Number(t.timestamp)*1000>60000||Number(t.timestamp)*1000>now+30000))continue;
       const trip=t.trip, tripId=`${agency}:${trip.tripId}`;
       if(trip.scheduleRelationship===3||trip.scheduleRelationship===7){excluded.add(tripId);continue;}
       for(const st of t.stopTimeUpdate||[]){
@@ -40,8 +42,8 @@ export function officialArrivals(stop:TransitStop,now=Date.now()) {
         const route=stop.routes.find(r=>r.id===`${agency}:${trip.routeId}`);
         if(!route)continue;
         const north=st.stopId.endsWith("N");
-        const direction=agency==="mta-subway"?(north?"Uptown":"Downtown"):(trip.directionId===1?"Inbound":"Outbound");
-        const destination=agency==="mta-subway"?(north?"Uptown & The Bronx / Queens":"Downtown & Brooklyn"):direction;
+        const direction=agency==="mta-subway"?(north?"Uptown":"Downtown"):agency==="mta-bus"?(trip.directionId===1?"Downtown":"Uptown"):(trip.directionId===1?"Inbound":"Outbound");
+        const destination=agency==="mta-subway"?(north?"Uptown & The Bronx / Queens":"Downtown & Brooklyn"):trip.transtopHeadsign|| (agency==="mta-bus"?`${route.name} · direction ${trip.directionId??"not reported"}`:direction);
         arrivals.push({id:`live:${tripId}:${st.stopId}`,routeId:route.id,routeName:route.name,color:route.color,direction,destination,
           minutes:Math.max(0,Math.ceil((when*1000-now)/60000)),source:"live",updatedAt:new Date(f.timestamp*1000).toISOString(),
           status:"Live agency prediction",scheduledAt:new Date(when*1000).toISOString(),tripId});
@@ -57,8 +59,8 @@ export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<Tran
   const schedule=official.length>=3&&!deep?[]:await scheduledArrivals(stop,excluded);
   // Official predictions always win per trip; a community estimate can only
   // replace a schedule for the same unambiguous trip, never fresh official data.
-  const liveTrips=new Set(official.map(a=>a.tripId)), communityTrips=new Set(community.map(a=>a.tripId));
-  const arrivals=[...official,...community.filter(a=>!liveTrips.has(a.tripId)),...schedule.filter(a=>!liveTrips.has(a.tripId)&&!communityTrips.has(a.tripId))]
+  const liveTrips=new Set(official.map(a=>tripIdentity(a.tripId))), communityTrips=new Set(community.map(a=>tripIdentity(a.tripId)));
+  const arrivals=[...official,...community.filter(a=>!liveTrips.has(tripIdentity(a.tripId))),...schedule.filter(a=>!liveTrips.has(tripIdentity(a.tripId))&&!communityTrips.has(tripIdentity(a.tripId)))]
     .sort((a,b)=>a.minutes-b.minutes).slice(0,36);
   return {...stop,arrivals,alerts:liveAlerts().filter(a=>stop.routes.some(r=>a.routeIds.includes(r.id)))};
 }
@@ -144,6 +146,7 @@ export async function sources() {
       data?.serviceStart&&data.serviceStart>today?"future schedules":health.fresh?"schedules + live predictions":"scheduled only";
     const failed=lastError&&(!data||lastError.data.at>data.importedAt)?lastError.data.message:undefined;
     return {id:a.id,agency:a.name,type:a.type,status,description:a.setup+
+      (a.id==="mta-bus"&&!process.env.MTA_BUS_TIME_API_KEY?" Live Bus Time credentials are not configured.":"")+
       (data&&data.components?.length>1?` Packages: ${data.components.map((c:any)=>`${c.id} (${c.serviceStart}–${c.serviceEnd})`).join(", ")}.`:"")+
       (imp?` ${health.fresh}/${health.total} fresh live feeds.`:""),
       routeCount:counts.find(c=>c.agency===a.id&&c.kind==="routes")?.count||0,stopCount:counts.find(c=>c.agency===a.id&&c.kind==="stops")?.count||0,

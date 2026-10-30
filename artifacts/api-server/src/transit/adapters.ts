@@ -1,3 +1,5 @@
+import { busRealtimeUrls } from "./bus-time";
+
 export interface AgencyAdapter {
   id:string; name:string; type:"subway"|"bus"|"rail"; staticUrl?:string; realtimeUrls:string[];
   documentation:string; status:string; setup:string;
@@ -16,8 +18,8 @@ export const adapters:AgencyAdapter[]=[
     realtimeUrls:[rt+"mnr%2Fgtfs-mnr"],documentation:"https://www.mta.info/developers",status:"configured",setup:"Public GTFS and GTFS-Realtime. Port Jervis / Pascack Valley require NJ TRANSIT and are not included."},
   {id:"mta-bus",name:"MTA Bus",type:"bus",staticUrl:"https://rrgtfsfeeds.s3.amazonaws.com/gtfs_m.zip",
     staticFeeds:["m","bx","b","q","si","busco"].map(id=>({id,url:`https://rrgtfsfeeds.s3.amazonaws.com/gtfs_${id}.zip`})),
-    realtimeUrls:[],documentation:"https://www.mta.info/developers",status:"scheduled only",
-    setup:"All five boroughs and MTA Bus Company, including express buses. Published schedules exclude temporary detours. Live Bus Time requires separate authorization; no live bus predictions are fabricated."},
+    realtimeUrls:busRealtimeUrls,documentation:"https://bustime.mta.info/wiki/Developers/GTFSRt",status:"configured",
+    setup:"All five boroughs and MTA Bus Company, including express buses. Published schedules plus official MTA Bus Time predictions, vehicle locations and service alerts when fresh. Live coverage depends on buses reporting; missing or stale data falls back to clearly labeled published schedules. Requires the server-only MTA_BUS_TIME_API_KEY."},
   {id:"nice",name:"NICE Bus",type:"bus",staticUrl:"https://www.nicebus.com/NICE/media/nicebus-gtfs/NICE_GTFS.zip",realtimeUrls:[],
     documentation:"https://www.nicebus.com/Passenger-Information/App-showcase",status:"scheduled only",
     setup:"Official NICE GTFS published for app developers. Includes Nassau local and express service. Published schedules, not live bus predictions."},

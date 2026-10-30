@@ -2,6 +2,7 @@ import { pool } from "@workspace/db";
 import { activeService, serviceDates, serviceInstant } from "./time";
 import type { Arrival, TransitStop } from "./types";
 import { stopTimesMode } from "./generations";
+import { tripIdentity } from "./bus-time";
 export async function scheduledArrivals(stop:TransitStop,excluded:Set<string>,now=Date.now()):Promise<Arrival[]> {
   const prefix=stop.id.split(":")[0], raw=stop.rawId||stop.id.slice(prefix.length+1);
   const ids=stop.parent?[stop.id]:[stop.id,`${prefix}:${raw}N`,`${prefix}:${raw}S`];
@@ -15,7 +16,8 @@ export async function scheduledArrivals(stop:TransitStop,excluded:Set<string>,no
   const dates=serviceDates(now), result:Arrival[]=[];
   for(const row of rows) {
     if(row.arrival_seconds<0)continue;
-    if(excluded.has(row.trip_id)||excluded.has(`${row.trip_id}|${row.timing.stop_id}`))continue;
+    if(excluded.has(row.trip_id)||excluded.has(`${row.trip_id}|${row.timing.stop_id}`)||
+      excluded.has(tripIdentity(row.trip_id)!)||excluded.has(`${tripIdentity(row.trip_id)}|${row.timing.stop_id}`))continue;
     const route=stop.routes.find(r=>r.id===`${prefix}:${row.trip.route_id}`);
     if(!route)continue;
     for(const date of dates) {
