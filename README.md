@@ -1,6 +1,20 @@
 # Transtop
 
-A mobile-first NYC and Long Island transit app based on the creator's original Transtop concept. Desktop has synchronized stop results and a Google map; mobile has Nearby, Search, Favorites and Ride navigation. No account is required.
+A mobile-first NYC and Long Island transit app based on the creator's original Transtop concept, with selected intercity and local connections into New Jersey and Pennsylvania. Desktop has synchronized stop results and a Google map; mobile has Nearby, Search, Favorites and Ride navigation. No account is required.
+
+## Current features and recent updates
+
+Documentation updated **October 30, 2026**. Coverage describes implemented sources, not a guarantee that an upstream feed or every operator is currently available; check Settings for source health and imported coverage.
+
+- **Original swipe-entry homepage:** responsive mobile/desktop recreation of the supplied black Transtop artwork, large white title, colored transit lines, five transport icons and MetroCard. Drag/swipe the card right to left to enter, or use the keyboard equivalent. There is no skip button or automatic entry. This is an entrance interaction, not a fare payment, card reader or balance service. Ferry and airplane icons are artwork, not active transport coverage.
+- **Live-only rider experience:** real agency observations, labeled published schedules and eligible community estimates; no Demo toggle or simulated live arrivals. Missing data is disclosed rather than replaced with examples.
+- **Google Maps and regional browsing:** dark geographic basemaps, shared stop/route selection, operator/mode/local-or-express filters, numbered route stops and a searchable legend. Panning starts a new tile-loading cycle; delayed tiles, offline recovery and authorization failures have explicit states.
+- **MTA buses across all five boroughs:** six coordinated static packages cover Manhattan, Bronx, Brooklyn, Queens, Staten Island and MTA Bus Company, including local, SBS and express services. Authorized Bus Time feeds add official predictions, reported vehicle positions and alerts where fresh matching data is available.
+- **Integrated Intercity Bus Network:** browse by selected location alongside local buses, subway and commuter rail, then filter by provider and inspect remaining stops and final destinations. Port Authority is a boarding location in this shared experience, **not a separate terminal hub**.
+- **Trans-Bridge:** regular and verified Thanksgiving/Black Friday timetables from all 15 supplied carrier PDFs, with stop locations, PABT gates, airport boarding guidance and reservation/drop-off restrictions. Details and known conflicts are documented below.
+- **NJ TRANSIT 890/891:** the uploaded T1890 brochure adds weekday local-bus timetables, numbered timepoints, published fares, lift-equipped service notes and school/flex restrictions. These remain local buses, not intercity buses.
+
+Existing features include device-local stop/route favorites, selected-date timetables, source/update labels, large-text and reduced-motion preferences, opt-in foreground Ride Mode and an installable PWA shell.
 
 ## Daily GTFS refresh operations
 
@@ -21,13 +35,28 @@ pnpm --filter @workspace/api-server run import-gtfs mta-subway mta-lirr mta-mnr 
 
 Start the existing **API Server** and **Transtop web** workflows. They inject `PORT` and `BASE_PATH`. The API is mounted at `/api`, the app at `/`. For non-Replit hosting, provide the same variables and route `/api` to Express with the frontend at `/`. Build the API with its `build` script and the web app with its `build` script. The web app needs the API service as well as static assets.
 
-`pnpm run typecheck` checks the whole repository. The initial build was checked with TypeScript, API requests and desktop/mobile screenshots; a full automated regression suite is a remaining release requirement.
+`pnpm run typecheck` checks the whole repository. Targeted backend/frontend regression suites, API checks and mobile/desktop visual checks are available; broader end-to-end coverage remains release work. See [Verification](#verification).
+
+### Environment configuration
+
+Use workspace secret/environment configuration; never commit credential values.
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | PostgreSQL for imported agency data, snapshots and rider contributions. |
+| `VITE_GOOGLE_MAPS_API_KEY` | Browser Maps JavaScript API key, restricted to authorized websites and that API. Embedded at frontend build time; see [Google Maps](#google-maps). |
+| `MTA_BUS_TIME_API_KEY` | Server-only authorization for Bus Time trip updates, vehicle positions and alerts. Without working authorization, eligible static schedules remain separately labeled rather than called live. |
+| `TRANSIT_AUTO_IMPORT` | Set to `true` to opt into missing/stale static GTFS imports on startup and daily refresh. Separate from curated PDF imports. |
+| `GOOGLE_MAPS_ROUTES_API_KEY` | Reserved server-only credential for the deferred Google journey planner. Supplying it does **not** enable that feature. |
+| `PORT`, `BASE_PATH` | Per-service host configuration supplied by the existing artifact workflows. |
 
 ## Data modes
 
-**Demo is the default.** The persistent “Demo data” indicator means arrivals, alerts and illustrative map lines are examples, not advice for travel. Demo and live records have separate database keys, and live APIs do not substitute demo records. Favorites are stored on the device, tagged with their data mode.
+**The rider app is Live-only.** “Live” selects real transit sources; it does not mean every result is a realtime prediction. Rows distinguish fresh agency predictions, published scheduled times and eligible community estimates. Demo-sourced results are filtered out of the rider interface.
 
-Switch to **Live** in the app header/settings. The regional importer supports the agencies below. Settings is the current coverage inventory: imported counts, source files, import timestamps, service windows, expired/partial data and last errors. Do not infer current coverage from an adapter being configured. Imported development data does not automatically seed a new production database; perform the documented imports in the target environment through an authorized job after schema setup.
+Backend demo compatibility and isolated mode keys remain for development/testing, but there is no rider-facing mode switch. Favorites and preferences are stored on the device.
+
+The regional importer supports the agencies below. Settings is the current coverage inventory: imported counts, source files, import timestamps, service windows, expired/partial data and last errors. Do not infer current coverage from an adapter being configured. Imported development data does not automatically seed a new production database; perform the documented imports in the target environment through an authorized job after schema setup.
 
 ### Integration status
 
@@ -36,11 +65,15 @@ Switch to **Live** in the app header/settings. The regional importer supports th
 | NYC Subway | Working: regular GTFS + all eight public GTFS-RT feeds + official alerts | No key required. Live predictions verified end to end. GPS positions are not invented from arrival times. Regular static schedule omits many temporary changes; fresh live updates/alerts are authoritative. |
 | LIRR | Working: GTFS + public GTFS-RT | No key required. Static import and fresh feed verified. Displays vehicle coordinates only when provided. |
 | Metro-North | Working: GTFS + public GTFS-RT | No key required. Port Jervis and Pascack Valley services require a separate NJ TRANSIT integration and are excluded. |
-| MTA Bus | Six official packages imported as one atomic generation: Manhattan, Bronx, Brooklyn, Queens, Staten Island, MTA Bus Company | Local/SBS/express schedules. Bus Time live predictions still require separate authorization and an adapter; no fake bus positions. Some routes cross boroughs; the borough file name is not a geographic boundary. |
+| MTA Bus | Six official packages imported as one atomic generation, plus authorized Bus Time GTFS-RT trip updates, vehicle positions and alerts | Manhattan, Bronx, Brooklyn, Queens, Staten Island and MTA Bus Company local/SBS/express schedules. Live access requires `MTA_BUS_TIME_API_KEY`; unmatched trips, failed polls and stale observations are not labeled live. Coordinates are never invented. Borough file names are not geographic boundaries. |
 | NICE Bus | Official public static GTFS | Nassau local/express stops and schedules. No unverified live predictions. |
 | Suffolk County Transit | Official public static GTFS | Fixed-route service only; realtime access requires agency approval. |
 | Huntington HART / Long Beach / Glen Cove | Public GTFS distributed through NYSDOT 511NY | Check displayed service windows and seasonal timetables. No unverified live predictions. |
 | Hudson Rail Link / JFK AirTrain | Public GTFS distributed through NYSDOT 511NY | Bronx commuter feeder buses and Queens airport rail connections. Schedules only. |
+| Trans-Bridge Lines | Curated regular and exact November 26–27, 2026 holiday schedules from 15 carrier PDFs | Allentown/Clinton, Doylestown/Flemington, Newark Airport, Wind Creek and Wall Street. Scheduled times only, qualified map locations and source links; exceptions/conflicts below. |
+| Martz | Partial validated public New York timetable | Recurring trip-specific patterns only. Special/ambiguous trips and unverified holidays are withheld. Not complete network or live-vehicle coverage. |
+| NJ TRANSIT 890/891 | Uploaded T1890 weekday local-bus brochure | 29 trip patterns and 16 numbered timepoints, effective July 11, 2026. Not a full NJ TRANSIT integration; weekend and unverified holiday schedules are not supplied. |
+| Other intercity providers | Coverage inventory and official links, with access/verification gaps disclosed | A provider listing or alias does not mean its departures, stops or booking inventory are imported. |
 | Private commuter operators | Coverage gap | Hampton Jitney, Hampton Luxury Liner and other operators without a verified authorized bulk feed are not claimed as complete. Use official operator schedules. Google may return some journeys but does not guarantee coverage. |
 | Ferry / air | Out of scope | Future expansion only. |
 
@@ -59,7 +92,62 @@ The allowlisted endpoints are in `artifacts/api-server/src/transit/adapters.ts`.
 
 Search offers paginated route/stop browsing by operator, mode and local/express class. Stop and route pages have selected-service-date timetables and actual destination/direction patterns; route-only timetables show trips departing their origin. All controls and displayed times use **America/New_York**, including for visitors in other timezones. GTFS departures beyond 24:00 show their following calendar date. Untimed intermediate stops remain in route ordering but never acquire fabricated exact times. A published timetable is not a realtime prediction or a guarantee against disruptions.
 
-MTA data is supplied as-is. Transtop is independent and is not affiliated with, endorsed by or licensed by the MTA. No agency logos, proprietary official maps or MetroCard balance integration are included. Original generic route labels/colors are used for identification; review MTA licensing requirements before public launch.
+MTA data is supplied as-is. Transtop is independent and is not affiliated with or endorsed by the MTA. The supplied historic entry artwork includes MTA/MetroCard imagery; this does not establish agency affiliation or authorization. There is no MetroCard balance integration or fare payment. Review data terms and branding/image rights before public launch.
+
+### Intercity Bus Network
+
+Select/search for a location, choose **Intercity Bus Network**, then filter by provider. Nearby intercity departures use a **3 km** boarding-location radius. Date/time controls, trip-specific subsequent stops, final destinations, boarding notes and official source links are integrated into the shared experience. Named stops without verified coordinates remain in timetable sequences instead of receiving guessed map pins. PDF imports do not invent road geometry or moving vehicles.
+
+The provider inventory audits the supplied Midtown terminal directory, including aliases and operators without usable bulk data. It distinguishes imported, partial, stale, link-only and access-required coverage. A directory listing is not proof of current terminal service; missing imported times do not mean no service operates.
+
+**Martz:** recurring public timetables refresh daily. A validated snapshot is usable for at most 72 hours; stale/changed/unavailable sources cause times to be withheld. Queries are limited to the effective date through the next 30 days. Special/ambiguous rows and unverified holidays are not extrapolated from a generic route.
+
+#### Trans-Bridge regular and holiday schedules
+
+All **15 supplied PDFs** are recorded with official carrier URLs and SHA-256 source hashes:
+
+| Corridor / source | Imported coverage |
+| --- | --- |
+| Allentown–Clinton–New York | Eastbound effective July 10, 2026; westbound June 8, 2026. Weekday, Monday–Thursday, Friday-only and weekend patterns retained. |
+| Doylestown–Flemington–New York | Both directions effective March 9, 2026, with each run's actual intermediate stops. |
+| Newark Airport | To/from-airport sheets effective June 8, 2026, cross-checked against complete corridor timetables; boarding guidance preserved. |
+| Wind Creek | Regular June 8, 2026 and holiday extracts cross-check full-route runs instead of creating duplicate buses. |
+| Wall Street | Both directions from the July 25, 2025 timetable still listed by the carrier at verification; weekday and Monday–Thursday restrictions preserved. |
+| Thanksgiving / Black Friday | Seven dedicated sheets for **November 26 and November 27, 2026**, covering Allentown/Clinton, Doylestown, Newark Airport and Wind Creek. |
+
+There are **75 regular trip patterns, including four Wall Street patterns, plus 22 holiday replacement patterns**. These are calendar-specific patterns, not 97 daily departures. Airport/casino extracts do not add duplicate physical buses.
+
+**Holiday overrides:** the supplied November 26–27 timetables replace regular Trans-Bridge service on those exact dates. **There is no Wall Street service eastbound or westbound on Thanksgiving, Thursday November 26, or Black Friday, Friday November 27, 2026.** Other corridors retain their verified holiday runs. These exceptions do not extend to other years/holidays; unverified holidays are withheld rather than assigned normal weekday clocks.
+
+**Stop locations and restrictions:**
+
+- Individual runs retain published PABT lower-level South Wing gates; confirm current gates before boarding.
+- Newark guidance includes Terminal A's lower-level Zone 16 and the carrier's Terminal B/C timing offsets. Airport coordinates are orientation points, not exact boarding poles for every terminal.
+- Wind Creek boarding is in the designated parking-garage bus lanes.
+- Flemington uses the current **80 Park Avenue** address, not the outdated destination in the older carrier map link.
+- Notes distinguish operator-linked places, address-level geocodes and terminal/area orientation points. Unverified street-level pins remain absent.
+- Arrival-only and `D` discharge stops never become boarding predictions. Untimed intermediate stops remain in sequence without fabricated times.
+- `R` cruise-terminal service requires reservation; no unprinted clock time is supplied. Run 128's untimed Allentown extension appears only for Newark Airport passengers.
+- After-midnight times retain the originating service day and show the following calendar date in `America/New_York`.
+
+**Known source conflicts:** the July main timetable supersedes the older airport extract's Friday Allentown/Bethlehem pickups for run 181. Weekend westbound run **214** has conflicting Hellertown, Wescosville and Allentown onward times between sheets; those three public clocks are withheld pending carrier confirmation, while verified boarding and other matched times remain available.
+
+These are **published schedules, not live Trans-Bridge predictions**. The curated PDF snapshot ships with the API and is not automatically replaced by the GTFS job. Review/re-import changed carrier documents before updating it; check the carrier for disruptions and gate changes.
+
+Official sources: [regular schedules](https://transbridgelines.com/schedules-stops/schedules), [holiday schedules](https://transbridgelines.com/schedules-stops/holiday-schedules), [bus stops](https://transbridgelines.com/schedules-stops/bus-stops), [Newark Airport](https://transbridgelines.com/schedules-stops/newark-airport-service), [Wind Creek](https://transbridgelines.com/schedules-stops/wind-creek-bethlehem-casino), and [cruise-terminal reservations](https://transbridgelines.com/schedules-stops/pier-transportation).
+
+#### NJ TRANSIT local routes 890/891
+
+The supplied T1890 brochure adds **29 weekday trips across 16 numbered timepoints**, preserving short workings, blank cells, noon rollovers and directional stop order. Source notes include the July 1, 2026 fares, lift-equipped information, school restrictions and flex-service reservation instructions. Published fares are historical to that source date, not live fare quotes.
+
+These routes use ordinary **bus** mode and the NJ TRANSIT agency filter, not the Intercity Bus Network. Only verified timepoint coordinates are mapped; all named timepoints remain selectable in route timetables. Other NJ TRANSIT routes, weekend clocks and unverified holiday departures are not claimed.
+
+Useful API entry points:
+
+- `GET /api/transit/intercity/providers` — provider inventory and coverage/source status.
+- `GET /api/transit/intercity/departures?lat=40.7569&lon=-73.9910&provider=transbridge&date=2026-11-26` — location/provider/date-filtered scheduled departures.
+- `GET /api/transit/timetable?mode=live&routeId=transbridge%3Aallentown-west&date=2026-11-26` — shared selected-date timetable.
+- Shared `/api/transit/stops`, `/api/transit/routes/:id` and `/api/transit/network` also include eligible imported stops/routes.
 
 ## Arrival selection and timestamps
 
@@ -112,6 +200,8 @@ Use an **always-running server** for predictable polling and retention. The API 
 - Retention cleanup every minute and on startup.
 - With `TRANSIT_AUTO_IMPORT=true`, missing/stale static datasets are refreshed on startup and daily, using a shared advisory lock with the CLI. Successful imports younger than 22 hours are skipped. Independent agency failures preserve the last successful generation and do not stop the other agencies. Without this opt-in, run the CLI explicitly.
 
+Intercity sources have separate update rules: Martz refreshes daily when its public source validates; Trans-Bridge and NJ TRANSIT brochure tables are curated snapshots shipped with the code. Updating development code/data does not update an already published app until the update is published.
+
 Static imports stage a full generation in separate mode keys, then swap atomically. A failed import leaves the previous complete live dataset intact. The import CLI supports only registry-approved agencies and endpoints, not arbitrary user URLs.
 
 Production should have a single poller/worker owner. Multiple independently polling instances will multiply upstream traffic; move jobs to a dedicated worker and add distributed locks/queues and shared rate limits before scaling. Database snapshots persist source observations; the runtime's prediction cache warms on its first poll.
@@ -152,9 +242,34 @@ The web app includes a PWA manifest and original icon. Its production service wo
 
 - `artifacts/transtop`: responsive React app, Google Maps, favorites, consent and foreground geolocation.
 - `artifacts/api-server/src/transit`: adapters, GTFS importer, realtime polling, schedule fallback, estimation, ingestion and jobs.
+- `artifacts/api-server/src/transit/bus-time.ts`: credential-safe MTA Bus Time requests and static/realtime trip identity matching.
+- `artifacts/api-server/src/transit/intercity`: provider inventory, Martz validation, Trans-Bridge source tables/stop registry, and shared uploaded timetable services.
+- `.agents/scripts/import_transbridge.py`: reproducible positional PDF extraction for the 15 supplied Trans-Bridge documents. Requires development-only PyMuPDF; serving normalized data does not require Python/PDF parsing.
+- `artifacts/api-server/tests`: intercity, uploaded timetable, Trans-Bridge and GTFS import/performance checks.
+- `artifacts/transtop/tests`: Live-only behavior and map lifecycle regressions.
 - `lib/api-spec/openapi.yaml`: request/response contract; regenerate clients with `pnpm --filter @workspace/api-spec run codegen` after edits.
 - `lib/db`: PostgreSQL/Drizzle schema and migration.
 
+## Verification
+
+```sh
+# Repository-wide types
+pnpm run typecheck
+
+# Calendar, source validation, rollover, boarding and holiday regression tests
+pnpm --filter @workspace/api-server exec tsx --test tests/intercity.test.ts tests/uploaded-schedules.test.ts tests/transbridge.test.ts
+
+# Existing schedule/network/geometry backend tests
+pnpm --filter @workspace/api-server exec tsx --test src/transit/*.test.ts
+
+# Rider Live-only behavior and Google map lifecycle tests
+pnpm --filter @workspace/transtop test
+```
+
+The Trans-Bridge update passed the **17 combined intercity/uploaded-schedule tests**, backend/frontend typechecks, frontend production build and running API checks. Checks cover the two exact holiday replacements, Wall Street closure, duplicate prevention, Friday/weekend restrictions, after-midnight dates, source conflicts, conditional/drop-off stops and verified locations. This records that update's verification, not a claim that every suite was rerun for this documentation edit or that production is continuously healthy.
+
+See [transit import operations](docs/transit-imports.md) for database import tests, isolated performance checks, cleanup and rollback requirements. API tests do not replace browser checks for real Google tiles, swipe gestures, geolocation permissions or offline recovery.
+
 ## Remaining release work
 
-Live bus adapter and authorized access; private-operator coverage agreements; reliable live-trip association where static/realtime IDs differ; calibrated segment/dwell history; aggregated rider-report/crowding publication; stronger independent-contributor verification and abuse controls; multi-instance workers; production Google billing/key/domain configuration; broader automated regression coverage for stale fallback, permission denial, expiry, ingestion races, outliers and demo/live isolation. These are documented limitations, not silently simulated features.
+Private-operator coverage agreements and remaining link-only intercity sources; additional verified street-level/timepoint coordinates; carrier resolution of conflicting Trans-Bridge clocks and future holiday documents; reliable live-trip association where static/realtime IDs differ; calibrated segment/dwell history; aggregated rider-report/crowding publication; stronger contributor verification and abuse controls; multi-instance workers; runtime feed health and production Google billing/key/domain configuration; broader end-to-end regression coverage for stale fallback, permission denial, expiry, ingestion races, outliers and mode isolation. Google journey planning remains deferred until separately approved and authorized. These are documented limitations, not silently simulated features.
