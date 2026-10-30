@@ -3,9 +3,11 @@ import { loadGoogleMaps } from '@/lib/google-maps';
 import { SchematicMap } from './schematic-map';
 import { MODE_COLOR } from './transit';
 import { DARK_ROADMAP } from '@/lib/map-style';
+import { useLocation } from 'wouter';
+import { vehicleFresh } from '@/lib/vehicle-visibility';
 
 export type MapStop = { id: string; name: string; lat: number; lon: number; type: string; color?: string; label?: boolean; routes?: {id:string;name:string;color:string}[] };
-export type MapVehicle = { id: string; lat: number; lon: number; source: string; updatedAt?: string; color?: string; routeId?: string; routeName?: string };
+export type MapVehicle = { id: string; lat: number; lon: number; source: string; updatedAt?: string; color?: string; routeId?: string; routeName?: string;agencyId?:string;trainNumber?:string;destination?:string;runId?:string;expiresAt?:string };
 export type MapLine = { id: string; name: string; color: string; coords: number[][]; shapeId?: string; type?: string; agency?: string };
 export type MapBounds = { west: number; south: number; east: number; north: number };
 export type MapViewport = MapBounds & { zoom: number };
@@ -59,6 +61,7 @@ function installAuthHook() {
 }
 
 export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehicles = [], network, onRoute, zoom = 14.5, className, label = 'Transit map', googleOnly = false, onViewport, fitBounds, fitKey, labelStops = false }: Props) {
+  const [,navigate]=useLocation();
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
   const libraries = useRef<Awaited<ReturnType<typeof loadGoogleMaps>> | null>(null);
@@ -74,8 +77,7 @@ export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehi
   }, [vehicles.length]);
   const visibleVehicles = useMemo(() => vehicles.filter(v => {
     if (vehicleKind(v.source) === 'demo') return false;
-    const age = v.updatedAt ? clock - new Date(v.updatedAt).getTime() : Infinity;
-    return vehicleKind(v.source) !== 'official' || Number.isFinite(age) && age <= 60000 && age >= -30000;
+    return vehicleKind(v.source) !== 'official' || vehicleFresh(v,clock);
   }), [vehicles, clock]);
   const failed = failure !== null;
   const callbacks = useRef({ onSelect, onRoute, onViewport });
@@ -254,11 +256,11 @@ export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehi
     }
     for (const v of visibleVehicles) {
       const kind = vehicleKind(v.source), color = v.color ?? '#f4f1ea';
-      const age = v.updatedAt ? Date.now() - new Date(v.updatedAt).getTime() : Infinity;
-      if (kind === 'official' && (!Number.isFinite(age) || age > 60000 || age < -30000)) continue;
-      const title = `${v.routeName ? `Route ${v.routeName} vehicle` : 'Vehicle'} · ${sourceText(v.source)} · ${agoText(v.updatedAt)}`;
+      if (kind === 'official' && !vehicleFresh(v)) continue;
+      const title = `${v.trainNumber?`Train ${v.trainNumber} · ${v.routeName} · to ${v.destination}`:v.routeName ? `Route ${v.routeName} vehicle` : 'Vehicle'} · ${sourceText(v.source)} · ${agoText(v.updatedAt)}`;
       const marker = new Marker({ map: m, position: { lat: v.lat, lng: v.lon }, title, zIndex: 40,
-        icon: { path: kind === 'community' ? google.maps.SymbolPath.CIRCLE : 'M 0,-8 8,0 0,8 -8,0 z',
+        ...(v.trainNumber?{label:{text:v.trainNumber,color:'#111',fontSize:'11px',fontWeight:'bold'}}:{}),
+        icon: { path: kind === 'community' ? google.maps.SymbolPath.CIRCLE : v.trainNumber?'M -16,-12 16,-12 16,12 -16,12 z':'M 0,-8 8,0 0,8 -8,0 z',
           scale: kind === 'community' ? 14 : 1, fillColor: color, fillOpacity: kind === 'community' ? .15 : 1,
           strokeColor: kind === 'community' ? '#5cc2f2' : '#fff', strokeWeight: 2 } });
       listeners.push(marker.addListener('click', () => {
@@ -267,6 +269,11 @@ export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehi
         const text = document.createElement('p');
         text.textContent = title;
         content.append(text);
+        if(v.runId){
+          const button=document.createElement('button');button.type='button';button.textContent='View train and ordered stops';
+          button.style.cssText='text-decoration:underline;padding:8px 0;cursor:pointer';
+          button.onclick=()=>navigate(`/trains/${encodeURIComponent(v.runId!)}`);content.append(button);
+        }
         if (v.routeId) {
           const button = document.createElement('button');
           button.type = 'button';
@@ -293,6 +300,8 @@ export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehi
         <div ref={el} className={failed ? 'invisible h-full w-full' : 'h-full w-full'} />
         {failed && !googleOnly && <div className="absolute inset-0"><SchematicMap center={center} stops={stops} activeId={activeId} onSelect={onSelect} shape={shape} vehicles={visibleVehicles} network={network} onRoute={onRoute} className="h-full w-full" label={label} /></div>}
         {!tilesReady && !failed && <div className="pointer-events-none absolute left-3 top-3 rounded-lg bg-[#151515]/95 p-3 text-sm text-white" role="status">Loading Google map tiles…</div>}
+        {(vehicles.some(v=>v.agencyId==='amtrak')||network?.some(l=>l.id.startsWith('amtrak:')))&&
+          <a href="https://amtraker.com" target="_blank" rel="noreferrer" className="absolute bottom-8 right-2 z-10 rounded bg-black/85 px-2 py-1 text-[10px] text-white underline">Train reports © Amtraker · ODC-By</a>}
       </div>
       {failed && <div className="relative z-10 max-h-[60%] shrink-0 overflow-y-auto rounded-lg border border-white/20 bg-black p-3 text-xs text-white" role="alert">
         <p className="break-words">{failure} {googleOnly ? '' : 'Schematic only — not the Google basemap. Lists and schedules remain available.'}</p>

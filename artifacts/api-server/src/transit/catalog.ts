@@ -8,6 +8,7 @@ import { GetCatalogQueryParams, GetTimetableQueryParams } from "@workspace/api-z
 import type { z } from "zod";
 import { stopTimesMode } from "./generations";
 import { intercityCatalog, intercityTimetable } from "./intercity/service";
+import { scheduledRunId } from "./amtrak-service";
 type CatalogParams=z.infer<typeof GetCatalogQueryParams>;
 type TimetableParams=z.infer<typeof GetTimetableQueryParams>;
 
@@ -76,16 +77,23 @@ export async function timetable(p:TimetableParams) {
     JOIN transit_routes r ON r.mode=t.mode AND r.id=(t.agency||':'||(t.data->>'route_id'))
     LEFT JOIN transit_calendars c ON c.mode=t.mode AND c.id=(t.agency||':'||(t.data->>'service_id'))
     WHERE t.mode='live' AND t.agency=$1 AND ($2::text IS NULL OR t.data->>'route_id'=$2)
-      AND st.departure_seconds>=0`,
+      AND st.departure_seconds>=0 AND ($1<>'amtrak' OR (COALESCE(st.data->>'pickup_type','0')<>'1'
+        AND st.sequence < (SELECT max(last_call.sequence) FROM transit_stop_times last_call
+          WHERE last_call.mode=st.mode AND last_call.trip_id=st.trip_id)))`,
     ids?[agency,rawRoute,ids]:[agency,rawRoute]);
   const {rows:ex}=await pool.query("SELECT data FROM transit_calendar_exceptions WHERE mode='live' AND agency=$1 AND data->>'date'=$2",[agency,serviceDate]);
   const exceptions=new Map<string,Record<string,string>[]>();
   for(const {data} of ex){const arr=exceptions.get(data.service_id)||[];arr.push(data);exceptions.set(data.service_id,arr);}
-  const fromAt=date.set({hour:Number(from.slice(0,2)),minute:Number(from.slice(3))}).toMillis();
+  const fromAt=agency==="amtrak"?serviceInstant(serviceDate,Number(from.slice(0,2))*3600+Number(from.slice(3))*60,ZONE):
+    date.set({hour:Number(from.slice(0,2)),minute:Number(from.slice(3))}).toMillis();
   const departures=rows.filter(row=>matchesPattern(row.trip,p.direction)&&activeService(row.calendar,exceptions.get(row.trip.service_id)||[],serviceDate))
     .map(row=>({id:`${row.trip_id}:${serviceDate}:${row.timing.stop_sequence}`,tripId:row.trip_id,stopId:row.stop.id,stopName:row.stop.name,
       routeId:row.route.id,routeName:row.route.name,destination:row.trip.trip_headsign||"See route direction",direction:patternLabel(row.trip),
-      time:new Date(serviceInstant(serviceDate,row.departure_seconds)).toISOString()}))
-    .filter(row=>Date.parse(row.time)>=fromAt).sort((a,b)=>Date.parse(a.time)-Date.parse(b.time)||a.tripId.localeCompare(b.tripId));
-  return {...empty,departures:departures.slice(offset,offset+limit),total:departures.length};
+      time:new Date(serviceInstant(serviceDate,row.departure_seconds,row.trip.agency_timezone||ZONE)).toISOString(),
+      ...(agency==="amtrak"?{trainNumber:row.trip.trip_short_name,timezone:row.stop.stop_timezone||row.trip.agency_timezone,
+        runId:scheduledRunId(row.trip_id,serviceDate)}:{})}))
+    .filter(row=>Date.parse(row.time)>=fromAt)
+    .sort((a,b)=>Date.parse(a.time)-Date.parse(b.time)||a.tripId.localeCompare(b.tripId));
+  return {...empty,departures:departures.slice(offset,offset+limit),total:departures.length,
+    ...(agency==="amtrak"?{message:"Published Amtrak service-day timetable. Date and From use the agency timezone America/New_York; departures display in each station's local timezone with the local date. At western stations a service day's departures can fall on the preceding local date; multi-day runs can depart on later dates. Not live predictions. Shared-operator portions, Thruway buses and other agencies are excluded."}:{})};
 }

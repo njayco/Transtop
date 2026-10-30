@@ -40,7 +40,7 @@ async function importLocked(agency:string) {
     data:{kind:"gtfs-generation",stage}});
   try {
   for(const feed of a.staticFeeds||[{id:agency,url:a.staticUrl}]){
-  const selection=new GtfsSelection(a.staticAgencyIds);
+  const selection=new GtfsSelection(a.staticAgencyIds,a.staticRouteTypes);
   const scope=(id:string)=>a.staticFeeds?`${feed.id}~${id}`:id;
   const response=await fetch(feed.url,{signal:AbortSignal.timeout(120000),redirect:"error"});
   if(!response.ok)throw new Error(`GTFS download returned ${response.status}`);
@@ -55,11 +55,16 @@ async function importLocked(agency:string) {
   const zip=await Open.buffer(bytes);
   const file=(n:string)=>zip.files.find(f=>f.path===`${n}.txt`);
   if(!file("stops")||!file("routes")||!file("trips")||!file("stop_times"))throw new Error("Required GTFS files missing");
-  const tripRoute=new Map<string,string>(), shapeMap=new Map<string,number[][]>(),agencyNames=new Map<string,string>();
+   const tripRoute=new Map<string,string>(), shapeMap=new Map<string,number[][]>(),agencyNames=new Map<string,string>(),agencyZones=new Map<string,string>(),routeZones=new Map<string,string>();
+   let maxDepartureSeconds=0;
   let serviceStart="",serviceEnd="";
+  const feedInfo:Record<string,string>[]=[];
+  const infoEntry=file("feed_info");
+  if(infoEntry)for await(const row of infoEntry.stream().pipe(parse({columns:true,bom:true,skip_empty_lines:true})))feedInfo.push(row);
   const agencyEntry=file("agency");
   if(agencyEntry)for await(const row of agencyEntry.stream().pipe(parse({columns:true,bom:true,skip_empty_lines:true}))){
     agencyNames.set(row.agency_id||"",row.agency_name||a.name);
+     agencyZones.set(row.agency_id||"",row.agency_timezone);
   }
     const specs:[string,any,(r:Record<string,string>)=>string][]=[
       ["agency",agencies,r=>r.agency_id||agency],["routes",routes,r=>r.route_id],["trips",trips,r=>r.trip_id],
@@ -91,13 +96,15 @@ async function importLocked(agency:string) {
            }
          }
         if(name==="routes") {
+            routeZones.set(r.route_id,agencyZones.get(r.agency_id||"")||"America/New_York");
            const name=a.routeName||r.route_short_name||r.route_long_name;
            const express=a.type==="bus"&&isExpressRoute(agency,name,`${r.route_long_name} ${r.route_desc}`);
            const rr:TransitRoute={id:`${agency}:${r.route_id}`,name,longName:a.routeName||r.route_long_name||name,color:"#"+(r.route_color||"468AC4"),type:a.type,agency:agencyNames.get(r.agency_id||"")||a.name,agencyId:agency,serviceClass:express?"express":"local"};
           allRoutes.set(r.route_id,rr);
         }
-        if(name==="trips")tripRoute.set(r.trip_id,r.route_id);
+         if(name==="trips"){tripRoute.set(r.trip_id,r.route_id);r.agency_timezone=routeZones.get(r.route_id)||"America/New_York";}
         if(name==="stop_times"){
+           if(r.departure_time)maxDepartureSeconds=Math.max(maxDepartureSeconds,gtfsSeconds(r.departure_time));
           const rid=tripRoute.get(r.trip_id);
           if(rid){if(!routeStops.has(r.stop_id))routeStops.set(r.stop_id,new Set());routeStops.get(r.stop_id)!.add(rid);}
            // Retain untimed intermediate stops for complete route ordering,
@@ -120,7 +127,7 @@ async function importLocked(agency:string) {
       allStops.set(r.stop_id,r);
     }
     selection.retainStops(allStops);
-    components.push({id:feed.id,url:feed.url,serviceStart,serviceEnd});
+  components.push({id:feed.id,url:feed.url,serviceStart,serviceEnd,...{maxDepartureSeconds,feedInfo}});
     const shapeEntry=file("shapes");
     if(shapeEntry) {
       const shapeParser=shapeEntry.stream().pipe(parse({columns:true,bom:true,skip_empty_lines:true}));

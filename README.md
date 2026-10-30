@@ -19,6 +19,30 @@ Existing features include device-local stop/route favorites, selected-date timet
 
 ## Daily GTFS refresh operations
 
+### Amtrak schedules and tracking
+
+Amtrak is integrated with existing rail/operator browsing, not a separate hub.
+Import its national rail schedules with
+`pnpm --filter @workspace/api-server run import-gtfs amtrak`; the existing
+`TRANSIT_AUTO_IMPORT=true` lifecycle also refreshes them. Agency 51 train routes
+are isolated from Shore Line East agency 1230 and non-rail/shared-operator services.
+
+Train reports are supplied by [Amtraker](https://amtraker.com), using upstream
+Amtrak observations, under [ODC-By 1.0](https://opendatacommons.org/licenses/by/1-0/).
+API documentation: [Amtraker](https://github.com/piemadd/amtrak).
+Transtop uses its offered JSON API, not direct Amtrak endpoint decryption.
+Prominent app/map attribution is required; source credit must not be hidden in
+Settings alone. No Amtraker library code is copied.
+
+Tracking is cached server-side and checked every minute with timeout/backoff.
+Reports expire five minutes after the source observation time. Missing, failed,
+stale or ambiguous observations never become live predictions or invented route
+associations. Selecting a numbered train opens its dated ordered station calls.
+Date-selectable timetables use GTFS service dates, with departures shown in
+station-local timezones. Thruway, charter, MARC, VIA-only service, Shore Line East
+and other agencies' shared-route portions are excluded from this Amtrak catalog.
+See [access decisions, operation and limitations](docs/amtrak-access.md).
+
 See [transit import performance and rollback](docs/transit-imports.md) for the
 generation-based publication strategy, isolated benchmarks, cleanup limits, and
 the required compatibility step before reverting to older schedule readers.

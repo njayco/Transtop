@@ -20,3 +20,36 @@ For printed timetables, omit ambiguous footnotes, continuation destinations, unc
 **Why:** Official Martz pages contain special trips, downtown continuation notes, weekday boarding relocations and a Sunday overnight meridiem inconsistency. A generic route pattern would give riders the wrong remaining stops.
 
 **How to apply:** Normalize actual trip-specific timepoints, preserve the service day across midnight, reject ambiguous DST clocks and show coverage gaps explicitly.
+
+Establish data-use authorization separately from an adapter's software license
+before enabling a new operator's collection or redistribution.
+
+**Why:** Amtrak's website terms reviewed October 30, 2026 restrict automated
+retrieval and redistribution; the uploaded adapter's ISC declaration does not
+authorize upstream data use. No separate applicable permission was established.
+
+**How to apply:** Check current source-specific terms or written authorization,
+separately for schedules and tracking. Do not infer permission from HTTP success,
+third-party catalog listings or approval for another operator in a shared archive.
+See `docs/amtrak-access.md` for the access prerequisite and sources.
+
+Distinguish public-record access and reuse of factual timetables from recurring
+access to undocumented tracking services.
+
+**Why:** The user pointed to 49 CFR Part 701; § 701.1 explicitly permits obtaining
+public train timetables without a FOIA request, but does not expressly address
+automated tracking polling. Treating these as identical overstates the blocker.
+
+**How to apply:** Assess schedule and tracking access independently. Do not claim
+that FOIA provides a blanket API license or that website terms conclusively
+prohibit using timetable facts.
+
+Amtraker offers its API data for reuse under its own published terms; distinguish
+that from permission to collect directly from Amtrak.
+
+**Why:** Its provider documentation explicitly publishes an ODC-By data license,
+an identifying User-Agent requirement and visible app/map attribution guidance.
+That changes the available source options, not the original endpoint's status.
+
+**How to apply:** Recheck current provider terms before activation, obtain approval
+for the source change, and keep tracking snapshots separate from full timetables.

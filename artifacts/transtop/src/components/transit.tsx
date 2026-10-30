@@ -4,6 +4,7 @@ import type { Alert, Arrival, Stop } from '@workspace/api-client-react';
 import { SOURCE_LABEL, ago, arrivalText, distance, severityTone, statusTone, textOn } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { honest, usePrefs } from '@/lib/prefs';
+import { useFreshArrivals } from '@/lib/amtrak-arrivals';
 
 export const MODE_COLOR: Record<string, string> = { subway: '#2fb36b', bus: '#e5a823', rail: '#a33a62', intercity: '#e0662f' };
 export const MODE_NAME: Record<string, string> = { subway: 'Subway', bus: 'Bus', rail: 'Commuter Rail', intercity: 'Intercity Bus Network' };
@@ -93,7 +94,7 @@ export function AlertRow({ alert }: { alert: Alert }) {
 
 export function StopCard({ stop, active, onHover, index = 0 }: { stop: Stop; active?: boolean; onHover?: (id: string | null) => void; index?: number }) {
   const { mode, isFavStop, toggleStop } = usePrefs();
-  const arrivals = honest(stop.arrivals, mode).slice(0, 3);
+  const arrivals = honest(useFreshArrivals(stop.arrivals), mode).slice(0, 3);
   const updated = arrivals[0]?.updatedAt ?? stop.updatedAt;
   const sources = Array.from(new Set(arrivals.map((a) => a.source)));
   return (

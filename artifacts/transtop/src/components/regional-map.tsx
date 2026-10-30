@@ -9,6 +9,7 @@ import { TransitMap, vehicleKind } from '@/components/transit-map';
 import { MODE_COLOR, MODE_NAME, RouteBadge } from '@/components/transit';
 import { usePrefs } from '@/lib/prefs';
 import { cn } from '@/lib/utils';
+import { amtrakVisible } from '@/lib/vehicle-visibility';
 
 export const REGION_BOUNDS = { west: -74.27, south: 40.48, east: -71.75, north: 42.15 };
 const REGION_CENTER = { lat: 41.32, lon: -73.01 };
@@ -73,8 +74,9 @@ export function RegionalMap({ onClose }: { onClose?: () => void }) {
     label: vp.zoom >= 15, routes: s.routes.map((r) => ({ id: r.id, name: r.name, color: r.color })),
   })), [shownStops, vp.zoom]);
   const vehicles = useMemo(() => (veh.data ?? [])
-    .filter((v) => routeIndex.has(v.routeId) && vehicleKind(v.source) !== 'demo')
-    .map((v) => { const r = routeIndex.get(v.routeId)!; return { ...v, color: r.color, routeName: r.name }; }), [veh.data, routeIndex]);
+    .filter((v) => vehicleKind(v.source) !== 'demo'&&(v.agencyId==='amtrak'?
+      modes.has('rail')&&amtrakVisible(v,{...vp,agency,serviceClass:svc,routeId:selLine||undefined}):routeIndex.has(v.routeId||'')))
+    .map((v) => { const r = routeIndex.get(v.routeId||''); return { ...v, color: r?.color||'#CAE4F1', routeName: r?.name||v.routeName }; }), [veh.data, routeIndex,modes,vp,agency,svc,selLine]);
 
   const line = selLine ? routeIndex.get(selLine) ?? (data?.lines.find((l) => l.route.id === selLine)?.route) : undefined;
   const stop = selStop ? shownStops.find((s) => s.id === selStop) : undefined;

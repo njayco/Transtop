@@ -5,12 +5,17 @@ export interface AgencyAdapter {
   documentation:string; status:string; setup:string;
   staticFeeds?:{id:string;url:string}[];
   staticAgencyIds?:string[];
+  staticRouteTypes?:string[];
   routeName?:string;
 }
 const rt="https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/";
 // Allowlist verified against https://www.mta.info/developers and the linked
 // official realtime catalog on 2026-10-29. No caller-supplied fetch URLs.
 export const adapters:AgencyAdapter[]=[
+  {id:"amtrak",name:"Amtrak",type:"rail",staticUrl:"https://content.amtrak.com/content/gtfs/GTFS.zip",
+    staticAgencyIds:["51"],staticRouteTypes:["2"],realtimeUrls:[],
+    documentation:"https://github.com/piemadd/amtrak",status:"scheduled only",
+    setup:"Published Amtrak agency 51 rail schedules. Tracking supplied by Amtraker (unofficial), upstream Amtrak observations, under ODC-By 1.0; no affiliation or uninterrupted access guarantee. Only fresh source timestamps qualify as live. Thruway buses, charters, MARC, VIA-only services and Shore Line East are excluded. Shared-operator route portions owned by other agencies (including the VIA portion of Maple Leaf) are not included. Missing tracking or ambiguous trip matches remain scheduled/unresolved. https://amtraker.com"},
   {id:"mta-subway",name:"MTA New York City Transit",type:"subway",staticUrl:"https://rrgtfsfeeds.s3.amazonaws.com/gtfs_subway.zip",
     realtimeUrls:["gtfs","gtfs-ace","gtfs-bdfm","gtfs-g","gtfs-jz","gtfs-l","gtfs-nqrw","gtfs-si"].map(f=>rt+"nyct%2F"+f),
     documentation:"https://www.mta.info/developers",status:"configured",setup:"Public GTFS and GTFS-Realtime, no API key required. Data downloaded and redistributed by Transtop. Subway predictions do not imply GPS vehicle positions."},

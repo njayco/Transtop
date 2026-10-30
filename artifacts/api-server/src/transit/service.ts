@@ -15,6 +15,8 @@ import { stopTimesMode } from "./generations";
 import { tripIdentity } from "./bus-time";
 import { intercityCatalog, intercityArrivals, intercityRoute, intercityProviders } from "./intercity/service";
 import { documentArrivals,documentRoute,isDocumentId } from "./intercity/uploaded-service";
+import { amtrakArrivals } from "./amtrak-service";
+import { amtrakHealth } from "./amtrak-live";
 
 let stopCache:{at:number;demo:TransitStop[];live:TransitStop[]}|undefined;
 export async function allStops(mode:Mode) {
@@ -56,6 +58,7 @@ export function officialArrivals(stop:TransitStop,now=Date.now()) {
 }
 export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<TransitStop> {
   if(mode==="demo")return demoArrivals(stop);
+  if(stop.id.startsWith("amtrak:"))return {...stop,arrivals:await amtrakArrivals(stop)};
   if(isDocumentId(stop.id))return {...stop,arrivals:documentArrivals(stop)};
   if(stop.type==="intercity")return {...stop,arrivals:await intercityArrivals(stop)};
   const {arrivals:official,excluded}=officialArrivals(stop);
@@ -161,17 +164,20 @@ export async function sources() {
   const result=adapters.map(a=>{
     const imp=imports.find(i=>i.id===`${a.id}:static`),health=feedStatus(a.id),data=imp?.data;
     const lastError=imports.find(i=>i.id===`${a.id}:import-error`);
-    const status=!imp?(a.staticUrl?"not imported":a.status):data?.serviceEnd&&data.serviceEnd<today?"expired schedules":
+     const amtrak=a.id==="amtrak"?amtrakHealth():undefined;
+     const status=!imp?(a.staticUrl?"not imported":a.status):data?.serviceEnd&&data.serviceEnd<today?"expired schedules":
       data?.components?.some((c:any)=>c.serviceEnd<today)?"partial schedules":
-      data?.serviceStart&&data.serviceStart>today?"future schedules":health.fresh?"schedules + live predictions":"scheduled only";
+       data?.serviceStart&&data.serviceStart>today?"future schedules":amtrak?.fresh?"schedules + live train reports":
+        health.fresh?"schedules + live predictions":"scheduled only";
     const failed=lastError&&(!data||lastError.data.at>data.importedAt)?lastError.data.message:undefined;
     return {id:a.id,agency:a.name,type:a.type,status,description:a.setup+
       (a.id==="mta-bus"&&!process.env.MTA_BUS_TIME_API_KEY?" Live Bus Time credentials are not configured.":"")+
+       (amtrak?` ${amtrak.fresh} fresh train reports; ${amtrak.unresolved} unresolved identities. Tracking checked ${amtrak.checkedAt||"not yet"}. Unresolved trains never replace schedules.`:"")+
       (data&&data.components?.length>1?` Packages: ${data.components.map((c:any)=>`${c.id} (${c.serviceStart}–${c.serviceEnd})`).join(", ")}.`:"")+
-      (imp?` ${health.fresh}/${health.total} fresh live feeds.`:""),
+       (imp&&!amtrak?` ${health.fresh}/${health.total} fresh live feeds.`:""),
       routeCount:counts.find(c=>c.agency===a.id&&c.kind==="routes")?.count||0,stopCount:counts.find(c=>c.agency===a.id&&c.kind==="stops")?.count||0,
-      importedAt:data?.importedAt,serviceStart:data?.serviceStart,serviceEnd:data?.serviceEnd,sourceUrl:data?.sourceUrl,lastError:failed,
-      url:a.documentation,updatedAt:health.updatedAt||data?.importedAt||null};
+       importedAt:data?.importedAt,serviceStart:data?.serviceStart,serviceEnd:data?.serviceEnd,sourceUrl:data?.sourceUrl,lastError:failed||amtrak?.error,
+       url:a.documentation,updatedAt:amtrak?.updatedAt||health.updatedAt||data?.importedAt||null};
   });
   const google=journeyHealth();
   const intercity=(await intercityProviders()).map(p=>({id:p.id,agency:p.name,type:p.id==="nj-transit"?"bus":"intercity",status:p.status,

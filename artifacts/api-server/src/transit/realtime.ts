@@ -6,6 +6,8 @@ import type { TransitAlert } from "./types";
 import { busRequestUrl, matchBusTrips } from "./bus-time";
 import { officialAlert } from "./official-alert";
 import { normalizeCtRealtime } from "./ct-realtime";
+import { amtrakPositions } from "./amtrak-live";
+import type { TransitVehicle } from "./types";
 export interface LiveFeed { timestamp:number; fetchedAt:number; entities:any[]; error?:string }
 const cache=new Map<string,LiveFeed>(), inflight=new Map<string,Promise<void>>();
 export const FRESH_MS=60_000;
@@ -51,7 +53,7 @@ export function feedStatus(agency:string) {
 export function freshVehicle(timestamp: number, now = Date.now()) {
   return Number.isFinite(timestamp) && timestamp > 0 && now - timestamp * 1000 <= FRESH_MS && timestamp * 1000 <= now + 30000;
 }
-export function mapVehicles(mode: "live" | "demo" = "live") {
+export function mapVehicles(mode: "live" | "demo" = "live"):TransitVehicle[] {
   if (mode === "demo") return [];
   const vehicles = new Map<string, { id: string; routeId: string; lat: number; lon: number; source: string; updatedAt: string }>();
   for (const agency of adapters) for (const f of feedsFor(agency.id)) {
@@ -67,7 +69,7 @@ export function mapVehicles(mode: "live" | "demo" = "live") {
       if (!vehicles.has(id) || vehicles.get(id)!.updatedAt < item.updatedAt) vehicles.set(id, item);
     }
   }
-  return [...vehicles.values()];
+   return [...vehicles.values(),...amtrakPositions()];
 }
 export function liveAlerts():TransitAlert[] {
   const feeds=[{feed:cache.get(alertUrl),agency:undefined as string|undefined},

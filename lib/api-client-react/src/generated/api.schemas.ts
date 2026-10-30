@@ -114,6 +114,13 @@ export interface Arrival {
   tripId?: string;
   rangeMax?: number;
   confidence?: string;
+  trainNumber?: string;
+  runId?: string;
+  timezone?: string;
+  /** Original scheduled departure instant for client fallback */
+  publishedAt?: string;
+  /** Prediction expiry based on source observation time */
+  expiresAt?: string;
 }
 
 export interface Alert {
@@ -167,6 +174,13 @@ export interface Vehicle {
   lon: number;
   source: string;
   updatedAt: string;
+  routeId?: string;
+  agencyId?: string;
+  routeName?: string;
+  trainNumber?: string;
+  destination?: string;
+  runId?: string;
+  expiresAt?: string;
 }
 
 export interface NetworkLine {
@@ -177,7 +191,7 @@ export interface NetworkLine {
 }
 
 export type MapVehicle = Vehicle & {
-  routeId: string;
+  routeId?: string;
 };
 
 export interface MapStop {
@@ -249,6 +263,53 @@ export interface TimetableDeparture {
   destination: string;
   direction: string;
   time: string;
+  trainNumber?: string;
+  runId?: string;
+  timezone?: string;
+}
+
+export interface TrainCall {
+  code: string;
+  name: string;
+  sequence: number;
+  /** @nullable */
+  timezone: string | null;
+  status: string;
+  /** @nullable */
+  scheduledArrival: string | null;
+  /** @nullable */
+  scheduledDeparture: string | null;
+  /** @nullable */
+  estimatedArrival: string | null;
+  /** @nullable */
+  estimatedDeparture: string | null;
+  /** @nullable */
+  actualArrival: string | null;
+  /** @nullable */
+  actualDeparture: string | null;
+}
+
+export interface TrainDetail {
+  id: string;
+  trainNumber: string;
+  routeName: string;
+  destination: string;
+  serviceDate: string;
+  source: string;
+  /** @nullable */
+  updatedAt: string | null;
+  /** @nullable */
+  expiresAt: string | null;
+  state: string;
+  /** @nullable */
+  lat: number | null;
+  /** @nullable */
+  lon: number | null;
+  calls: TrainCall[];
+  routeId?: string;
+  tripId?: string;
+  matched: boolean;
+  message: string;
 }
 
 export interface TimetableResults {

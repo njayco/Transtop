@@ -11,4 +11,11 @@ export interface Vehicle {
   lon: number;
   source: string;
   updatedAt: string;
+  routeId?: string;
+  agencyId?: string;
+  routeName?: string;
+  trainNumber?: string;
+  destination?: string;
+  runId?: string;
+  expiresAt?: string;
 }

@@ -7,3 +7,4 @@
 - [Intercity source trust](intercity-source-trust.md) — old feeds can have future calendars; atlas data and ambiguous printed rows must not become current departure predictions.
 - [Connecticut data license](connecticut-license.md) — the owner accepted CTtransit's GTFS license before adding Connecticut services.
 - [CT realtime compatibility](connecticut-realtime.md) — invalid optional decoded display metadata must not disable otherwise valid bus trip updates.
+- [Amtrak source choice](amtrak-source-choice.md) — owner approved Amtraker tracking rather than direct undocumented Amtrak endpoint access; keep schedules separate.

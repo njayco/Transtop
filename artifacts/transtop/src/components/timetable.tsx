@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'wouter';
 import { CalendarDays, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { getGetTimetableQueryKey, useGetTimetable, type GetTimetableParams } from '@workspace/api-client-react';
 import { ErrorState } from '@/components/transit';
@@ -73,10 +74,11 @@ export function TimetablePanel({ stopId, routeId, direction, color, title = 'Pub
           <ol>
             {rows.map((d) => (
               <li key={d.id} className="flex items-center gap-3 border-b border-white/5 px-4 py-2.5 last:border-0" data-testid={`row-timetable-${d.id}`}>
-                <span className="w-24 shrink-0 font-mono text-base font-bold tabular-nums">{clock(d.time)}{newYorkDate(new Date(d.time))!==date&&<span className="block text-[10px] text-muted-foreground">{newYorkDate(new Date(d.time))}</span>}</span>
+                <span className="w-24 shrink-0 font-mono text-base font-bold tabular-nums">{clock(d.time,d.timezone)}{d.timezone?<span className="block text-[10px] text-muted-foreground">{new Date(d.time).toLocaleDateString('en-US',{timeZone:d.timezone})} · {d.timezone}</span>:newYorkDate(new Date(d.time))!==date&&<span className="block text-[10px] text-muted-foreground">{newYorkDate(new Date(d.time))}</span>}</span>
                 <span className="inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-md px-1.5 text-xs font-extrabold text-black" style={{ background: color ?? '#d9d4c7' }}>{d.routeName}</span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">to {d.destination}</p>
+                  {d.runId&&<Link href={`/trains/${encodeURIComponent(d.runId)}`} className="text-sm font-bold underline">Train {d.trainNumber} · all stops</Link>}
                   <p className="truncate text-xs text-muted-foreground">{routeId ? d.stopName : d.direction}</p>
                 </div>
               </li>

@@ -10,6 +10,7 @@ import { RouteBadge } from '@/components/transit';
 import { IntercityModule } from '@/components/intercity';
 import { TIMES_SQUARE, usePrefs } from '@/lib/prefs';
 import { ago } from '@/lib/format';
+import { amtrakVisible } from '@/lib/vehicle-visibility';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { MapViewport } from '@/components/transit-map';
@@ -65,8 +66,9 @@ export default function Nearby() {
   const lines = useMemo(() => (network.data ?? []).map((l) => ({ id: l.route.id, shapeId: l.shapeId, type: l.route.type, agency: l.route.agency, name: l.route.name, color: hoverRoutes.size && !hoverRoutes.has(l.route.id) ? '#55555c' : l.route.color, coords: l.shape })), [network.data, hoverRoutes]);
   const legendRoutes = useMemo(() => { const m = new Map<string, NonNullable<typeof network.data>[number]['route']>(); (network.data ?? []).forEach((l) => { if (!m.has(l.route.id)) m.set(l.route.id, l.route); }); return [...m.values()]; }, [network.data]);
   const vehicles = useMemo(() => { const byId = new Map(legendRoutes.map((r) => [r.id, r])); return (vehQ.data ?? [])
-    .filter((v) => byId.has(v.routeId) && vehicleKind(v.source) !== 'demo')
-    .map((v) => ({ ...v, color: byId.get(v.routeId)!.color, routeName: byId.get(v.routeId)!.name })); }, [vehQ.data, legendRoutes, mode]);
+    .filter((v) => vehicleKind(v.source) !== 'demo'&&(v.agencyId==='amtrak'?
+      amtrakVisible(v,{...(viewport||{west:center.lon-.1,east:center.lon+.1,south:center.lat-.08,north:center.lat+.08}),type:filter,agency,serviceClass:svc}):byId.has(v.routeId||'')))
+    .map((v) => ({ ...v, color: byId.get(v.routeId||'')?.color||'#CAE4F1', routeName: byId.get(v.routeId||'')?.name||v.routeName })); }, [vehQ.data, legendRoutes, mode,viewport,center,filter,agency,svc]);
   const goRoute = (id: string) => nav(`/routes/${encodeURIComponent(id)}`);
   const legend = (
     <div className="space-y-1.5">

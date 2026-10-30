@@ -47,6 +47,7 @@ const EXPECTED = [
   { k: 'CTtransit / CTfastrak buses', id: 'cttransit' },
   { k: 'CTrail Hartford Line', id: 'ctrail-hartford' },
   { k: 'CTrail Shore Line East', id: 'ctrail-sle' },
+  { k: 'Amtrak rail · tracking via Amtraker', id: 'amtrak' },
   { k: 'Private commuter operators', id: 'private-commuter' },
   { k: 'Google journey planning', id: 'google-routes' },
 ];

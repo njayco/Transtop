@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { vehicleFresh } from '../src/lib/vehicle-visibility.ts';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import vm from 'node:vm';
@@ -62,6 +63,8 @@ async function mountMap() {
     './schematic-map': { SchematicMap: () => null },
     './transit': { MODE_COLOR: {} },
     '@/lib/map-style': { DARK_ROADMAP: [] },
+    'wouter': { useLocation: () => ['/', () => {}] },
+    '@/lib/vehicle-visibility': { vehicleFresh },
   };
   const source = await readFile(new URL('../src/components/transit-map.tsx', import.meta.url), 'utf8');
   const { outputText } = ts.transpileModule(source, {

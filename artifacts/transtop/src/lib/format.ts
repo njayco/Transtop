@@ -1,16 +1,16 @@
 import type { Arrival } from '@workspace/api-client-react';
 
-export function clock(iso: string) {
+export function clock(iso: string, timezone = 'America/New_York') {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
+  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: timezone, ...(timezone!=='America/New_York'?{timeZoneName:'short' as const}:{}) });
 }
 
-export function arrivalText(a: Pick<Arrival, 'minutes' | 'rangeMax' | 'scheduledAt' | 'source'>) {
+export function arrivalText(a: Pick<Arrival, 'minutes' | 'rangeMax' | 'scheduledAt' | 'source' | 'timezone'>) {
   if (a.source === 'unavailable') return '—';
   if (a.minutes <= 0) return 'Due';
   if (a.rangeMax && a.rangeMax > a.minutes) return `${a.minutes}–${a.rangeMax} min`;
-  if (a.minutes > 45 && a.scheduledAt) return clock(a.scheduledAt);
+  if (a.minutes > 45 && a.scheduledAt) return clock(a.scheduledAt,a.timezone);
   return `${a.minutes} min`;
 }
 

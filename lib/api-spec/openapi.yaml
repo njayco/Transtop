@@ -5,6 +5,19 @@ info:
 servers:
   - url: /api
 paths:
+  /transit/trains/{id}:
+    get:
+      operationId: getTrain
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, maxLength: 180}}
+      responses:
+        "200":
+          description: Dated Amtrak run, including unresolved observations or published schedule
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/TrainDetail"}
+        "404":
+          description: Run unavailable or no published service on this date
   /transit/intercity/providers:
     get:
       operationId: getIntercityProviders
@@ -334,6 +347,11 @@ components:
         tripId: {type: string}
         rangeMax: {type: integer}
         confidence: {type: string}
+        trainNumber: {type: string}
+        runId: {type: string}
+        timezone: {type: string}
+        publishedAt: {type: string, description: Original scheduled departure instant for client fallback}
+        expiresAt: {type: string, description: Prediction expiry based on source observation time}
     Alert:
       type: object
       required: [id, title, description, severity, routeIds, source]
@@ -381,6 +399,13 @@ components:
         lon: {type: number}
         source: {type: string}
         updatedAt: {type: string}
+        routeId: {type: string}
+        agencyId: {type: string}
+        routeName: {type: string}
+        trainNumber: {type: string}
+        destination: {type: string}
+        runId: {type: string}
+        expiresAt: {type: string}
     NetworkLine:
       type: object
       required: [route, shape, vehicles, shapeId]
@@ -393,7 +418,6 @@ components:
       allOf:
         - {$ref: "#/components/schemas/Vehicle"}
         - type: object
-          required: [routeId]
           properties:
             routeId: {type: string}
     MapStop:
@@ -472,6 +496,44 @@ components:
         destination: {type: string}
         direction: {type: string}
         time: {type: string}
+        trainNumber: {type: string}
+        runId: {type: string}
+        timezone: {type: string}
+    TrainCall:
+      type: object
+      required: [code, name, sequence, timezone, status, scheduledArrival, scheduledDeparture, estimatedArrival, estimatedDeparture, actualArrival, actualDeparture]
+      properties:
+        code: {type: string}
+        name: {type: string}
+        sequence: {type: integer}
+        timezone: {type: ["string", "null"]}
+        status: {type: string}
+        scheduledArrival: {type: ["string", "null"]}
+        scheduledDeparture: {type: ["string", "null"]}
+        estimatedArrival: {type: ["string", "null"]}
+        estimatedDeparture: {type: ["string", "null"]}
+        actualArrival: {type: ["string", "null"]}
+        actualDeparture: {type: ["string", "null"]}
+    TrainDetail:
+      type: object
+      required: [id, trainNumber, routeName, destination, serviceDate, source, updatedAt, expiresAt, state, lat, lon, calls, matched, message]
+      properties:
+        id: {type: string}
+        trainNumber: {type: string}
+        routeName: {type: string}
+        destination: {type: string}
+        serviceDate: {type: string}
+        source: {type: string}
+        updatedAt: {type: ["string", "null"]}
+        expiresAt: {type: ["string", "null"]}
+        state: {type: string}
+        lat: {type: ["number", "null"]}
+        lon: {type: ["number", "null"]}
+        calls: {type: array, items: {$ref: "#/components/schemas/TrainCall"}}
+        routeId: {type: string}
+        tripId: {type: string}
+        matched: {type: boolean}
+        message: {type: string}
     TimetableResults:
       type: object
       required: [departures, total, offset, limit, date, message]

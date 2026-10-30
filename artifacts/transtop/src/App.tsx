@@ -15,6 +15,7 @@ import RoutePage from '@/pages/route';
 import Favorites from '@/pages/favorites';
 import RidePage from '@/pages/ride';
 import Settings from '@/pages/settings';
+import TrainPage from '@/pages/train';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 15_000, refetchOnWindowFocus: true, networkMode: 'online' } },
@@ -28,6 +29,7 @@ function Router() {
         <Route path="/search" component={SearchPage} />
         <Route path="/stops/:id" component={StopPage} />
         <Route path="/routes/:id" component={RoutePage} />
+        <Route path="/trains/:id" component={TrainPage} />
         <Route path="/favorites" component={Favorites} />
         <Route path="/ride" component={RidePage} />
         <Route path="/settings" component={Settings} />

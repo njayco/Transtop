@@ -127,7 +127,7 @@ export default function RoutePage() {
                 <p className="font-bold">Vehicle positions</p>
                 {vehicles.length === 0 ? <p className="mt-1 text-muted-foreground">No positions available for this route right now.</p> : (
                   <ul className="mt-2 space-y-1.5">
-                    {vehicles.map((v) => <li key={v.id} className="flex items-center justify-between gap-2"><span className="text-muted-foreground">Vehicle {v.id.split(':').pop()}</span><SourceLabel source={v.source} updatedAt={v.updatedAt} /></li>)}
+                    {vehicles.map((v) => <li key={v.id} className="flex items-center justify-between gap-2">{v.runId?<Link href={`/trains/${encodeURIComponent(v.runId)}`} className="font-bold underline">Train {v.trainNumber} · to {v.destination}</Link>:<span className="text-muted-foreground">Vehicle {v.id.split(':').pop()}</span>}<SourceLabel source={v.source} updatedAt={v.updatedAt} /></li>)}
                   </ul>
                 )}
                 <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">

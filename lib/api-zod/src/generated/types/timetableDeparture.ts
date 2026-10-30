@@ -15,4 +15,7 @@ export interface TimetableDeparture {
   destination: string;
   direction: string;
   time: string;
+  trainNumber?: string;
+  runId?: string;
+  timezone?: string;
 }

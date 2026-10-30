@@ -14,7 +14,15 @@ import { journeyLimit,planJourney,JourneyError } from "../transit/journeys";
 const router:IRouter=Router();
 import { GetIntercityProvidersResponse, GetIntercityDeparturesQueryParams, GetIntercityDeparturesResponse } from "@workspace/api-zod";
 import { intercityProviders, intercityDepartures } from "../transit/intercity/service";
+import { amtrakTrainDetail } from "../transit/amtrak-service";
+import { GetTrainResponse } from "@workspace/api-zod";
 router.use("/transit",(_req,res,next)=>{res.set("Cache-Control","no-store");next();});
+router.get("/transit/trains/:id",async(req,res):Promise<void>=>{
+  if(typeof req.params.id!=="string"||req.params.id.length>180){res.status(400).json({error:"Invalid train identity"});return;}
+  const train=await amtrakTrainDetail(req.params.id);
+  if(!train){res.status(404).json({error:"No observation or published service for this dated train run"});return;}
+  res.json(GetTrainResponse.parse(train));
+});
 router.get("/transit/intercity/providers",async(_req,res):Promise<void>=>{
   res.json(GetIntercityProvidersResponse.parse(await intercityProviders()));
 });

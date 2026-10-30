@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as RPo
 import { Plus, Minus, LocateFixed } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MapLine, MapStop, MapVehicle } from './transit-map';
+import { useLocation } from 'wouter';
 
 const MODE_COLOR: Record<string, string> = { subway: '#2fb36b', bus: '#e5a823', rail: '#a33a62' };
 
@@ -30,7 +31,7 @@ const keyAct = (fn: () => void) => (e: KeyboardEvent) => { if (e.key === 'Enter'
 
 function srcText(source: string) {
   const s = source.toLowerCase();
-  return s.includes('community') ? 'Approximate community position' : 'Live agency data';
+  return s.includes('community') ? 'Approximate community position' : source;
 }
 function ago(iso?: string) {
   if (!iso) return 'update time unknown';
@@ -39,6 +40,7 @@ function ago(iso?: string) {
 }
 
 export function SchematicMap({ center, stops, activeId, onSelect, shape, vehicles: allVehicles, network, onRoute, className, label }: Props) {
+  const [,navigate]=useLocation();
   const vehicles = useMemo(() => allVehicles.filter((v) => !v.source.toLowerCase().includes('demo')), [allVehicles]);
   const [view, setView] = useState({ k: 1, x: 0, y: 0 });
   const drag = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
@@ -118,14 +120,15 @@ export function SchematicMap({ center, stops, activeId, onSelect, shape, vehicle
             const [x, y] = proj(v.lon, v.lat);
             const src = srcText(v.source);
             const community = src.startsWith('Approx');
-            const act = () => v.routeId && onRoute?.(v.routeId);
+            const act = () => {if(v.runId)navigate(`/trains/${encodeURIComponent(v.runId)}`);else if(v.routeId)onRoute?.(v.routeId);};
             return (
-              <g key={v.id} transform={`translate(${x} ${y}) scale(${inv})`} role={v.routeId ? 'button' : 'img'} tabIndex={v.routeId ? 0 : undefined}
-                aria-label={`${v.routeName ? `Route ${v.routeName} vehicle` : 'Vehicle'}, ${src}, ${ago(v.updatedAt)}`} onClick={act} onKeyDown={keyAct(act)} className="cursor-pointer focus:outline-none">
+              <g key={v.id} transform={`translate(${x} ${y}) scale(${inv})`} role={v.routeId||v.runId ? 'button' : 'img'} tabIndex={v.routeId||v.runId ? 0 : undefined}
+                aria-label={`${v.trainNumber?`Train ${v.trainNumber} to ${v.destination}`:v.routeName ? `Route ${v.routeName} vehicle` : 'Vehicle'}, ${src}, ${ago(v.updatedAt)}`} onClick={act} onKeyDown={keyAct(act)} className="cursor-pointer focus:outline-none">
                 <title>{`${v.routeName ? `Route ${v.routeName}` : 'Vehicle'} · ${src} · ${ago(v.updatedAt)}`}</title>
                 {community
                   ? <circle r={16} fill="rgba(92,194,242,.15)" stroke="#5cc2f2" strokeDasharray="4 3" strokeWidth={2} />
                   : <rect x={-7} y={-7} width={14} height={14} transform="rotate(45)" fill={v.color ?? '#f4f1ea'} stroke="#f4f1ea" strokeWidth={2} />}
+                {v.trainNumber&&<text y={-13} textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">{v.trainNumber}</text>}
               </g>
             );
           })}

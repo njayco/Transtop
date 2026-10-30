@@ -21,4 +21,11 @@ export interface Arrival {
   tripId?: string;
   rangeMax?: number;
   confidence?: string;
+  trainNumber?: string;
+  runId?: string;
+  timezone?: string;
+  /** Original scheduled departure instant for client fallback */
+  publishedAt?: string;
+  /** Prediction expiry based on source observation time */
+  expiresAt?: string;
 }

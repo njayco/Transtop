@@ -7,6 +7,46 @@
 import * as zod from 'zod';
 
 
+export const getTrainPathIdMax = 180;
+
+
+
+export const GetTrainParams = zod.object({
+  "id": zod.coerce.string().max(getTrainPathIdMax)
+})
+
+export const GetTrainResponse = zod.object({
+  "id": zod.string(),
+  "trainNumber": zod.string(),
+  "routeName": zod.string(),
+  "destination": zod.string(),
+  "serviceDate": zod.string(),
+  "source": zod.string(),
+  "updatedAt": zod.string().nullable(),
+  "expiresAt": zod.string().nullable(),
+  "state": zod.string(),
+  "lat": zod.number().nullable(),
+  "lon": zod.number().nullable(),
+  "calls": zod.array(zod.object({
+  "code": zod.string(),
+  "name": zod.string(),
+  "sequence": zod.number().int(),
+  "timezone": zod.string().nullable(),
+  "status": zod.string(),
+  "scheduledArrival": zod.string().nullable(),
+  "scheduledDeparture": zod.string().nullable(),
+  "estimatedArrival": zod.string().nullable(),
+  "estimatedDeparture": zod.string().nullable(),
+  "actualArrival": zod.string().nullable(),
+  "actualDeparture": zod.string().nullable()
+})),
+  "routeId": zod.string().optional(),
+  "tripId": zod.string().optional(),
+  "matched": zod.boolean(),
+  "message": zod.string()
+})
+
+
 export const GetIntercityProvidersResponseItem = zod.object({
   "id": zod.string(),
   "name": zod.string(),
@@ -139,7 +179,12 @@ export const GetStopsResponse = zod.object({
   "scheduledAt": zod.string(),
   "tripId": zod.string().optional(),
   "rangeMax": zod.number().int().optional(),
-  "confidence": zod.string().optional()
+  "confidence": zod.string().optional(),
+  "trainNumber": zod.string().optional(),
+  "runId": zod.string().optional(),
+  "timezone": zod.string().optional(),
+  "publishedAt": zod.string().optional().describe('Original scheduled departure instant for client fallback'),
+  "expiresAt": zod.string().optional().describe('Prediction expiry based on source observation time')
 })),
   "alerts": zod.array(zod.object({
   "id": zod.string(),
@@ -206,7 +251,12 @@ export const GetStopResponse = zod.object({
   "scheduledAt": zod.string(),
   "tripId": zod.string().optional(),
   "rangeMax": zod.number().int().optional(),
-  "confidence": zod.string().optional()
+  "confidence": zod.string().optional(),
+  "trainNumber": zod.string().optional(),
+  "runId": zod.string().optional(),
+  "timezone": zod.string().optional(),
+  "publishedAt": zod.string().optional().describe('Original scheduled departure instant for client fallback'),
+  "expiresAt": zod.string().optional().describe('Prediction expiry based on source observation time')
 })),
   "alerts": zod.array(zod.object({
   "id": zod.string(),
@@ -281,7 +331,12 @@ export const GetRouteResponse = zod.object({
   "scheduledAt": zod.string(),
   "tripId": zod.string().optional(),
   "rangeMax": zod.number().int().optional(),
-  "confidence": zod.string().optional()
+  "confidence": zod.string().optional(),
+  "trainNumber": zod.string().optional(),
+  "runId": zod.string().optional(),
+  "timezone": zod.string().optional(),
+  "publishedAt": zod.string().optional().describe('Original scheduled departure instant for client fallback'),
+  "expiresAt": zod.string().optional().describe('Prediction expiry based on source observation time')
 })),
   "alerts": zod.array(zod.object({
   "id": zod.string(),
@@ -301,7 +356,14 @@ export const GetRouteResponse = zod.object({
   "lat": zod.number(),
   "lon": zod.number(),
   "source": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "routeId": zod.string().optional(),
+  "agencyId": zod.string().optional(),
+  "routeName": zod.string().optional(),
+  "trainNumber": zod.string().optional(),
+  "destination": zod.string().optional(),
+  "runId": zod.string().optional(),
+  "expiresAt": zod.string().optional()
 })),
   "alerts": zod.array(zod.object({
   "id": zod.string(),
@@ -412,7 +474,12 @@ export const GetCatalogResponse = zod.object({
   "scheduledAt": zod.string(),
   "tripId": zod.string().optional(),
   "rangeMax": zod.number().int().optional(),
-  "confidence": zod.string().optional()
+  "confidence": zod.string().optional(),
+  "trainNumber": zod.string().optional(),
+  "runId": zod.string().optional(),
+  "timezone": zod.string().optional(),
+  "publishedAt": zod.string().optional().describe('Original scheduled departure instant for client fallback'),
+  "expiresAt": zod.string().optional().describe('Prediction expiry based on source observation time')
 })),
   "alerts": zod.array(zod.object({
   "id": zod.string(),
@@ -466,7 +533,10 @@ export const GetTimetableResponse = zod.object({
   "routeName": zod.string(),
   "destination": zod.string(),
   "direction": zod.string(),
-  "time": zod.string()
+  "time": zod.string(),
+  "trainNumber": zod.string().optional(),
+  "runId": zod.string().optional(),
+  "timezone": zod.string().optional()
 })),
   "total": zod.number().int(),
   "offset": zod.number().int(),
@@ -585,7 +655,14 @@ export const GetNetworkResponse = zod.object({
   "lat": zod.number(),
   "lon": zod.number(),
   "source": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "routeId": zod.string().optional(),
+  "agencyId": zod.string().optional(),
+  "routeName": zod.string().optional(),
+  "trainNumber": zod.string().optional(),
+  "destination": zod.string().optional(),
+  "runId": zod.string().optional(),
+  "expiresAt": zod.string().optional()
 }))
 })),
   "stops": zod.array(zod.object({
@@ -640,9 +717,16 @@ export const GetMapVehiclesResponseItem = zod.object({
   "lat": zod.number(),
   "lon": zod.number(),
   "source": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "routeId": zod.string().optional(),
+  "agencyId": zod.string().optional(),
+  "routeName": zod.string().optional(),
+  "trainNumber": zod.string().optional(),
+  "destination": zod.string().optional(),
+  "runId": zod.string().optional(),
+  "expiresAt": zod.string().optional()
 }).and(zod.object({
-  "routeId": zod.string()
+  "routeId": zod.string().optional()
 }))
 export const GetMapVehiclesResponse = zod.array(GetMapVehiclesResponseItem)
 

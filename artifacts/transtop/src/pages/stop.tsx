@@ -9,6 +9,7 @@ import { TimetablePanel } from '@/components/timetable';
 import { IntercityModule, providerFor } from '@/components/intercity';
 import { honest, usePrefs } from '@/lib/prefs';
 import { ago, clock } from '@/lib/format';
+import { useFreshArrivals } from '@/lib/amtrak-arrivals';
 
 export default function StopPage() {
   const { id = '' } = useParams<{ id: string }>();
@@ -17,14 +18,15 @@ export default function StopPage() {
   const params = { mode };
   const q = useGetStop(stopId, params, { query: { queryKey: getGetStopQueryKey(stopId, params), refetchInterval: 30_000, retry: 1 } });
   const stop = q.data;
+  const freshArrivals=useFreshArrivals(stop?.arrivals??[]);
   const groups = useMemo(() => {
     const m = new Map<string, Arrival[]>();
-    honest(stop?.arrivals ?? [], mode).forEach((a) => {
+    honest(freshArrivals, mode).forEach((a) => {
       const k = `${a.direction}|${a.destination}`;
       m.set(k, [...(m.get(k) ?? []), a]);
     });
     return Array.from(m.entries()).map(([k, arr]) => ({ key: k, direction: k.split('|')[0], destination: k.split('|')[1], arr: arr.sort((x, y) => x.minutes - y.minutes) }));
-  }, [stop, mode]);
+  }, [freshArrivals, mode]);
   const mapStops = useMemo(() => (stop ? [{ id: stop.id, name: stop.name, lat: stop.lat, lon: stop.lon, type: stop.type, label: true, routes: stop.routes }] : []), [stop]);
 
   return (
@@ -77,8 +79,9 @@ export default function StopPage() {
                     <RouteBadge name={a.routeName} color={a.color} size="lg" />
                     <div className="min-w-0 flex-1">
                       <p className="flex flex-wrap items-center gap-x-2 font-semibold">{a.destination} <StatusText status={a.status} /></p>
-                      <p className="text-xs text-muted-foreground">Scheduled {clock(a.scheduledAt)}{a.confidence ? ` · ${a.confidence} confidence (heuristic)` : ''}</p>
-                      <div className="mt-1.5"><SourceLabel source={a.source} updatedAt={a.updatedAt} /></div>
+                      {a.runId&&<Link href={`/trains/${encodeURIComponent(a.runId)}`} className="text-sm font-bold underline">Train {a.trainNumber} · all stops</Link>}
+                      <p className="text-xs text-muted-foreground">{a.source==='live'?'Estimated':'Scheduled'} {clock(a.scheduledAt,a.timezone)}{a.timezone?` · ${a.timezone}`:''}{a.confidence ? ` · ${a.confidence} confidence (heuristic)` : ''}</p>
+                      <div className="mt-1.5"><SourceLabel source={a.trainNumber&&a.source==='live'?'Amtraker · unofficial':a.source} updatedAt={a.updatedAt} /></div>
                     </div>
                     <Countdown a={a} big />
                   </li>

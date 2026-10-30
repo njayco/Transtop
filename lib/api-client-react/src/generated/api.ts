@@ -50,7 +50,8 @@ import type {
   SampleInput,
   Stop,
   StopResults,
-  TimetableResults
+  TimetableResults,
+  TrainDetail
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -79,6 +80,101 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getGetTrainUrl = (id: string,) => {
+
+
+
+
+  return `/api/transit/trains/${id}`
+}
+
+export const getTrain = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<TrainDetail> => {
+
+  return customFetch<TrainDetail>(getGetTrainUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTrainQueryKey = (id: string,) => {
+    return [
+    `/api/transit/trains/${id}`
+    ] as const;
+    }
+
+
+export const getGetTrainQueryOptions = <TData = Awaited<ReturnType<typeof getTrain>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrain>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTrainQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTrain>>> = ({ signal }) => getTrain(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTrain>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetTrainQueryResult = NonNullable<Awaited<ReturnType<typeof getTrain>>>
+export type GetTrainQueryError = ErrorType<void>
+
+
+export function useGetTrain<TData = Awaited<ReturnType<typeof getTrain>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrain>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTrain>>,
+          TError,
+          Awaited<ReturnType<typeof getTrain>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTrain<TData = Awaited<ReturnType<typeof getTrain>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrain>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTrain>>,
+          TError,
+          Awaited<ReturnType<typeof getTrain>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTrain<TData = Awaited<ReturnType<typeof getTrain>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrain>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetTrain<TData = Awaited<ReturnType<typeof getTrain>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrain>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetTrainQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetIntercityProvidersUrl = () => {
 

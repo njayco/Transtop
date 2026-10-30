@@ -7,12 +7,13 @@ export class GtfsSelection {
   private services=new Set<string>();
   private shapes=new Set<string>();
   private stops=new Set<string>();
-  constructor(agencyIds?:string[]) { this.agencies=new Set(agencyIds); }
+  constructor(agencyIds?:string[],private routeTypes?:string[]) { this.agencies=new Set(agencyIds); }
   accept(table:string,row:Record<string,string>):boolean {
     if(!this.agencies.size)return true;
     if(table==="agency")return this.agencies.has(row.agency_id);
     if(table==="routes"){
       if(!this.agencies.has(row.agency_id))return false;
+      if(this.routeTypes&&!this.routeTypes.includes(row.route_type))return false;
       this.routes.add(row.route_id);return true;
     }
     if(table==="trips"){

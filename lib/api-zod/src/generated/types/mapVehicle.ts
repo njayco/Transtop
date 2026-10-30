@@ -7,5 +7,5 @@
 import type { Vehicle } from './vehicle';
 
 export type MapVehicle = Vehicle & {
-  routeId: string;
+  routeId?: string;
 };

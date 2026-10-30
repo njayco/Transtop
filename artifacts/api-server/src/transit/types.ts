@@ -5,14 +5,17 @@ export interface Arrival {
   id:string; routeId:string; routeName:string; color:string; direction:string; destination:string;
   minutes:number; source:"demo"|"live"|"scheduled"|"community"|"unavailable"; updatedAt:string;
   status:string; scheduledAt:string; tripId?:string; rangeMax?:number; confidence?:string;
+  trainNumber?:string;runId?:string;timezone?:string;publishedAt?:string;expiresAt?:string;
 }
 export interface TransitAlert {id:string; title:string; description:string; severity:string; routeIds:string[]; source:string}
 export interface TransitStop {
   id:string; name:string; agency:string; type:TransitType; lat:number; lon:number; distance:number; walkingMinutes:number;
   routes:TransitRoute[]; arrivals:Arrival[]; alerts:TransitAlert[]; accessible:boolean; updatedAt:string; neighborhood?:string;
   rawId?:string; parent?:string;
+  stop_timezone?:string;
 }
-export interface TransitVehicle {id:string; lat:number; lon:number; source:string; updatedAt:string}
+export interface TransitVehicle {id:string; lat:number; lon:number; source:string; updatedAt:string;
+  routeId?:string;agencyId?:string;routeName?:string;trainNumber?:string;destination?:string;runId?:string;expiresAt?:string}
 export interface RouteDetail {route:TransitRoute; stops:TransitStop[]; shape:number[][]; vehicles:TransitVehicle[]; alerts:TransitAlert[]; directions:string[];
   timetableStops?:{id:string;name:string;sequence:number}[]}
 export const namespace = (agency:string, id:string) => `${agency}:${id}`;
