@@ -1,6 +1,6 @@
-# [Project name]
+# Transtop
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A mobile-first NYC and Long Island transit app with explicit demo/live modes, nearby arrivals, maps, local favorites, and opt-in rider contributions.
 
 ## Run & Operate
 
@@ -22,23 +22,31 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/transtop` — responsive frontend.
+- `artifacts/api-server/src/transit` — official adapters, import/poll jobs, arrival rules and private ingestion.
+- `lib/db/src/schema/transit.ts` — Drizzle schema.
+- `lib/api-spec/openapi.yaml` — API contract; regenerate after changes.
+- `README.md` — verified sources, setup, privacy, deployment constraints and limitations.
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Feed availability is not authorization; verify official docs and terms before extending coverage.
+- Official predictions are authoritative only when fresh. No demo substitutions in live mode.
+- One always-running poller owner is required; multi-instance distributed jobs are not yet configured.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Nearby, Search, Stop/Route details, Favorites, Ride, Settings; NYC Subway, LIRR and Metro-North imports/live polling are implemented. Live bus integration awaits an authorized key and adapter; NICE is planned only.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Preserve the user's original Transtop black background, large white typography and angular multicolored transit identity; do not reproduce the HTC frame.
+- Focus on buses and trains, no unauthorized MetroCard balance, ferry/air are future only.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Read README limitations before claiming production readiness or complete agency coverage.
+- Demo and live data must remain separate. Never expose raw contributions.
 
 ## Pointers
 

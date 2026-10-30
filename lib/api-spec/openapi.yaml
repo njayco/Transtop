@@ -1,36 +1,291 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
 servers:
   - url: /api
-    description: Base API path
-tags:
-  - name: health
-    description: Health operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
-      tags: [health]
-      summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/HealthStatus"
+              schema: {$ref: "#/components/schemas/HealthStatus"}
+  /transit/stops:
+    get:
+      operationId: getStops
+      parameters:
+        - {name: q, in: query, schema: {type: string}}
+        - {name: mode, in: query, schema: {type: string, enum: [demo, live], default: demo}}
+        - {name: type, in: query, schema: {type: string}}
+        - {name: lat, in: query, schema: {type: number}}
+        - {name: lon, in: query, schema: {type: number}}
+      responses:
+        "200":
+          description: Nearby stops with next departures
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/StopResults"}
+  /transit/stops/{id}:
+    get:
+      operationId: getStop
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: mode, in: query, schema: {type: string, enum: [demo, live], default: demo}}
+      responses:
+        "200":
+          description: Stop details
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Stop"}
+  /transit/routes/{id}:
+    get:
+      operationId: getRoute
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: mode, in: query, schema: {type: string, enum: [demo, live], default: demo}}
+        - {name: direction, in: query, schema: {type: string}}
+      responses:
+        "200":
+          description: Route details
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RouteDetail"}
+  /transit/sources:
+    get:
+      operationId: getSources
+      responses:
+        "200":
+          description: Integration health
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: "#/components/schemas/FeedSource"}}
+  /transit/network:
+    get:
+      operationId: getNetwork
+      parameters:
+        - {name: mode, in: query, schema: {type: string, enum: [demo, live], default: demo}}
+        - {name: type, in: query, schema: {type: string}}
+        - {name: lat, in: query, schema: {type: number}}
+        - {name: lon, in: query, schema: {type: number}}
+      responses:
+        "200":
+          description: Nearby route geometry and agency vehicle positions
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: "#/components/schemas/NetworkLine"}}
+  /transit/alerts:
+    get:
+      operationId: getAlerts
+      parameters:
+        - {name: mode, in: query, schema: {type: string, enum: [demo, live], default: demo}}
+      responses:
+        "200":
+          description: Current alerts
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: "#/components/schemas/Alert"}}
+  /transit/rides:
+    post:
+      operationId: startRide
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/RideInput"}
+      responses:
+        "201":
+          description: Ride contribution capability; token returned once
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Ride"}
+  /transit/rides/{id}:
+    delete:
+      operationId: endRide
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: x-ride-token, in: header, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: Revoked
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/HealthStatus"}
+  /transit/rides/{id}/samples:
+    post:
+      operationId: submitSample
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: x-ride-token, in: header, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/SampleInput"}
+      responses:
+        "202":
+          description: Sample accepted
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/HealthStatus"}
+  /transit/rides/{id}/reports:
+    post:
+      operationId: submitReport
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: x-ride-token, in: header, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ReportInput"}
+      responses:
+        "202":
+          description: Report accepted
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/HealthStatus"}
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
-        status:
-          type: string
-      required:
-        - status
-
+        status: {type: string}
+    Route:
+      type: object
+      required: [id, name, color, type, agency]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        color: {type: string}
+        type: {type: string, enum: [subway, bus, rail]}
+        agency: {type: string}
+    Arrival:
+      type: object
+      required: [id, routeId, routeName, color, direction, destination, minutes, source, updatedAt, status, scheduledAt]
+      properties:
+        id: {type: string}
+        routeId: {type: string}
+        routeName: {type: string}
+        color: {type: string}
+        direction: {type: string}
+        destination: {type: string}
+        minutes: {type: integer}
+        source: {type: string, enum: [demo, live, community, scheduled, unavailable]}
+        updatedAt: {type: string}
+        status: {type: string}
+        scheduledAt: {type: string}
+        tripId: {type: string}
+        rangeMax: {type: integer}
+        confidence: {type: string}
+    Alert:
+      type: object
+      required: [id, title, description, severity, routeIds, source]
+      properties:
+        id: {type: string}
+        title: {type: string}
+        description: {type: string}
+        severity: {type: string}
+        routeIds: {type: array, items: {type: string}}
+        source: {type: string}
+    Stop:
+      type: object
+      required: [id, name, agency, type, lat, lon, distance, walkingMinutes, routes, arrivals, alerts, accessible, updatedAt]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        agency: {type: string}
+        type: {type: string, enum: [subway, bus, rail]}
+        lat: {type: number}
+        lon: {type: number}
+        distance: {type: number}
+        walkingMinutes: {type: integer}
+        routes: {type: array, items: {$ref: "#/components/schemas/Route"}}
+        arrivals: {type: array, items: {$ref: "#/components/schemas/Arrival"}}
+        alerts: {type: array, items: {$ref: "#/components/schemas/Alert"}}
+        accessible: {type: boolean}
+        updatedAt: {type: string}
+        neighborhood: {type: string}
+    StopResults:
+      type: object
+      required: [stops, mode, updatedAt, message]
+      properties:
+        stops: {type: array, items: {$ref: "#/components/schemas/Stop"}}
+        mode: {type: string}
+        updatedAt: {type: string}
+        message: {type: string}
+        centerLat: {type: number}
+        centerLon: {type: number}
+    Vehicle:
+      type: object
+      required: [id, lat, lon, source, updatedAt]
+      properties:
+        id: {type: string}
+        lat: {type: number}
+        lon: {type: number}
+        source: {type: string}
+        updatedAt: {type: string}
+    NetworkLine:
+      type: object
+      required: [route, shape, vehicles]
+      properties:
+        route: {$ref: "#/components/schemas/Route"}
+        shape: {type: array, items: {type: array, items: {type: number}}}
+        vehicles: {type: array, items: {$ref: "#/components/schemas/Vehicle"}}
+    RouteDetail:
+      type: object
+      required: [route, stops, shape, vehicles, alerts, directions]
+      properties:
+        route: {$ref: "#/components/schemas/Route"}
+        stops: {type: array, items: {$ref: "#/components/schemas/Stop"}}
+        shape: {type: array, items: {type: array, items: {type: number}}}
+        vehicles: {type: array, items: {$ref: "#/components/schemas/Vehicle"}}
+        alerts: {type: array, items: {$ref: "#/components/schemas/Alert"}}
+        directions: {type: array, items: {type: string}}
+    FeedSource:
+      type: object
+      required: [id, agency, status, description, url, updatedAt]
+      properties:
+        id: {type: string}
+        agency: {type: string}
+        status: {type: string}
+        description: {type: string}
+        url: {type: string}
+        updatedAt: {type: ["string", "null"]}
+    RideInput:
+      type: object
+      required: [agency, routeId, direction, stopId, consent, mode]
+      properties:
+        agency: {type: string}
+        routeId: {type: string}
+        direction: {type: string}
+        stopId: {type: string}
+        tripId: {type: string}
+        consent: {type: boolean}
+        mode: {type: string, enum: [demo, live]}
+    Ride:
+      type: object
+      required: [id, token, expiresAt, status]
+      properties:
+        id: {type: string}
+        token: {type: string}
+        expiresAt: {type: string}
+        status: {type: string}
+    SampleInput:
+      type: object
+      required: [lat, lon, accuracy, timestamp]
+      properties:
+        lat: {type: number, minimum: -90, maximum: 90}
+        lon: {type: number, minimum: -180, maximum: 180}
+        accuracy: {type: number, minimum: 0, maximum: 100}
+        timestamp: {type: string}
+    ReportInput:
+      type: object
+      required: [kind, stopId]
+      properties:
+        kind: {type: string, enum: [arrived, departed, delayed, low, medium, high]}
+        stopId: {type: string}

@@ -1,0 +1,1 @@
+{"name":"Transtop","short_name":"Transtop","description":"When is my bus or train coming? NYC and Long Island arrivals with honest source labels.","start_url":"/","scope":"/","display":"standalone","background_color":"#0c0c0d","theme_color":"#0c0c0d","icons":[{"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}

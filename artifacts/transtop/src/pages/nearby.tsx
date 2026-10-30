@@ -1,0 +1,185 @@
+import { useMemo, useState } from 'react';
+import { useLocation } from 'wouter';
+import { LocateFixed, Search, List, Map as MapIcon, X, MapPin } from 'lucide-react';
+import { getGetNetworkQueryKey, getGetStopsQueryKey, useGetAlerts, useGetNetwork, useGetStops, type GetNetworkParams, type GetStopsParams } from '@workspace/api-client-react';
+import { MobileTop } from '@/components/shell';
+import { AlertRow, ErrorState, SkeletonCards, StopCard, TransitLines } from '@/components/transit';
+import { TransitMap, vehicleKind } from '@/components/transit-map';
+import { RouteBadge } from '@/components/transit';
+import { TIMES_SQUARE, usePrefs } from '@/lib/prefs';
+import { ago } from '@/lib/format';
+import { cn } from '@/lib/utils';
+
+const FILTERS = [
+  { v: 'all', l: 'All' }, { v: 'subway', l: 'Subway' }, { v: 'bus', l: 'Bus' }, { v: 'rail', l: 'Commuter Rail' },
+] as const;
+type Place = { lat: number; lon: number; label: string } | { q: string; label: string };
+
+export default function Nearby() {
+  const { mode } = usePrefs();
+  const [, nav] = useLocation();
+  const [place, setPlace] = useState<Place>(TIMES_SQUARE);
+  const [filter, setFilter] = useState<string>('all');
+  const [view, setView] = useState<'list' | 'map'>('list');
+  const [text, setText] = useState('');
+  const [hover, setHover] = useState<string | null>(null);
+  const [geo, setGeo] = useState<'idle' | 'explain' | 'asking' | 'denied' | 'unsupported'>('idle');
+
+  const params: GetStopsParams = useMemo(() => ({
+    mode, ...(filter !== 'all' ? { type: filter } : {}),
+    ...('q' in place ? { q: place.q } : { lat: place.lat, lon: place.lon }),
+  }), [mode, filter, place]);
+  const stops = useGetStops(params, { query: { queryKey: getGetStopsQueryKey(params), refetchInterval: 30_000, retry: 1 } });
+  const alerts = useGetAlerts({ mode });
+  const list = stops.data?.stops ?? [];
+  const mapStops = useMemo(() => list.map((s) => ({ id: s.id, name: s.name, lat: s.lat, lon: s.lon, type: s.type })), [list]);
+  const center = stops.data?.centerLat != null && stops.data?.centerLon != null
+    ? { lat: stops.data.centerLat, lon: stops.data.centerLon }
+    : 'lat' in place ? place : TIMES_SQUARE;
+  const netParams: GetNetworkParams = useMemo(() => ({ mode, ...(filter !== 'all' ? { type: filter } : {}), lat: center.lat, lon: center.lon }), [mode, filter, center.lat, center.lon]);
+  const network = useGetNetwork(netParams, { query: { queryKey: getGetNetworkQueryKey(netParams), refetchInterval: 30_000, retry: 1 } });
+  const hoverRoutes = useMemo(() => new Set(list.find((s) => s.id === hover)?.routes.map((r) => r.id) ?? []), [list, hover]);
+  const lines = useMemo(() => (network.data ?? []).map((l) => ({ id: l.route.id, name: l.route.name, color: hoverRoutes.size && !hoverRoutes.has(l.route.id) ? '#55555c' : l.route.color, coords: l.shape })), [network.data, hoverRoutes]);
+  const vehicles = useMemo(() => (network.data ?? []).flatMap((l) => l.vehicles
+    .filter((v) => (mode === 'demo' ? true : vehicleKind(v.source) !== 'demo'))
+    .map((v) => ({ ...v, color: l.route.color, routeId: l.route.id, routeName: l.route.name }))), [network.data, mode]);
+  const goRoute = (id: string) => nav(`/routes/${encodeURIComponent(id)}`);
+  const legend = (
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap items-center gap-1.5" aria-label="Routes on map">
+        {(network.data ?? []).map((l) => (
+          <button key={l.route.id} onClick={() => goRoute(l.route.id)} aria-label={`Route ${l.route.name} details`} data-testid={`button-map-route-${l.route.id}`} className="transition-transform hover:scale-110"><RouteBadge name={l.route.name} color={l.route.color} size="sm" /></button>
+        ))}
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        {mode === 'demo' ? 'Demo data: lines and vehicle positions are samples, not real service. ' : 'Diamonds are agency-reported positions; dashed circles are approximate community areas. '}
+        {network.isError ? 'Route lines unavailable right now.' : 'Positions refresh every 30 seconds.'}
+      </p>
+    </div>
+  );
+
+  const requestGeo = () => {
+    if (!('geolocation' in navigator)) { setGeo('unsupported'); return; }
+    setGeo('asking');
+    navigator.geolocation.getCurrentPosition(
+      (p) => { setPlace({ lat: p.coords.latitude, lon: p.coords.longitude, label: 'Your location' }); setGeo('idle'); },
+      () => setGeo('denied'),
+      { enableHighAccuracy: false, timeout: 15_000, maximumAge: 60_000 },
+    );
+  };
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = text.trim();
+    if (q) { setPlace({ q, label: q }); setGeo('idle'); }
+  };
+
+  const panel = (
+    <div className="space-y-4">
+      <form onSubmit={submit} role="search" className="relative">
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+        <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Address, neighborhood, station or route" aria-label="Search a place to see nearby stops"
+          data-testid="input-nearby-search" className="h-14 w-full rounded-2xl border border-input bg-card pl-12 pr-24 text-base placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+        <button type="submit" data-testid="button-nearby-go" className="absolute right-2 top-1/2 h-10 -translate-y-1/2 rounded-xl bg-white/10 px-4 text-sm font-bold hover:bg-white/15">Go</button>
+      </form>
+      <p className="-mt-2 text-xs text-muted-foreground" data-testid="text-search-privacy">Station and neighborhood searches stay on Transtop. Street addresses with a number are looked up with the US Census geocoder. No account or location permission needed.</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <button onClick={() => setGeo('explain')} data-testid="button-use-location"
+          className="inline-flex h-11 items-center gap-2 rounded-full bg-foreground px-4 text-sm font-bold text-background transition-transform active:scale-95">
+          <LocateFixed className="h-4 w-4" />Use my location
+        </button>
+        <button onClick={() => nav('/search')} className="inline-flex h-11 items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold text-muted-foreground hover:text-foreground" data-testid="button-open-search">
+          Find a route or station
+        </button>
+      </div>
+      {geo !== 'idle' && (
+        <div className="rise rounded-2xl border border-border bg-card p-4" role="dialog" aria-label="Location permission">
+          <div className="flex items-start gap-3">
+            <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+            <div className="flex-1 text-sm">
+              {geo === 'explain' && <>
+                <p className="font-bold">Find stops near you</p>
+                <p className="mt-1 text-muted-foreground">Your browser will ask to share your location once. Transtop uses it only to sort nearby stops. It is not stored, and it is separate from Ride sharing.</p>
+                <div className="mt-3 flex gap-2">
+                  <button onClick={requestGeo} data-testid="button-allow-location" className="h-11 rounded-full bg-primary px-5 font-bold text-primary-foreground">Continue</button>
+                  <button onClick={() => setGeo('idle')} className="h-11 rounded-full px-4 font-semibold text-muted-foreground hover:text-foreground">Not now</button>
+                </div>
+              </>}
+              {geo === 'asking' && <p aria-live="polite">Waiting for your browser...</p>}
+              {(geo === 'denied' || geo === 'unsupported') && <>
+                <p className="font-bold">{geo === 'denied' ? 'Location not shared' : 'Location not supported here'}</p>
+                <p className="mt-1 text-muted-foreground">No problem. Type an address or neighborhood above, like "Penn Station" or "Jamaica".</p>
+              </>}
+            </div>
+            <button onClick={() => setGeo('idle')} aria-label="Close" className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-white/10"><X className="h-4 w-4" /></button>
+          </div>
+        </div>
+      )}
+      <div role="radiogroup" aria-label="Service filter" className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1">
+        {FILTERS.map((f) => (
+          <button key={f.v} role="radio" aria-checked={filter === f.v} onClick={() => setFilter(f.v)} data-testid={`filter-${f.v}`}
+            className={cn('h-10 shrink-0 rounded-full border px-4 text-sm font-semibold transition-colors', filter === f.v ? 'border-foreground bg-foreground text-background' : 'border-border text-muted-foreground hover:text-foreground')}>{f.l}</button>
+        ))}
+      </div>
+      <div className="flex items-end justify-between gap-2">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Near</p>
+          <h2 className="font-display text-2xl" data-testid="text-place">{place.label}</h2>
+        </div>
+        {stops.data && <p className="text-right text-xs text-muted-foreground">Updated {ago(stops.data.updatedAt)}</p>}
+      </div>
+      {stops.data?.message && <p className="rounded-xl border border-border bg-card/60 px-3 py-2 text-sm text-muted-foreground" role="status">{stops.data.message}</p>}
+    </div>
+  );
+
+  const results = (
+    <div className="space-y-3" aria-live="polite">
+      {stops.isLoading && <SkeletonCards />}
+      {stops.isError && <ErrorState onRetry={() => stops.refetch()} detail={mode === 'live' ? 'Live feeds may not be configured. Check Settings for feed status, or switch to Demo.' : undefined} />}
+      {stops.data && list.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-border p-8 text-center">
+          <p className="font-display text-xl">No stops found here</p>
+          <p className="mt-1 text-sm text-muted-foreground">{mode === 'live' ? 'Live integrations may not cover this area yet. Demo data never fills in for live results.' : 'Try another neighborhood, or switch the filter to All.'}</p>
+        </div>
+      )}
+      {list.map((s, i) => <StopCard key={s.id} stop={s} index={i} active={hover === s.id} onHover={setHover} />)}
+      {(alerts.data?.length ?? 0) > 0 && (
+        <section className="pt-4">
+          <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Service alerts</h2>
+          <div className="space-y-2">{alerts.data!.slice(0, 4).map((a) => <AlertRow key={a.id} alert={a} />)}</div>
+        </section>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="relative md:grid md:h-[calc(100dvh-65px)] md:grid-cols-[440px_1fr] lg:grid-cols-[500px_1fr]">
+      <TransitLines className="absolute inset-x-0 top-0 h-72 w-full opacity-40 md:hidden" />
+      <div className="relative md:overflow-y-auto md:border-r md:border-border">
+        <MobileTop />
+        <div className="space-y-5 p-4 md:p-6">
+          {panel}
+          <div className="flex justify-end md:hidden">
+            <div className="inline-flex rounded-full border border-border bg-card p-0.5" role="tablist" aria-label="View">
+              {(['list', 'map'] as const).map((v) => (
+                <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)} data-testid={`button-view-${v}`}
+                  className={cn('inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold', view === v ? 'bg-white/10' : 'text-muted-foreground')}>
+                  {v === 'list' ? <List className="h-4 w-4" /> : <MapIcon className="h-4 w-4" />}{v === 'list' ? 'List' : 'Map'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="md:hidden">
+            {view === 'map'
+              ? <div className="space-y-3"><TransitMap center={center} stops={mapStops} activeId={hover} network={lines} vehicles={vehicles} onRoute={goRoute} onSelect={(id) => nav(`/stops/${encodeURIComponent(id)}`)} className="h-[52dvh] w-full overflow-hidden rounded-2xl border border-border" /><p className="text-xs text-muted-foreground">Tap a stop for arrivals, or a line for the route.</p>{legend}</div>
+              : results}
+          </div>
+          <div className="hidden md:block">{results}</div>
+        </div>
+      </div>
+      <div className="relative hidden md:block">
+        <TransitMap center={center} stops={mapStops} activeId={hover} network={lines} vehicles={vehicles} onRoute={goRoute} onSelect={(id) => nav(`/stops/${encodeURIComponent(id)}`)} className="h-full w-full" />
+        <div className="absolute bottom-8 left-3 max-w-[60%] rounded-xl border border-border bg-background/85 p-3 backdrop-blur">{legend}</div>
+      </div>
+    </div>
+  );
+}

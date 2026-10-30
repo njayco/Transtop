@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Transtop"
+description = "Mobile-first NYC and Long Island transit arrivals, nearby stops, map, favorites, and privacy-conscious rider contributions with explicit demo and live modes."
+version = "1.0.0"
+id = "artifacts/transtop"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23975
+
+[services.development]
+run = "pnpm --filter @workspace/transtop run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/transtop", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/transtop/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23975"
+BASE_PATH = "/"

@@ -1,0 +1,1 @@
+- [Generated API pitfalls](api-generation.md) — Orval can rewrite root barrels and create type/value export collisions; header helpers require DOM iterable types.
