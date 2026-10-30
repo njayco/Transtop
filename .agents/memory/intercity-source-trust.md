@@ -15,6 +15,12 @@ The BTS Intercity Bus Atlas is not a source of timetables for this app.
 
 **How to apply:** Find an authorized carrier feed or validate public factual timetable information instead. Do not infer departures or road paths from atlas route lines.
 
+Do not confuse the University of Illinois Intercity Bus GTFS (IBG) project with the BTS atlas. IBG publishes downloadable GTFS schedules and GeoJSON, but remains a research snapshot rather than a realtime service.
+
+**Why:** The Findings article and UTEL-UIUC/intercity-bus-gtfs repository reviewed on October 30, 2026 include mostly 2025 source records and some January 2026 records. Their documented processing removes one-day services and can adjust stop coordinates, timezones and geometry; these choices need checking against actual archive contents before rider-facing use.
+
+**How to apply:** Use IBG to discover carriers and upstream sources, then revalidate current departures, precise boarding points and holiday exceptions separately. Establish dataset/carrier reuse terms rather than assuming the article's license automatically covers all source data.
+
 For printed timetables, omit ambiguous footnotes, continuation destinations, uncertain boarding locations and unverified holiday overrides rather than guessing.
 
 **Why:** Official Martz pages contain special trips, downtown continuation notes, weekday boarding relocations and a Sunday overnight meridiem inconsistency. A generic route pattern would give riders the wrong remaining stops.
