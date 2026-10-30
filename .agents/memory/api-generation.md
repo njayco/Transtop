@@ -14,3 +14,9 @@ OpenAPI `format: date-time` is coerced into a JavaScript Date by the generated s
 **Why:** The server and browser generators intentionally represent validated timestamps differently; treating the parsed server value as a string causes type errors or incorrect conversion.
 
 **How to apply:** Infer server inputs from the generated Zod schema and use Date operations after validation. Keep serialized browser requests as ISO strings.
+
+Post-merge setup must regenerate both API clients and server Zod schemas before workflows restart.
+
+**Why:** A merged map feature arrived with a newer contract and frontend callers but stale generated bindings, leaving missing hooks and incompatible network-response types. Installing dependencies and pushing the database schema did not refresh those bindings.
+
+**How to apply:** Retain the API-spec codegen step in shared merge setup. Resolve contract mismatches at their source rather than manually patching generated files.

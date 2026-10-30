@@ -97,13 +97,10 @@ export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehi
     const authFail = () => fail(`Google rejected map authorization. Enable Maps JavaScript API and billing, and allow ${window.location.origin} in the browser key’s website restrictions. After correcting access, reload this page. Never share your key.`);
     const offline = () => fail('You are offline. Reconnect to load the Google basemap; schedules already loaded remain available below.');
     const online = () => { if (!authenticationFailed) { setReady(false); setTilesReady(false); setFailure(null); setAttempt(a => a + 1); } };
-    const awaitTiles = () => {
-      loaded = false;
-      if (!disposed) setTilesReady(false);
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => { if (!loaded) fail('Google map tiles have not arrived. Check your connection, content blocker, Maps JavaScript API authorization and billing, then retry.'); }, 20000);
-    };
-    awaitTiles();
+    // Watch the initial load only. Panning, zooming and resize can change bounds
+    // using cached tiles without a corresponding new tilesloaded event. Never
+    // invalidate a verified basemap or replace it with a schematic for that.
+    timer = window.setTimeout(() => { if (!loaded) fail('Google map tiles have not arrived. Check your connection, content blocker, Maps JavaScript API authorization and billing, then retry.'); }, 20000);
     window.addEventListener('transtop:maps-auth-failure', authFail);
     window.addEventListener('offline', offline);
     window.addEventListener('online', online);
@@ -132,13 +129,11 @@ export function TransitMap({ center, stops = [], activeId, onSelect, shape, vehi
       const reportRendering = () => { if (el.current) el.current.dataset.renderingType = m.getRenderingType(); };
       listeners.push(m.addListener('renderingtype_changed', reportRendering));
       reportRendering();
-      // Each changed camera needs its own readiness cycle, not just the first load.
-      // Existing overlays can remain visible while newly exposed tiles arrive.
       const rememberCamera = () => {
         const c = m.getCenter(), z = m.getZoom();
         if (c && z != null) camera.current = { center: { lat: c.lat(), lon: c.lng() }, zoom: z };
       };
-      listeners.push(m.addListener('bounds_changed', () => { rememberCamera(); awaitTiles(); }));
+      listeners.push(m.addListener('bounds_changed', rememberCamera));
       listeners.push(m.addListener('tilesloaded', () => {
         loaded = true;
         window.clearTimeout(timer);
