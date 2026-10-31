@@ -38,6 +38,9 @@ export default defineConfig({
     {
       name: 'transtop-public-content',
       configureServer(server) {
+        // The route-aware host uses the same renderer and adds canonical,
+        // sitemap and status handling. Do not short-circuit it in middleware mode.
+        if (server.config.server.middlewareMode) return;
         server.middlewares.use(publicContentMiddleware({
           base: basePath.replace(/\/$/, ''),
           template: async (url) => server.transformIndexHtml(url,

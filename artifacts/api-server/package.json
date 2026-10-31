@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev:web": "TRANSTOP_ROOT=../transtop tsx src/public-web.ts --dev",
+    "test:public-web": "tsx --experimental-test-module-mocks --test tests/public-web.ts tests/public-web-catalog.ts tests/public-web-train.ts",
+    "test:public-web-production": "tsx --test tests/public-web-production.ts",
     "test:wmata": "tsx --test tests/wmata.ts tests/wmata-access.ts",
     "check:wmata-vehicles-live": "tsx tests/wmata-vehicles-live.ts",
     "test:wmata-import": "tsx tests/wmata-import.ts",
@@ -20,6 +23,7 @@
     "bench:gtfs": "tsx tests/gtfs-performance.ts && tsx tests/gtfs-cleanup-performance.ts",
     "dev": "export NODE_ENV=development && pnpm run build && pnpm run start",
     "build": "node ./build.mjs",
+    "build:web": "node ./build.mjs --web",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

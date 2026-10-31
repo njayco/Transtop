@@ -12,12 +12,15 @@ globalThis.require = createRequire(import.meta.url);
 const artifactDir = path.dirname(fileURLToPath(import.meta.url));
 
 async function buildAll() {
-  const distDir = path.resolve(artifactDir, "dist");
+  const web = process.argv.includes("--web");
+  // Each artifact owns its output, so concurrent artifact builds cannot delete
+  // the other's bundle and the web service never relies on an API build.
+  const distDir = path.resolve(artifactDir, web ? "../transtop/dist/server" : "dist");
   await rm(distDir, { recursive: true, force: true });
-  await prepareCountryDatabase();
+  if (!web) await prepareCountryDatabase();
 
   await esbuild({
-    entryPoints: [path.resolve(artifactDir, "src/index.ts")],
+    entryPoints: [path.resolve(artifactDir, web ? "src/public-web.ts" : "src/index.ts")],
     platform: "node",
     bundle: true,
     format: "esm",
@@ -102,7 +105,7 @@ async function buildAll() {
       "puppeteer",
       "puppeteer-core",
       "electron",
-    ],
+    ].filter(name => !web || name !== "protobufjs"),
     sourcemap: "linked",
     plugins: [
       // pino relies on workers to handle logging, instead of externalizing it we use a plugin to handle it

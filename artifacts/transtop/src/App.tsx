@@ -17,6 +17,7 @@ import RidePage from '@/pages/ride';
 import Settings from '@/pages/settings';
 import TrainPage from '@/pages/train';
 import { TrainFollowsProvider } from '@/lib/train-follows';
+import { PublicUrlMetadata } from '@/components/public-url-metadata';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 15_000, refetchOnWindowFocus: true, networkMode: 'online' } },
@@ -25,6 +26,7 @@ const queryClient = new QueryClient({
 function Router() {
   return (
     <RoutedErrorBoundary>
+      <PublicUrlMetadata />
       <Switch>
         <Route path="/" component={Nearby} />
         <Route path="/search" component={SearchPage} />

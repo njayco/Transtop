@@ -18,7 +18,10 @@ run = "pnpm --filter @workspace/transtop run dev"
 build = [ "pnpm", "--filter", "@workspace/transtop", "run", "build" ]
 
 [services.production.run]
-args = ["node", "artifacts/transtop/server/start.mjs"]
+args = [ "node", "--enable-source-maps", "artifacts/transtop/dist/server/public-web.mjs" ]
+
+[services.production.run.env]
+NODE_ENV = "production"
 
 [services.env]
 PORT = "23975"
