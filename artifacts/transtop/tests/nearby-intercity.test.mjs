@@ -24,7 +24,7 @@ async function mountNearby(isMobile) {
     })),
   };
   let intercity = { data, isLoading: false, isError: false, refetch() {} };
-  let ready = true;
+  let ready = true, stopError = false, stopPlaceholder = false, stopAlerts = {};
   function slot(initial) {
     const i = current.cursor++;
     return current.slots[i] ??= { value: typeof initial === 'function' ? initial() : initial };
@@ -54,16 +54,20 @@ async function mountNearby(isMobile) {
     getGetMapVehiclesQueryKey: (p) => ['vehicles', p],
     getGetIntercityDeparturesQueryKey: (p) => ['intercity', p],
     useGetSources: () => ({ data: modes.map((type) => ({ id: type, agency: type, type })) }),
-    useGetAlerts: () => ({ data: [] }),
+    useGetAlerts: () => { throw new Error('Nearby must not request network-wide alerts'); },
     useGetMapVehicles: () => ({ data: [] }),
     useGetStops(params) {
       requests.stops = params;
       return {
         isLoading: !ready,
+        isError: stopError,
+        isPlaceholderData: stopPlaceholder,
         data: ready ? {
           centerLat: 40.756, centerLon: -73.991, updatedAt: new Date().toISOString(),
           stops: modes.filter((type) => !params.type || params.type === type).map((type) => ({
-            id: `${type}-stop`, name: `${type} stop`, type, routes: [], lat: 40.756, lon: -73.991,
+            id: `${type}-stop`, name: `${type} stop`, type,
+            routes: [{ id: `${type}:route`, type, agencyId: type, agency: type, serviceClass: 'local' }],
+            alerts: stopAlerts[type] ?? [], lat: 40.756, lon: -73.991,
           })),
         } : undefined,
       };
@@ -87,7 +91,7 @@ async function mountNearby(isMobile) {
     '@/components/global-coverage': { GlobalCoverageNotice: stub('GlobalCoverageNotice') },
     '@/components/tfl-details': { TflDetails: stub('TflDetails') },
     '@/components/shell': { MobileTop: stub('MobileTop') },
-    '@/components/transit': Object.fromEntries(['AlertRow', 'ErrorState', 'SkeletonCards', 'StopCard', 'TransitLines', 'RouteBadge'].map((name) => [name, stub(name)])),
+     '@/components/transit': Object.fromEntries(['ServiceAlerts', 'AlertRow', 'ErrorState', 'SkeletonCards', 'StopCard', 'TransitLines', 'RouteBadge'].map((name) => [name, stub(name)])),
     '@/components/transit-map': { TransitMap: stub('TransitMap'), vehicleKind: () => 'live' },
     '@/lib/prefs': { TIMES_SQUARE: { lat: 40.756, lon: -73.991, label: 'Port Authority' }, usePrefs: () => ({ mode: 'live' }) },
     '@/lib/format': { ago: () => 'just now', clock: (v) => v },
@@ -111,6 +115,7 @@ async function mountNearby(isMobile) {
     return module.namespace;
   }
   mocks['@/components/intercity'] = await load('../src/components/intercity.tsx');
+  mocks['@/lib/relevant-alerts'] = await load('../src/lib/relevant-alerts.ts');
   const { default: Nearby } = await load('../src/pages/nearby.tsx');
   function renderNode(node, path, visited) {
     if (Array.isArray(node)) return node.map((child, i) => renderNode(child, `${path}.${child?.key ?? i}`, visited));
@@ -122,7 +127,9 @@ async function mountNearby(isMobile) {
       visited.add(id);
       current = instance;
       current.cursor = 0;
-      return renderNode(node.type(node.props), `${id}.render`, visited);
+      const rendered = renderNode(node.type(node.props), `${id}.render`, visited);
+      return rendered && !Array.isArray(rendered) && typeof rendered === 'object'
+        ? { ...rendered, key: node.key ?? rendered.key } : rendered;
     }
     return { ...node, props: { ...node.props, children: renderNode(node.props.children, `${path}.children`, visited) } };
   }
@@ -147,6 +154,9 @@ async function mountNearby(isMobile) {
     render, requests, timers, byId,
     find: (predicate) => find(predicate, tree),
     setReady(value) { ready = value; render(); },
+    setStopAlerts(value) { stopAlerts = value; render(); },
+    setStopError(value) { stopError = value; render(); },
+    setStopPlaceholder(value) { stopPlaceholder = value; render(); },
     setIntercity(value) { intercity = { ...intercity, ...value }; render(); },
     choose(mode) { byId(`filter-${mode}`)[0].props.onClick(); render(); },
     change(id, value) { byId(id)[0].props.onChange({ target: { value } }); render(); },
@@ -159,6 +169,45 @@ async function mountNearby(isMobile) {
       return content(tree);
     },
   };
+}
+
+for (const mobile of [false, true]) {
+  test(`Nearby ${mobile ? 'mobile' : 'desktop'}: scoped alert candidates, identity resets and unavailable results`, async () => {
+    const env = await mountNearby(mobile);
+    const disclosure = () => env.find(n => n.type === 'ServiceAlerts')[0];
+    const delay = { id: 'bus-delay', severity: 'delay', routeIds: ['bus:route'], source: 'Agency' };
+    env.setStopAlerts({
+      bus: [delay, delay, { ...delay, id: 'global', routeIds: [] }, { ...delay, id: 'notice', severity: 'notice' }],
+      subway: [{ ...delay, id: 'subway-delay', routeIds: ['subway:route'] }],
+    });
+    assert.deepEqual(Array.from(disclosure().props.alerts, a => a.id), ['subway-delay', 'bus-delay']);
+    let key = disclosure().key;
+    env.choose('bus');
+    assert.notEqual(disclosure().key, key, 'native details remount closed when filters change');
+    assert.deepEqual(Array.from(disclosure().props.alerts, a => a.id), ['bus-delay']);
+    key = disclosure().key;
+    env.change('select-nearby-class', 'express');
+    assert.notEqual(disclosure().key, key);
+    assert.equal(disclosure().props.alerts.length, 0, 'mixed stop routes cannot leak unmatched service classes');
+    env.change('select-nearby-class', 'all');
+    key = disclosure().key;
+    env.change('input-nearby-search', 'New place');
+    env.find(n => n.type === 'form')[0].props.onSubmit({ preventDefault() {} });
+    env.render();
+    assert.notEqual(disclosure().key, key, 'new search resets disclosure even with cached data');
+    env.setStopError(true);
+    assert.equal(disclosure().props.alerts.length, 0);
+    env.setStopError(false);
+    env.setReady(false);
+    assert.equal(disclosure().props.alerts.length, 0);
+    env.setReady(true);
+    env.setStopPlaceholder(true);
+    assert.equal(disclosure().props.alerts.length, 0);
+    env.setStopPlaceholder(false);
+    assert.equal(disclosure().props.alerts.length, 1);
+    env.choose('rail');
+    assert.equal(disclosure().props.alerts.length, 0, 'previous results do not remain after filtering');
+  });
 }
 
 function assertExcluded(env) {

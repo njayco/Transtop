@@ -5,6 +5,8 @@ import { SOURCE_LABEL, ago, arrivalText, distance, severityTone, statusTone, tex
 import { cn } from '@/lib/utils';
 import { honest, usePrefs } from '@/lib/prefs';
 import { useFreshArrivals } from '@/lib/amtrak-arrivals';
+import { formatAlertContent } from '@/lib/alert-content';
+import { AlertContent } from '@/components/alert-content';
 
 export const MODE_COLOR: Record<string, string> = { subway: '#2fb36b', bus: '#e5a823', rail: '#a33a62', intercity: '#e0662f' };
 export const MODE_NAME: Record<string, string> = { subway: 'Subway', bus: 'Bus', rail: 'Rail / tram', intercity: 'Intercity Bus Network' };
@@ -79,21 +81,33 @@ export function FavButton({ active, onClick, label }: { active: boolean; onClick
 }
 
 export function AlertRow({ alert }: { alert: Alert }) {
-  const tone = severityTone(alert.severity);
+  const tone = alert.severity === 'disruption' ? 'bad' : alert.severity === 'notice' ? 'neutral' : severityTone(alert.severity);
+  const formatted = formatAlertContent(alert.title, alert.description);
   return (
     <div className={cn('flex gap-3 rounded-xl border bg-card p-3.5', tone === 'bad' ? 'border-[hsl(var(--bad)/.45)]' : tone === 'warn' ? 'border-[hsl(var(--warn)/.4)]' : 'border-card-border')}
       role="note" data-testid={`alert-${alert.id}`}>
       <AlertTriangle className={cn('mt-0.5 h-5 w-5 shrink-0', TONE[tone])} aria-hidden />
-      <div className="min-w-0">
-        <p className="font-semibold leading-snug">
-          <span className={cn('mr-2 text-[11px] font-bold uppercase tracking-wider', TONE[tone])}>{tone === 'bad' ? 'Major' : tone === 'warn' ? 'Delays' : 'Notice'}</span>
-          {alert.title}
-        </p>
-        {alert.description && <p className="mt-1 text-sm text-muted-foreground">{alert.description}</p>}
-        <p className="mt-1.5 text-[11px] uppercase tracking-wider text-muted-foreground/80">Source: {SOURCE_LABEL[alert.source] ?? alert.source}</p>
+      <div className="min-w-0 flex-1 [overflow-wrap:anywhere]">
+        <span className={cn('mb-1 inline-block rounded border border-current px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider', TONE[tone])}>{tone === 'bad' ? 'Disruption' : tone === 'warn' ? 'Delays' : 'Notice'}</span>
+        {formatted.blocks.length ? <details key={`${alert.source}|${alert.id}|${formatted.title}`}>
+          <summary className="cursor-pointer rounded font-semibold leading-snug focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">{formatted.title}<span className="sr-only"> — alert details</span></summary>
+          <div className="mt-3"><AlertContent blocks={formatted.blocks} /></div>
+        </details> : <p className="font-semibold leading-snug">{formatted.title}</p>}
+        <p className="mt-2 text-[11px] uppercase tracking-wider text-muted-foreground/80">Source: {formatAlertContent(SOURCE_LABEL[alert.source] ?? alert.source, '').title}</p>
       </div>
     </div>
   );
+}
+
+export function ServiceAlerts({ alerts }: { alerts: Alert[] }) {
+  if (!alerts.length) return null;
+  return <details className="rounded-xl border border-border bg-card p-3.5" data-testid="nearby-service-alerts">
+    <summary className="cursor-pointer rounded text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+      {alerts.length} service alert{alerts.length === 1 ? '' : 's'} on routes at these stops
+    </summary>
+    <p className="mt-2 text-xs text-muted-foreground">Route-wide alerts; they may not affect every stop shown.</p>
+    <div className="mt-3 space-y-2">{alerts.map(a => <AlertRow key={`${a.source}|${a.id}`} alert={a} />)}</div>
+  </details>;
 }
 
 export function StopCard({ stop, active, onHover, index = 0 }: { stop: Stop; active?: boolean; onHover?: (id: string | null) => void; index?: number }) {

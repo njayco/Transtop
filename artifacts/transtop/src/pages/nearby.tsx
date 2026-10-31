@@ -1,15 +1,16 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'wouter';
 import { LocateFixed, Search, List, Map as MapIcon, X, MapPin, Globe2 } from 'lucide-react';
-import { getGetMapVehiclesQueryKey, getGetNetworkQueryKey, getGetStopsQueryKey, useGetAlerts, useGetMapVehicles, useGetNetwork, useGetSources, useGetStops, type GetMapVehiclesParams, type GetNetworkParams, type GetStopsParams } from '@workspace/api-client-react';
+import { getGetMapVehiclesQueryKey, getGetNetworkQueryKey, getGetStopsQueryKey, useGetMapVehicles, useGetNetwork, useGetSources, useGetStops, type GetMapVehiclesParams, type GetNetworkParams, type GetStopsParams } from '@workspace/api-client-react';
 import { RegionalMap } from '@/components/regional-map';
 import { MobileTop } from '@/components/shell';
-import { AlertRow, ErrorState, SkeletonCards, StopCard, TransitLines } from '@/components/transit';
+import { ServiceAlerts, ErrorState, SkeletonCards, StopCard, TransitLines } from '@/components/transit';
 import { TransitMap, vehicleKind } from '@/components/transit-map';
 import { RouteBadge } from '@/components/transit';
 import { IntercityModule } from '@/components/intercity';
 import { TIMES_SQUARE, usePrefs } from '@/lib/prefs';
 import { ago } from '@/lib/format';
+import { relevantAlerts } from '@/lib/relevant-alerts';
 import { trackedVehicleVisible } from '@/lib/vehicle-visibility';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -51,8 +52,11 @@ export default function Nearby() {
     ...('q' in place ? { q: place.q } : { lat: place.lat, lon: place.lon }),
   }), [mode, filter, place, agency, provider, svc,cursor]);
   const stops = useGetStops(params, { query: { queryKey: getGetStopsQueryKey(params), refetchInterval: 30_000, retry: 1 } });
-  const alerts = useGetAlerts({ mode });
   const list = stops.data?.stops ?? [];
+  const alerts = stops.isLoading || stops.isError || stops.isPlaceholderData ? [] : relevantAlerts(list, {
+    type: filter, agency: filter === 'intercity' ? provider : agency, serviceClass: svc,
+  });
+  const alertScope = JSON.stringify(params);
   const agencies = useMemo(() => [...new Map([
     ...(sources.data??[]).map(s=>({id:s.id,agency:s.agency,type:s.type})),
     ...list.flatMap(s=>s.routes.map(r=>({id:r.agencyId||r.id.split(':')[0],agency:r.agency,type:r.type}))),
@@ -199,12 +203,7 @@ export default function Nearby() {
       )}
       {stops.data && !provider.startsWith('tl:') && (filter === 'all' || filter === 'intercity') && <div className={filter === 'intercity' ? '' : 'pb-2'}><IntercityModule key={`${center.lat},${center.lon}`} center={center} provider={provider} onProvider={setProvider} compact={filter !== 'intercity'} /></div>}
       {list.map((s, i) => <StopCard key={s.id} stop={s} index={i} active={hover === s.id} onHover={setHover} />)}
-      {(alerts.data?.length ?? 0) > 0 && (
-        <section className="pt-4">
-          <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Service alerts</h2>
-          <div className="space-y-2">{alerts.data!.slice(0, 4).map((a) => <AlertRow key={a.id} alert={a} />)}</div>
-        </section>
-      )}
+      <ServiceAlerts key={alertScope} alerts={alerts} />
     </div>
   );
 
