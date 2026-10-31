@@ -1,4 +1,4 @@
-# Favorites browser regressions
+# Transtop browser regressions
 
 From the workspace root:
 
@@ -26,3 +26,13 @@ explicit removal, hidden retired records, and the hidden-only empty state.
 Failure traces and screenshots go under
 `generated-artifacts/transtop-browser/` (ignored by Git and publishing).
 The existing `pnpm --filter @workspace/transtop test` focused checks remain separate.
+
+## Regional entry fixtures
+
+`entry.spec.ts` intercepts the same-origin country endpoint with US/GB/FR/JP,
+unsupported countries, failures and delayed responses. It exercises entry with
+keyboard, mouse and browser-generated touch, partial/cancelled drags, resizing,
+session/replay, deep-link query/hash preservation and reduced motion. Mobile,
+desktop and short-landscape screenshots go into the ignored output directory.
+No VPN or production override is needed. For manual tab-only preview instructions
+and server privacy/ingress/database checks, see `docs/regional-entry.md`.

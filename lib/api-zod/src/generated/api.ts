@@ -7,6 +7,15 @@
 import * as zod from 'zod';
 
 
+/**
+ * No inputs accepted. Only country is returned, never an IP. Unknown or failed lookups return null. Responses are private and no-store.
+ * @summary Approximate entry styling using a local country database
+ */
+export const GetEntryCountryResponse = zod.object({
+  "country": zod.union([zod.literal('US'),zod.literal('GB'),zod.literal('FR'),zod.literal('JP'),zod.literal(null)]).nullable()
+})
+
+
 export const checkFavoriteAvailabilityBodyItemsItemIdMax = 240;
 
 export const checkFavoriteAvailabilityBodyItemsMax = 20;

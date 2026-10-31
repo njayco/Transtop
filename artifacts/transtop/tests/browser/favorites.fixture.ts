@@ -34,6 +34,9 @@ export const test = base.extend<{ source: Source }>({
           checkedAt: '2026-10-31T12:00:00Z',
         })) });
       }
+      if (url.pathname === '/api/entry/country' && request.method() === 'GET') {
+        return route.fulfill({ json: { country: null } });
+      }
       if (url.pathname.startsWith('/api/')) {
         unexpected.push(`${request.method()} ${url.pathname}`);
         return route.abort('blockedbyclient');

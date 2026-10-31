@@ -150,6 +150,7 @@ export default function Settings() {
             <p><b>Nearby location</b> is requested only when you tap Use my location. It is used once to sort stops and is not stored. You can revoke it in your browser settings.</p>
             <p><b>Address search</b>: station and neighborhood names are matched by Transtop. Numbered street addresses are sent to the US Census geocoder to find coordinates.</p>
             <p><b>Google Maps</b>: opening a map sends your map viewport and ordinary connection information to Google. Submitting a journey sends both location texts and your travel time/preferences to Google through Transtop; journey results are not permanently stored. When you choose Use my location, the map can center on that location. Individual rider contributions are never sent as public map markers. <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline">Google Privacy Policy</a> · <a href="https://maps.google.com/help/terms_maps/" target="_blank" rel="noreferrer" className="underline">Google Maps Terms</a></p>
+            <p data-testid="text-entry-region-privacy"><b>Entry screen region</b>: to pick a London, Paris, Tokyo or New York poster, Transtop's server looks up an approximate country from your connection's IP address using a local database. The raw IP is not stored, logged or sent to any geolocation vendor, and no GPS or browser location is requested. VPNs and some networks may show a different region. IP geolocation by <a href="https://db-ip.com" target="_blank" rel="noreferrer" className="underline">DB-IP</a> (DB-IP Lite, CC BY 4.0).</p>
             <p><b>Ride sharing</b> is a separate, per-ride choice. Raw samples are deleted within 24 hours and only aggregated, reduced-precision positions are published.</p>
             {ride ? (
               <button onClick={async () => { await stopRide('user'); toast({ title: 'Sharing stopped' }); }} className="flex h-12 items-center gap-2 rounded-full bg-[hsl(var(--bad))] px-5 font-bold text-white" data-testid="button-settings-stop-sharing"><Radio className="h-4 w-4" />Stop sharing now</button>
@@ -167,7 +168,7 @@ export default function Settings() {
               <span className="font-semibold">Larger text</span>
               <Switch checked={prefs.largeText} onCheckedChange={(v) => prefs.set({ largeText: v })} data-testid="switch-large-text" />
             </label>
-            <button onClick={replay} className="flex min-h-[60px] w-full items-center gap-2 px-4 text-left font-semibold" data-testid="button-play-intro"><Play className="h-4 w-4" />Replay the MetroCard entry</button>
+            <button onClick={replay} className="flex min-h-[60px] w-full items-center gap-2 px-4 text-left font-semibold" data-testid="button-play-intro"><Play className="h-4 w-4" />Replay the entry screen</button>
           </div>
         </Section>
 

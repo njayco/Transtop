@@ -1,0 +1,18 @@
+IP Geolocation by DB-IP — https://db-ip.com
+
+DB-IP IP to Country Lite, October 2026 (unmodified MMDB database).
+Source: https://download.db-ip.com/free/dbip-country-lite-2026-10.mmdb.gz
+Copyright DB-IP.com. Distributed under Creative Commons Attribution 4.0 International:
+https://creativecommons.org/licenses/by/4.0/
+Full legal code: https://creativecommons.org/licenses/by/4.0/legalcode
+
+You may share and adapt this material for any purpose, including commercially,
+provided you give appropriate credit, provide a link to the license, and indicate
+if changes were made. No additional restrictions may be applied. No warranties
+are given. This notice is an attribution summary, not a replacement for the license.
+
+DB-IP Lite has reduced coverage and accuracy and is updated monthly.
+Licensing requirements: https://db-ip.com/db/lite.php
+Transtop uses the database locally for approximate entry-screen styling only.
+The country result is restricted to US, GB, FR, JP or unknown.
+Neither the database nor this use implies endorsement by DB-IP.

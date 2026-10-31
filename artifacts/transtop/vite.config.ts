@@ -29,6 +29,9 @@ if (!basePath) {
 
 export default defineConfig({
   base: basePath,
+  // The disposable browser-test server uses different plugins from the preview.
+  // Sharing optimized dependencies lets one invalidate the other's module URLs.
+  cacheDir: path.resolve(import.meta.dirname, `node_modules/.vite-${port}`),
   plugins: [
     react(),
     tailwindcss(),

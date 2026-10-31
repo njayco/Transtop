@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:entry-country": "tsx --test tests/entry-country.ts",
+    "prepare:entry-country": "node scripts/prepare-country-database.mjs",
     "import-gtfs": "tsx src/transit/import-cli.ts",
     "restore-legacy-gtfs": "tsx src/transit/legacy-rollback-cli.ts",
     "test:gtfs-import": "tsx tests/gtfs-import.ts",
@@ -27,7 +29,9 @@
     "drizzle-orm": "catalog:",
     "express": "^5.3.0",
     "gtfs-realtime-bindings": "^2.2.0",
+    "ipaddr.js": "^2.5.0",
     "luxon": "^3.7.2",
+    "mmdb-lib": "^3.0.3",
     "pino": "^9.14.0",
     "pino-http": "^10.5.0",
     "protobufjs": "^8.8.1",

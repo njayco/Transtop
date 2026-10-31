@@ -5,6 +5,27 @@ info:
 servers:
   - url: /api
 paths:
+  /entry/country:
+    get:
+      operationId: getEntryCountry
+      summary: Approximate entry styling using a local country database
+      description: No inputs accepted. Only country is returned, never an IP. Unknown or failed lookups return null. Responses are private and no-store.
+      responses:
+        "200":
+          description: Supported styling country or unknown
+          headers:
+            Cache-Control:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [country]
+                properties:
+                  country:
+                    type: [string, "null"]
+                    enum: [US, GB, FR, JP, null]
   /transit/favorites/availability:
     post:
       operationId: checkFavoriteAvailability

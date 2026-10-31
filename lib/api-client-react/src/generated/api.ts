@@ -31,6 +31,7 @@ import type {
   FeedSource,
   GetAlertsParams,
   GetCatalogParams,
+  GetEntryCountry200,
   GetIntercityDeparturesParams,
   GetMapVehiclesParams,
   GetNetworkParams,
@@ -82,6 +83,108 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getGetEntryCountryUrl = () => {
+
+
+
+
+  return `/api/entry/country`
+}
+
+/**
+ * No inputs accepted. Only country is returned, never an IP. Unknown or failed lookups return null. Responses are private and no-store.
+ * @summary Approximate entry styling using a local country database
+ */
+export const getEntryCountry = async ( options?: Parameters<typeof customFetch>[1]): Promise<GetEntryCountry200> => {
+
+  return customFetch<GetEntryCountry200>(getGetEntryCountryUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetEntryCountryQueryKey = () => {
+    return [
+    `/api/entry/country`
+    ] as const;
+    }
+
+
+export const getGetEntryCountryQueryOptions = <TData = Awaited<ReturnType<typeof getEntryCountry>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEntryCountry>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetEntryCountryQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEntryCountry>>> = ({ signal }) => getEntryCountry({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getEntryCountry>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetEntryCountryQueryResult = NonNullable<Awaited<ReturnType<typeof getEntryCountry>>>
+export type GetEntryCountryQueryError = ErrorType<unknown>
+
+
+export function useGetEntryCountry<TData = Awaited<ReturnType<typeof getEntryCountry>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEntryCountry>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEntryCountry>>,
+          TError,
+          Awaited<ReturnType<typeof getEntryCountry>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetEntryCountry<TData = Awaited<ReturnType<typeof getEntryCountry>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEntryCountry>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEntryCountry>>,
+          TError,
+          Awaited<ReturnType<typeof getEntryCountry>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetEntryCountry<TData = Awaited<ReturnType<typeof getEntryCountry>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEntryCountry>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Approximate entry styling using a local country database
+ */
+
+export function useGetEntryCountry<TData = Awaited<ReturnType<typeof getEntryCountry>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEntryCountry>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetEntryCountryQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getCheckFavoriteAvailabilityUrl = () => {
 

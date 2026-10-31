@@ -24,7 +24,20 @@ notices use the existing Transtop pages and filters. Requires the server-only
 claim, invented schedules or prediction-derived vehicle markers. See
 [TfL setup, verified samples, conservative shared limits, credits and coverage](docs/tfl.md).
 
-Documentation updated **October 30, 2026**. Coverage describes implemented sources, not a guarantee that an upstream feed or every operator is currently available; check Settings for source health and imported coverage.
+Documentation updated **October 31, 2026**. Coverage describes implemented sources, not a guarantee that an upstream feed or every operator is currently available; check Settings for source health and imported coverage.
+
+### Regional interactive entry
+
+The original US MetroCard entry remains the default. Approximate IP-country
+styling adds London (GB), Paris (FR) and Tokyo (JP) versions inspired by the
+supplied posters, with separate responsive route art, badges, landmarks and
+draggable original cards. Every version still requires a right-to-left slide
+or keyboard equivalent, remembers entry in the tab and replays from Settings
+without changing the destination. Failed/unknown country detection falls back
+promptly; it never requests GPS or sends the visitor IP to a geolocation vendor.
+DB-IP Lite is processed locally with attribution under CC BY 4.0. This changes
+entry artwork only, not agency coverage, fares or ticketing.
+See [privacy, ingress verification, database packaging/updates and fixture previews](docs/regional-entry.md).
 
 - **Original swipe-entry homepage:** responsive mobile/desktop recreation of the supplied black Transtop artwork, large white title, colored transit lines, five transport icons and MetroCard. Drag/swipe the card right to left to enter, or use the keyboard equivalent. There is no skip button or automatic entry. This is an entrance interaction, not a fare payment, card reader or balance service. Ferry and airplane icons are artwork, not active transport coverage.
 - **Live-only rider experience:** real agency observations, labeled published schedules and eligible community estimates; no Demo toggle or simulated live arrivals. Missing data is disclosed rather than replaced with examples.

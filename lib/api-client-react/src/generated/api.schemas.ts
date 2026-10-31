@@ -586,6 +586,24 @@ export interface ReportInput {
   stopId: string;
 }
 
+/**
+ * @nullable
+ */
+export type GetEntryCountry200Country = typeof GetEntryCountry200Country[keyof typeof GetEntryCountry200Country] | null;
+
+
+export const GetEntryCountry200Country = {
+  US: 'US',
+  GB: 'GB',
+  FR: 'FR',
+  JP: 'JP',
+} as const;
+
+export type GetEntryCountry200 = {
+  /** @nullable */
+  country: GetEntryCountry200Country;
+};
+
 export type GetIntercityDeparturesParams = {
 /**
  * @minimum -90

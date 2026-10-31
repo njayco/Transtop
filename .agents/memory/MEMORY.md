@@ -14,3 +14,5 @@
 - [TfL access boundaries](tfl-access.md) — HTTP success does not prove account quota; reserve for both environments and keep official predictions independent of Transitland.
 - [ODPT access boundaries](odpt-access.md) — public Japan coverage is independent of Transitland; Basic/Challenge access and new agreements remain unapproved.
 - [Saved-service identity trust](saved-service-trust.md) — missing source listings are not operator shutdowns; keep saved identities and labels until the rider chooses a change.
+- [Country styling ingress](entry-country-ingress.md) — verify actual proxy chains and edge header overwriting; the existing numeric Express trust setting does not prove visitor identity.
+- [Vite preview isolation](vite-preview-isolation.md) — disposable browser fixtures must not invalidate optimized dependencies used by the managed preview.
