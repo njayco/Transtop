@@ -1,7 +1,7 @@
 import type { TransitRoute, TransitStop, TflInfo, RouteDetail } from "../types";
 import { distance } from "../types";
 import type { Bounds } from "../map-geometry";
-import { request,health,configured,safeMessage,CREDIT,COVERAGE,TERMS } from "./client";
+import { request,health,configured,safeMessage,CREDIT,COVERAGE,TERMS,TflError } from "./client";
 import { MODES,line,normalizeStop,rawStop,rawLine,prediction,notices,suppliedShapes,boardingPoints,findStopRecord } from "./model";
 
 export type Query={q?:string;lat?:number;lon?:number;type?:string;agency?:string;serviceClass?:string;cursor?:string};
@@ -13,13 +13,21 @@ export function matches(r:TransitRoute,p:Query){
     (!p.serviceClass||p.serviceClass==="all");
 }
 export const eligible=(p:Query)=>configured()&&(!p.agency||p.agency==="tfl"||p.agency.startsWith("tfl-"))&&p.type!=="intercity";
-export async function lines():Promise<TransitRoute[]>{
-  const raw=await request(`Line/Mode/${MODES.join(",")}`,{},86400000);
+export async function lines(freshOnly=false):Promise<TransitRoute[]>{
+  const raw=await request(`Line/Mode/${MODES.join(",")}`,{},86400000,freshOnly);
   if(!Array.isArray(raw))throw new Error("Invalid TfL lines");
   return raw.slice(0,1000).flatMap(r=>{const v=line(r);return v?[v]:[];});
 }
-export async function stop(id:string):Promise<TransitStop|undefined>{
-  const raw=rawStop(id),rr=await lines(),value=await request(`StopPoint/${raw}`,{},86400000);
+export async function stop(id:string,freshOnly=false):Promise<TransitStop|undefined>{
+  const raw=rawStop(id),rr=await lines(freshOnly);
+  let value:any;
+  try{value=await request(`StopPoint/${raw}`,{},86400000,freshOnly);}
+  catch(error){
+    // Only this exact StopPoint response proves absence. A 404 from the line
+    // catalog, access failure, quota block or failed connection is not removal.
+    if(freshOnly&&error instanceof TflError&&error.httpStatus===404)return;
+    throw error;
+  }
   const record=findStopRecord(value,raw);
   return record?normalizeStop(record,rr):undefined;
 }

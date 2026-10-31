@@ -140,6 +140,34 @@ metadata.advance(3600001);metadata.status(500);
 assert.equal((await metadata.client.request("StopPoint/940GZZLUOXC",{},3600000)).ok,true);
 assert.equal(metadata.client.health().status,"stale"); // Retained metadata is explicitly disclosed, not relabeled healthy.
 assert.match(metadata.client.health().message,/Cached TfL metadata retained/);
+// Availability uses the specific response's cache expiry, not health's 5-minute timer.
+const currentMetadata=fixture();
+await currentMetadata.client.request("StopPoint/940GZZLUOXC",{},86400000);
+currentMetadata.advance(600000);
+assert.equal(currentMetadata.client.health().status,"stale");
+assert.equal((await currentMetadata.client.request("StopPoint/940GZZLUOXC",{},86400000,true)).ok,true);
+assert.equal(currentMetadata.calls(),1,"valid 24-hour metadata must not spend another request");
+for(const code of [404,401,403,429,500]){
+  const strict=fixture();
+  await strict.client.request("StopPoint/940GZZLUOXC",{},3600000);
+  strict.advance(3600001);strict.status(code);
+  await assert.rejects(strict.client.request("StopPoint/940GZZLUOXC",{},3600000,true),
+    (e:any)=>e instanceof TflError&&e.httpStatus===code,"strict checks never accept expired metadata");
+}
+const strictNetwork=fixture();
+await strictNetwork.client.request("StopPoint/940GZZLUOXC",{},3600000);
+strictNetwork.advance(3600001);strictNetwork.fail();
+await assert.rejects(strictNetwork.client.request("StopPoint/940GZZLUOXC",{},3600000,true));
+// A map's in-flight stale fallback cannot become an availability response.
+const mixed=fixture();
+await mixed.client.request("StopPoint/940GZZLUOXC",{},3600000);
+mixed.advance(3600001);mixed.status(500);
+const mixedResults=await Promise.allSettled([
+  mixed.client.request("StopPoint/940GZZLUOXC",{},3600000),
+  mixed.client.request("StopPoint/940GZZLUOXC",{},3600000,true),
+]);
+assert.equal(mixedResults[0].status,"fulfilled");
+assert.equal(mixedResults[1].status,"rejected");
 await assert.rejects(f.client.request("StopPoint",{app_key:"forbidden"}));
 // Two independent clients simulate replicas, not merely one client's in-flight map.
 const sharedCache=new Map<string,CacheEntry>(),locks=new Set<string>();let sharedCalls=0;

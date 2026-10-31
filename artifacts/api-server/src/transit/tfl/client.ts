@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { pool } from "@workspace/db";
 
 export class TflError extends Error {
-  constructor(message:string, public state="unavailable") { super(message); }
+  constructor(message:string, public state="unavailable", public httpStatus?:number) { super(message); }
 }
 export const configured=()=>!!process.env.TFL_API_KEY&&process.env.TFL_ENABLED!=="false";
 export const CREDIT="Powered by TfL Open Data · Data provided by Transport for London";
@@ -67,14 +67,17 @@ export function createClient(deps:{store:Store;fetch:typeof fetch;key:()=>string
       message:!deps.enabled()?"TfL disabled or server credential missing.":lastError||COVERAGE,
       lastSuccess,attribution:CREDIT,url:TERMS,timezone:"Europe/London",limit:17};
   }
-  async function request(path:string,params:Record<string,string|number>={},ttl=86400000) {
+  async function request(path:string,params:Record<string,string|number>={},ttl=86400000,freshOnly=false) {
     if(!allowedPath(path)||Object.keys(params).some(k=>!paramsAllowed.has(k))||
       Object.values(params).some(v=>String(v).length>180))throw new TflError("Invalid TfL request");
     if(!deps.enabled()||!deps.key())throw new TflError("TfL disabled or server credential missing.","setup required");
     const url=new URL(path,"https://api.tfl.gov.uk/");
     for(const [k,v] of Object.entries(params).sort())url.searchParams.set(k,String(v));
     const key="tfl:cache:"+createHash("sha256").update(url.toString()).digest("hex");
-    const pending=inflight.get(key);if(pending)return pending;
+    // Strict availability checks may share current cache entries, but never an
+    // in-flight map request that is allowed to return expired fallback metadata.
+    const inflightKey=key+(freshOnly?":fresh-only":"");
+    const pending=inflight.get(inflightKey);if(pending)return pending;
     let previous:CacheEntry|undefined;
     const work=(async()=>{
       const cached=await deps.store.get(key);
@@ -113,7 +116,7 @@ export function createClient(deps:{store:Store;fetch:typeof fetch;key:()=>string
           const delay=retry?(Number.isFinite(seconds)?seconds*1000:Date.parse(retry)-deps.now()):60000;
           blockedUntil=deps.now()+Math.min(900000,Math.max(30000,Number.isFinite(delay)?delay:60000));
           if(res.status===429||res.status===401||res.status===403||res.status>=500)await deps.store.block(blockedUntil);
-          throw new TflError(lastError,state);
+          throw new TflError(lastError,state,res.status);
         }
         if(!res.body)throw new Error();
         const reader=res.body.getReader(),chunks:Uint8Array[]=[];let size=0;
@@ -139,13 +142,13 @@ export function createClient(deps:{store:Store;fetch:typeof fetch;key:()=>string
       lastError="TfL shared cache is unavailable.";state="unavailable";throw new TflError(lastError);}
       // Only slow-changing metadata can be retained during an outage, explicitly stale.
       // Never serve an expired prediction/status cache as live, or bypass disable/missing key.
-      if(ttl>=3600000&&previous&&previous.expires>deps.now()-7*86400000){
+      if(!freshOnly&&ttl>=3600000&&previous&&previous.expires>deps.now()-7*86400000){
         state="stale";lastError=`Cached TfL metadata retained; ${lastError}`;
         lastSuccess=previous.fetchedAt||lastSuccess;return previous.value;
       }
       throw err;
-    }).finally(()=>inflight.delete(key));
-    inflight.set(key,work);return work;
+    }).finally(()=>inflight.delete(inflightKey));
+    inflight.set(inflightKey,work);return work;
   }
   return {request,health};
 }

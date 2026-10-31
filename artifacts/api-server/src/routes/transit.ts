@@ -18,6 +18,8 @@ import { amtrakTrainDetail } from "../transit/amtrak-service";
 import { GetTrainResponse } from "@workspace/api-zod";
 import { TransitlandError } from "../transit/transitland/client";
 import { TflError } from "../transit/tfl/client";
+import { CheckFavoriteAvailabilityBody, CheckFavoriteAvailabilityResponse } from "@workspace/api-zod";
+import { favoriteAvailability } from "../transit/favorite-availability";
 function sourceFailure(error:unknown,res:import("express").Response){
   if(error instanceof TflError){res.status(503).json({error:error.message});return true;}
   if(error instanceof Error&&["Invalid TfL identity","Invalid TfL direction"].includes(error.message)){res.status(400).json({error:error.message});return true;}
@@ -26,6 +28,11 @@ function sourceFailure(error:unknown,res:import("express").Response){
   return false;
 }
 router.use("/transit",(_req,res,next)=>{res.set("Cache-Control","no-store");next();});
+router.post("/transit/favorites/availability",async(req,res):Promise<void>=>{
+  const input=CheckFavoriteAvailabilityBody.safeParse(req.body);
+  if(!input.success){res.status(400).json({error:"Check between 1 and 20 saved stops or routes"});return;}
+  res.json(CheckFavoriteAvailabilityResponse.parse(await favoriteAvailability(input.data.items)));
+});
 router.get("/transit/trains/:id",async(req,res):Promise<void>=>{
   if(typeof req.params.id!=="string"||req.params.id.length>180){res.status(400).json({error:"Invalid train identity"});return;}
   const train=await amtrakTrainDetail(req.params.id);

@@ -7,6 +7,30 @@
 import * as zod from 'zod';
 
 
+export const checkFavoriteAvailabilityBodyItemsItemIdMax = 240;
+
+export const checkFavoriteAvailabilityBodyItemsMax = 20;
+
+
+
+export const CheckFavoriteAvailabilityBody = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string().min(1).max(checkFavoriteAvailabilityBodyItemsItemIdMax),
+  "kind": zod.enum(['stop', 'route'])
+})).min(1).max(checkFavoriteAvailabilityBodyItemsMax)
+})
+
+export const CheckFavoriteAvailabilityResponseItem = zod.object({
+  "id": zod.string(),
+  "kind": zod.enum(['stop', 'route']),
+  "status": zod.enum(['available', 'unavailable', 'unknown']),
+  "message": zod.string(),
+  "currentName": zod.string().optional(),
+  "checkedAt": zod.string()
+})
+export const CheckFavoriteAvailabilityResponse = zod.array(CheckFavoriteAvailabilityResponseItem)
+
+
 export const getTrainPathIdMax = 180;
 
 

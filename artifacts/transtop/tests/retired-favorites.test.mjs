@@ -20,6 +20,9 @@ test('retired research favorites stay hidden without deleting saved data or affe
     Link: noop, Heart: noop, X: noop, MobileTop: noop, ModeIcon: noop, RouteBadge: noop,
     TransitLines: noop, FollowedTrains: noop, MODE_NAME: { intercity: 'Intercity' },
     useOnline: () => true, usePrefs: () => prefs, ago: () => 'recently',
+    useState: value => [value, () => {}],
+    useFavoriteAvailability: () => ({ isFetching: false }),
+    FavoriteLink: noop, FavoriteStatus: noop,
   };
   const source = await readFile(new URL('../src/pages/favorites.tsx', import.meta.url), 'utf8');
   const { outputText } = ts.transpileModule(source, {

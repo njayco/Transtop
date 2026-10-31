@@ -5,6 +5,22 @@ info:
 servers:
   - url: /api
 paths:
+  /transit/favorites/availability:
+    post:
+      operationId: checkFavoriteAvailability
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/FavoriteAvailabilityInput"}
+      responses:
+        "200":
+          description: Cached exact-identity checks, never replacement suggestions or arrival predictions
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: "#/components/schemas/FavoriteAvailability"}}
+        "400":
+          description: Invalid or oversized batch
   /transit/trains/{id}:
     get:
       operationId: getTrain
@@ -264,6 +280,31 @@ paths:
               schema: {$ref: "#/components/schemas/HealthStatus"}
 components:
   schemas:
+    FavoriteIdentity:
+      type: object
+      required: [id, kind]
+      properties:
+        id: {type: string, minLength: 1, maxLength: 240}
+        kind: {type: string, enum: [stop, route]}
+    FavoriteAvailabilityInput:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items: {$ref: "#/components/schemas/FavoriteIdentity"}
+    FavoriteAvailability:
+      type: object
+      required: [id, kind, status, message, checkedAt]
+      properties:
+        id: {type: string}
+        kind: {type: string, enum: [stop, route]}
+        status: {type: string, enum: [available, unavailable, unknown]}
+        message: {type: string}
+        currentName: {type: string}
+        checkedAt: {type: string}
     IntercityProvider:
       type: object
       required: [id, name, status, description, url, checkedAt, terminalService, access, aliases]

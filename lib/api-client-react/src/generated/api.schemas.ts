@@ -4,6 +4,57 @@
  * Api
  * OpenAPI spec version: 0.1.0
  */
+export type FavoriteIdentityKind = typeof FavoriteIdentityKind[keyof typeof FavoriteIdentityKind];
+
+
+export const FavoriteIdentityKind = {
+  stop: 'stop',
+  route: 'route',
+} as const;
+
+export interface FavoriteIdentity {
+  /**
+     * @minLength 1
+     * @maxLength 240
+     */
+  id: string;
+  kind: FavoriteIdentityKind;
+}
+
+export interface FavoriteAvailabilityInput {
+  /**
+     * @minItems 1
+     * @maxItems 20
+     */
+  items: FavoriteIdentity[];
+}
+
+export type FavoriteAvailabilityKind = typeof FavoriteAvailabilityKind[keyof typeof FavoriteAvailabilityKind];
+
+
+export const FavoriteAvailabilityKind = {
+  stop: 'stop',
+  route: 'route',
+} as const;
+
+export type FavoriteAvailabilityStatus = typeof FavoriteAvailabilityStatus[keyof typeof FavoriteAvailabilityStatus];
+
+
+export const FavoriteAvailabilityStatus = {
+  available: 'available',
+  unavailable: 'unavailable',
+  unknown: 'unknown',
+} as const;
+
+export interface FavoriteAvailability {
+  id: string;
+  kind: FavoriteAvailabilityKind;
+  status: FavoriteAvailabilityStatus;
+  message: string;
+  currentName?: string;
+  checkedAt: string;
+}
+
 export interface IntercityProvider {
   id: string;
   name: string;

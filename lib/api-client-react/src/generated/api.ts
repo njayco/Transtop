@@ -26,6 +26,8 @@ import type {
 import type {
   Alert,
   CatalogResults,
+  FavoriteAvailability,
+  FavoriteAvailabilityInput,
   FeedSource,
   GetAlertsParams,
   GetCatalogParams,
@@ -80,6 +82,88 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getCheckFavoriteAvailabilityUrl = () => {
+
+
+
+
+  return `/api/transit/favorites/availability`
+}
+
+export const checkFavoriteAvailability = async (favoriteAvailabilityInput: FavoriteAvailabilityInput, options?: Parameters<typeof customFetch>[1]): Promise<FavoriteAvailability[]> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<FavoriteAvailability[]>(getCheckFavoriteAvailabilityUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(favoriteAvailabilityInput)
+  }
+);}
+
+
+
+
+
+export const getCheckFavoriteAvailabilityMutationKey = () => ['checkFavoriteAvailability'] as const;
+
+export const getCheckFavoriteAvailabilityMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkFavoriteAvailability>>, TError,CheckFavoriteAvailabilityMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof checkFavoriteAvailability>>, TError,CheckFavoriteAvailabilityMutationVariables, TContext> => {
+
+const mutationKey = getCheckFavoriteAvailabilityMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkFavoriteAvailability>>, CheckFavoriteAvailabilityMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  checkFavoriteAvailability(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CheckFavoriteAvailabilityMutationResult = NonNullable<Awaited<ReturnType<typeof checkFavoriteAvailability>>>
+    export type CheckFavoriteAvailabilityMutationBody = BodyType<FavoriteAvailabilityInput>
+    export type CheckFavoriteAvailabilityMutationError = ErrorType<void>
+    export type CheckFavoriteAvailabilityMutationVariables = {data: BodyType<FavoriteAvailabilityInput>}
+
+    export const useCheckFavoriteAvailability = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkFavoriteAvailability>>, TError,CheckFavoriteAvailabilityMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof checkFavoriteAvailability>>,
+        TError,
+        CheckFavoriteAvailabilityMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCheckFavoriteAvailabilityMutationOptions(options), queryClient);
+    }
 
 export const getGetTrainUrl = (id: string,) => {
 

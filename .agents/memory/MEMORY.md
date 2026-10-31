@@ -13,3 +13,4 @@
 - [Transitland access](transitland-access.md) — approved request limits are not unlimited metering; collection lookups avoid a documented composite-key mismatch.
 - [TfL access boundaries](tfl-access.md) — HTTP success does not prove account quota; reserve for both environments and keep official predictions independent of Transitland.
 - [ODPT access boundaries](odpt-access.md) — public Japan coverage is independent of Transitland; Basic/Challenge access and new agreements remain unapproved.
+- [Saved-service identity trust](saved-service-trust.md) — missing source listings are not operator shutdowns; keep saved identities and labels until the rider chooses a change.
