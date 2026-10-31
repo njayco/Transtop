@@ -25,10 +25,12 @@ The production GTFS operations used are on `https://api.wmata.com/gtfs/`:
 | Metrorail predictions | `rail-gtfsrt-tripupdates.pb` |
 | Metrobus alerts | `bus-gtfsrt-alerts.pb` |
 | Metrorail alerts | `rail-gtfsrt-alerts.pb` |
+| Metrobus GPS | `bus-gtfsrt-vehiclepositions.pb` |
 
 All five returned authorized HTTP 200, decoded ZIP/protobuf data during bounded
 checks. Separate JSON prediction/incident, GTFS Metro Alert and vehicle-position
-products were **not** requested or claimed as verified. No QA feed, guest key,
+products were **not** requested or claimed as verified during the initial integration.
+Metrobus GPS access was subsequently checked independently; see below. No QA feed, guest key,
 account registration, subscription upgrade or additional agreement was used.
 Empty rail alerts are a valid upstream result, not a promise of no disruptions.
 
@@ -66,7 +68,7 @@ environment (far below the confirmed 10/second even with two environments).
 Other applications sharing the key are outside this ledger.
 
 There is no WMATA background realtime timer. Rider views trigger shared/coalesced
-polling only for relevant modes. Predictions cache for 30 seconds; alerts check at
+polling only for relevant modes. Predictions and GPS cache for 30 seconds; alerts check at
 most every 120 seconds. Database leases select one poll owner per operation.
 429 responses block all operations in the environment; product denial backs off
 for an hour. Transient failures back off at least a minute; `Retry-After` is
@@ -144,18 +146,70 @@ points remain separate. Existing worldwide saved links retain their source and
 are not silently rewritten.
 
 No MARC, VRE, county agencies, ticketing, fares, pathways navigation, push alerts
-or new vehicle tracking is claimed. A fresh arrival prediction is not vehicle GPS.
+or rail GPS is claimed. A fresh arrival prediction is not vehicle GPS.
+
+## Official Metrobus GPS
+
+The documented production [Bus RT Vehicle Positions operation](https://developer.wmata.com/api-details#api=gtfs&operation=5cdc52139e0b4de98fdfd54a)
+was verified on the existing authorized account before connecting it to rider
+views. The official developer portal's operation metadata establishes the path
+and GTFS-RT 1.0 format, not account entitlement. A bounded authenticated request
+returned HTTP 200 and decoded **432 VehiclePosition observations / 34,883 bytes**
+at **2026-10-31T03:58:07Z**. This proves operation access at that time, not
+continuous availability or a larger quota. No JSON Bus Methods, QA product,
+rail vehicle-position product or subscription change was needed.
+
+Washington map viewports and exact WMATA bus route views request this product
+on demand through the same server-only client, persistent shared ledger, leases,
+cache and denial/throttling backoff as predictions and alerts. There is no new
+background timer or larger allowance: the existing **500 development / 4,500
+production** daily maximum includes GPS, predictions, alerts and static downloads.
+Busy views can become limited; they do not bypass request spacing or quota.
+
+Only VehiclePosition coordinates qualify. A physical `vehicle.id` produces the
+stable `wmata:vehicle:<id>` identity, never a feed-local entity ID or display label.
+Routes must match current static Metrobus IDs exactly. A supplied trip must also
+match an exact static trip, route and any supplied direction; absent/mismatched
+editions remain unresolved and withheld rather than guessed. Duplicate physical
+IDs are withheld. Rail entities, trip-update predictions, deleted records, missing
+GPS/timestamps and invalid coordinates do not create markers.
+
+The source label is **official WMATA Metrobus GPS** on the existing route-branded
+map badge and source details. Both the full-feed header and each vehicle's
+observation must be within 60 seconds, with at most 30 seconds future skew.
+`updatedAt` is the older timestamp; `expiresAt` is 60 seconds after that.
+Persisted caches are rechecked on every response and the map independently hides
+expired positions even if refreshing fails. Retrieval cannot extend freshness.
+Missing positions or a failed/denied product replace the old GPS snapshot with
+no markers. The existing map can ease only between two received GPS observations;
+it never extrapolates movement or animates schedules or rail station reports.
+
+The server reports `bus-vehicles` in Settings source health, and bus route notes
+report GPS availability separately from predictions and alerts.
+
+After the development schedule import published 132 routes, the explicit matching
+check at **2026-10-31T04:02:58Z** decoded **428 observations / 34,556 bytes** and
+accepted **244 fresh, exact-static-identity GPS positions**. The remaining
+observations were withheld by freshness/identity validation, not inferred into
+positions. The running application then returned **222 Metrobus GPS markers** in
+the bounded Washington viewport and **3 M70 buses** on its route detail, with
+independent fresh prediction/alert/GPS notes. Counts vary with time and viewport.
+These were development checks on the existing account, not a production import,
+deployment or claim that every bus currently has usable GPS.
 
 ## Verification
 
 ```sh
 pnpm --filter @workspace/api-server run test:wmata
+# Explicit one-request access/GPS matching check, not part of automated fixtures:
+pnpm --filter @workspace/api-server run check:wmata-vehicles-live
 # Disposable PostgreSQL only: see transit-imports.md (fixed port 55439).
 pnpm --filter @workspace/api-server run test:wmata-import
 pnpm --filter @workspace/api-server run test:gtfs-import
 pnpm --filter @workspace/api-server run test:catalog-timetable
 pnpm --filter @workspace/api-server run test:tfl
 pnpm --filter @workspace/api-server run test:odpt
+pnpm --filter @workspace/transtop exec node --experimental-vm-modules --test tests/vehicle-visibility.test.mjs tests/map-overlays.test.mjs tests/map-lifecycle.test.mjs
 pnpm run typecheck
 ```
 
@@ -165,6 +219,10 @@ cancellations/skips, stale/future observations, valid empty responses, nonnumeri
 times, scoped/systemwide/expired advisories, unknown selectors, denied access,
 throttling, coalescing, credential echo protection, safe URLs and preservation
 after failed refresh. Fixtures alone are not evidence of current provider access.
+GPS fixtures additionally cover protobuf physical IDs, exact bus route/trip
+agreement, duplicate IDs, missing/invalid coordinates and observation timestamps,
+stale/future headers, persisted-cache expiry, product denial/backoff, tight map
+viewports between stops, source labels and removal without disturbing route paths.
 
 Initial authorized real sample: **37,102,969 compressed bytes**, **132 routes
 (126 bus / 6 rail lines)** and **9,716 locations**. Feed version `S1000251`,

@@ -28,3 +28,11 @@ test('map independently enforces five-minute source expiry and future-clock tole
   assert.equal(vehicleFresh({...v,expiresAt:new Date(now+999_999).toISOString()},now+300_001),false);
   assert.equal(vehicleFresh({...v,agencyId:'mta-mnr'},now+60_001),false);
 });
+test('Metrobus GPS cannot outlive the supplied expiry or refresh a stale observation',()=>{
+  const now=Date.parse('2026-10-31T14:00:00Z');
+  const v={agencyId:'wmata',updatedAt:new Date(now-10_000).toISOString(),expiresAt:new Date(now+20_000).toISOString()};
+  assert.equal(vehicleFresh(v,now),true);
+  assert.equal(vehicleFresh(v,now+20_001),false);
+  assert.equal(vehicleFresh({...v,expiresAt:'invalid'},now),false);
+  assert.equal(vehicleFresh({...v,expiresAt:new Date(now+999_999).toISOString()},now+50_001),false);
+});

@@ -41,6 +41,19 @@ async function setup(){
   return {layers:new m.namespace.MapOverlays({},Marker,InfoWindow,()=>{},()=>{},()=>{}),paths,markers,popups,badge,
     frame(at){now=at;const work=[...frames.values()];frames.clear();work.forEach(fn=>fn(at));}};
 }
+test('official Metrobus badge keeps its physical identity and source label, then disappears with missing GPS',async()=>{
+  const {layers,markers}=await setup();
+  const bus={id:'wmata:vehicle:4727',lat:38.9,lon:-77.03,agencyId:'wmata',vehicleType:'bus',
+    routeId:'wmata:C51',routeName:'C51',color:'#0091C8',source:'official WMATA Metrobus GPS',
+    updatedAt:'2026-10-31T03:58:01Z'};
+  layers.setVehicles([bus]);
+  assert.equal(markers.length,1);
+  assert.match(markers[0].options.title,/C51.*official WMATA Metrobus GPS/);
+  layers.setVehicles([{...bus,updatedAt:'2026-10-31T03:58:31Z'}]);
+  assert.equal(markers.length,1);
+  layers.setVehicles([]);
+  assert.equal(markers[0].detached,1);
+});
 const line={id:'mta-subway:2',shapeId:'shape-2',type:'subway',name:'2',color:'#EE352E',coords:[[-74,40.7],[-73.9,40.8]]};
 const stop={id:'stop-1',name:'Station',lat:40.7,lon:-74,type:'subway'};
 const vehicle={id:'train-1',lat:40.7,lon:-74,source:'official GPS vehicle',routeId:'mta-subway:2',routeName:'2',updatedAt:'2026-10-30T21:00:00Z'};

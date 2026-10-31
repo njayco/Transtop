@@ -18,7 +18,8 @@ export function amtrakVisible(v:{lat:number;lon:number;routeId?:string},p:{
 }
 export function vehicleFresh(v:{updatedAt?:string;expiresAt?:string;agencyId?:string},now=Date.now()) {
   const at=Date.parse(v.updatedAt||'');
-  const expires=v.agencyId==='amtrak'?Math.min(Date.parse(v.expiresAt||''),at+300_000):at+60_000;
+  const expires=v.agencyId==='amtrak'?Math.min(Date.parse(v.expiresAt||''),at+300_000):
+    v.expiresAt?Math.min(Date.parse(v.expiresAt),at+60_000):at+60_000;
   return Number.isFinite(at)&&Number.isFinite(expires)&&at<=now+30_000&&expires>=now;
 }
 export function safeAmtrakArrival<T extends {source:string;trainNumber?:string;updatedAt?:string;expiresAt?:string;publishedAt?:string}>(a:T,now=Date.now()):T {

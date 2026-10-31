@@ -3,7 +3,8 @@ import { test } from "node:test";
 import GtfsRealtime from "gtfs-realtime-bindings";
 import { createClient, dailyLimit, sourceUrl, operationFor, WmataError, type Budget } from "../src/transit/wmata/client";
 import { current, matchTrip, normalizePredictions, normalizeAlerts, applies, routeType, locationInfo, boarding, type StaticCatalog } from "../src/transit/wmata/model";
-import { predictionArrivals, type Feed } from "../src/transit/wmata/realtime";
+import { predictionArrivals, vehicleObservations, type Feed } from "../src/transit/wmata/realtime";
+import { normalizeVehicles, busViewport } from "../src/transit/wmata/vehicles";
 import { verifiedFeed, boardingDuplicate } from "../src/transit/wmata/crosswalk";
 import { serviceInstant, activeService, gtfsSeconds } from "../src/transit/time";
 import type { TransitRoute,TransitStop } from "../src/transit/types";
@@ -43,6 +44,71 @@ const update=(rail=true)=>({id:rail?"rail-run":"bus-run",tripUpdate:{
   trip:{tripId:rail?"11842073_20755":"34947100",routeId:rail?"RED":"C51",directionId:0,startDate:"20261030",startTime:"12:02:00",scheduleRelationship:0},
   timestamp,stopTimeUpdate:[{stopId:rail?"PF_A01_1":"7219",stopSequence:1,arrival:{time:timestamp+120},scheduleRelationship:0}]}});
 const feed=(entities:any[],overrides:Partial<Feed>={}):Feed=>({timestamp,fetchedAt:now,entities,state:"fresh",nextPoll:now+30000,...overrides});
+
+const gps=()=>({id:"feed-local-id",vehicle:{vehicle:{id:"4727"},trip:{tripId:"34947100",routeId:"C51",directionId:0},
+  timestamp:timestamp-5,position:{latitude:38.9,longitude:-77.03}}});
+test("GPS polling is regional, including tight views between stops with no route geometry",()=>{
+  const c={...catalog,stops:[{...busStop,lat:38,lon:-78},{...busStop,lat:40,lon:-76},platform]};
+  assert.equal(busViewport({west:-77.1,east:-77,south:38.9,north:39},c),true);
+  assert.equal(busViewport({west:-75,east:-74,south:38.9,north:39},c),false);
+  assert.equal(busViewport({west:175,east:-175,south:38.9,north:39},c),false);
+  assert.equal(busViewport(undefined,c),false);
+  assert.equal(busViewport({west:-78,east:-76,south:38,north:40},{...c,stops:[]}),false);
+});
+test("Metrobus GPS retains physical identity, exact static route and older source expiry through protobuf",()=>{
+  const raw=gps();
+  const decoded=GtfsRealtime.transit_realtime.FeedMessage.decode(GtfsRealtime.transit_realtime.FeedMessage.encode({
+    header:{gtfsRealtimeVersion:"1.0",timestamp},entity:[raw]}).finish());
+  const rows=normalizeVehicles(decoded.entity,catalog,timestamp,now);
+  assert.equal(rows.length,1);
+  assert.equal(rows[0].id,"wmata:vehicle:4727");
+  assert.equal(rows[0].routeId,bus.id);assert.equal(rows[0].destination,"Takoma");
+  assert.equal(rows[0].source,"official WMATA Metrobus GPS");
+  assert.equal(rows[0].expiresAt,new Date(now+55000).toISOString());
+  const renamed={...raw,id:"different-entity"};
+  assert.equal(normalizeVehicles([renamed],catalog,timestamp,now)[0].id,rows[0].id);
+  assert.equal(normalizeVehicles([raw],catalog,timestamp-15,now)[0].updatedAt,new Date(now-15000).toISOString());
+});
+test("Metrobus missing/stale/future GPS, mismatched identities and deleted observations cannot create markers",()=>{
+  const raw=gps();
+  const variants=[
+    {...raw,vehicle:{...raw.vehicle,timestamp:timestamp-61}},
+    {...raw,vehicle:{...raw.vehicle,timestamp:timestamp+31}},
+    {...raw,vehicle:{...raw.vehicle,timestamp:undefined}},
+    {...raw,vehicle:{...raw.vehicle,position:undefined}},
+    {...raw,vehicle:{...raw.vehicle,position:{latitude:100,longitude:-77}}},
+    {...raw,vehicle:{...raw.vehicle,position:{latitude:38}}},
+    {...raw,vehicle:{...raw.vehicle,vehicle:{id:""}}},
+    {...raw,vehicle:{...raw.vehicle,trip:{...raw.vehicle.trip,routeId:"RED"}}},
+    {...raw,vehicle:{...raw.vehicle,trip:{...raw.vehicle.trip,routeId:"unknown"}}},
+    {...raw,vehicle:{...raw.vehicle,trip:{...raw.vehicle.trip,tripId:"unpublished"}}},
+    {...raw,vehicle:{...raw.vehicle,trip:{...raw.vehicle.trip,directionId:1}}},
+    {...raw,isDeleted:true},update(false),update(true),
+  ];
+  for(const variant of variants)assert.deepEqual(normalizeVehicles([variant],catalog,timestamp,now),[]);
+  for(const header of [timestamp-61,timestamp+31,0,NaN])
+    assert.deepEqual(normalizeVehicles([raw],catalog,header,now),[]);
+  assert.deepEqual(normalizeVehicles([raw,{...raw,id:"duplicate-entity"}],catalog,timestamp,now),[]);
+});
+test("persisted GPS is rechecked after restart; failed, empty and expired caches remove markers",()=>{
+  const rows=normalizeVehicles([gps()],catalog,timestamp,now);
+  const cached=JSON.parse(JSON.stringify(feed([],{vehicles:rows})));
+  assert.equal(vehicleObservations(cached,now).length,1);
+  assert.deepEqual(vehicleObservations(cached,now+55001),[]);
+  assert.deepEqual(vehicleObservations({...cached,error:"access denied"},now),[]);
+  assert.deepEqual(vehicleObservations({...cached,timestamp:timestamp-61},now),[]);
+  assert.deepEqual(vehicleObservations(feed([]),now),[]);
+  assert.deepEqual(vehicleObservations(undefined,now),[]);
+});
+test("vehicle-product denial backs off persistently and cannot spend requests on retries",async()=>{
+  let requests=0,blocked:string|undefined;
+  const client=createClient({key:()=>"fixture-only-key",enabled:()=>true,limit:()=>500,now:()=>now,
+    budget:{reserve:async()=>true,status:async()=>blocked,block:async(op,until,state)=>{
+      assert.equal(op,"bus-vehicles");assert.equal(until,now+3600000);blocked=state;
+    }},fetch:async(url)=>{requests++;assert.equal(url,sourceUrl("bus-vehicles"));return new Response(null,{status:403});}});
+  for(let i=0;i<2;i++)await assert.rejects(client.download("bus-vehicles"),e=>e instanceof WmataError&&e.state==="access denied");
+  assert.equal(requests,1);
+});
 
 test("combined modes, station/platform/entrance identity and names remain distinct",()=>{
   assert.equal(routeType("1"),"subway");assert.equal(routeType("3"),"bus");assert.equal(routeType("4"),undefined);

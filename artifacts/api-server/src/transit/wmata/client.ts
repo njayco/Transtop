@@ -9,6 +9,7 @@ export const operations={
   "rail-predictions":"rail-gtfsrt-tripupdates.pb",
   "bus-alerts":"bus-gtfsrt-alerts.pb",
   "rail-alerts":"rail-gtfsrt-alerts.pb",
+  "bus-vehicles":"bus-gtfsrt-vehiclepositions.pb",
 } as const;
 export type Operation=keyof typeof operations;
 export const sourceUrl=(op:Operation)=>`https://api.wmata.com/gtfs/${operations[op]}`;

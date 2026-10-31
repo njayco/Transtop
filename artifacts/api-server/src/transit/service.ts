@@ -47,9 +47,9 @@ export async function allStops(mode:Mode) {
   }
   return mode==="live"?[...stopCache.live.filter(s=>!s.odpt||odptEnabled()),...(await intercityCatalog()).stops]:stopCache[mode];
 }
-export async function trackedVehicles(mode:Mode="live",bounds?:{west:number;east:number;south:number;north:number}){
+export async function trackedVehicles(mode:Mode="live",bounds?:{west:number;east:number;south:number;north:number},routeId?:string){
   if(mode==="demo")return [];
-  return [...await catalogVehicles(mapVehicles(mode),reportedStopVehicles(mode),await allStops(mode)),...await globalVehicles(bounds)];
+  return [...await catalogVehicles(mapVehicles(mode),reportedStopVehicles(mode),await allStops(mode)),...await globalVehicles(bounds),...await wmata.vehicles(bounds,routeId)];
 }
 export function officialArrivals(stop:TransitStop,now=Date.now()) {
   const agency=stop.id.split(":")[0], raw=stop.rawId||stop.id.slice(agency.length+1);
@@ -231,7 +231,7 @@ export async function routeDetail(id:string,mode:Mode,direction?:string,lookupGl
   const route=r.data as TransitRoute, agency=id.split(":")[0], raw=id.slice(agency.length+1);
   if(agency==="wmata"&&(route.type==="bus"||route.type==="subway"))await wmata.refresh([route.type]);
   if(agency==="wmata")route.scheduleNotes=[...(route.scheduleNotes||[]),
-    `Predictions: ${wmata.state(route.type==="bus"?"bus-predictions":"rail-predictions")}. Alerts: ${wmata.state(route.type==="bus"?"bus-alerts":"rail-alerts")}. Missing or expired predictions are withheld; no vehicle GPS is generated.`];
+    `Predictions: ${wmata.state(route.type==="bus"?"bus-predictions":"rail-predictions")}. Alerts: ${wmata.state(route.type==="bus"?"bus-alerts":"rail-alerts")}. Missing or expired predictions are withheld; predictions never generate vehicle GPS.`];
   let ss=(await allStops(mode)).filter(s=>!s.parent&&s.routes.some(r=>r.id===id)),shape:number[][]=[];
   let directions=route.type==="rail"?["Outbound","Inbound"]:["Uptown","Downtown"];
   if(mode==="demo"){
@@ -257,7 +257,9 @@ export async function routeDetail(id:string,mode:Mode,direction?:string,lookupGl
     }else ss=[];
   }
   if(!shape.length&&mode==="demo")shape=ss.map(s=>[s.lon,s.lat]);
-  const vehicles=(await trackedVehicles(mode)).filter(v=>v.routeId===id);
+  const vehicles=(await trackedVehicles(mode,undefined,id)).filter(v=>v.routeId===id);
+  if(agency==="wmata"&&route.type==="bus")route.scheduleNotes=[...(route.scheduleNotes||[]),
+    `Metrobus GPS: ${wmata.state("bus-vehicles")}. Only fresh official coordinates with exact published route identities appear; missing or expired GPS removes the marker.`];
   return {route,stops:await Promise.all(ss.map(s=>enrich(s,mode))),shape,vehicles,
     alerts:(mode==="demo"?demoAlerts:liveAlerts()).filter(a=>a.agencyId==="wmata"?
       agency==="wmata"&&a.type===route.type&&(a.systemwide||a.scopes?.some(s=>s.routeId===id&&!s.stopId)):
