@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { providerName } from '../src/lib/provider-name.ts';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import vm from 'node:vm';
@@ -95,6 +96,7 @@ async function mountNearby(isMobile) {
     '@/components/transit-map': { TransitMap: stub('TransitMap'), vehicleKind: () => 'live' },
     '@/lib/prefs': { TIMES_SQUARE: { lat: 40.756, lon: -73.991, label: 'Port Authority' }, usePrefs: () => ({ mode: 'live' }) },
     '@/lib/format': { ago: () => 'just now', clock: (v) => v },
+    '@/lib/provider-name': { providerName },
     '@/lib/vehicle-visibility': { trackedVehicleVisible: () => true },
     '@/lib/utils': { cn: (...values) => values.filter(Boolean).join(' ') },
     '@/hooks/use-mobile': { useIsMobile: () => isMobile },

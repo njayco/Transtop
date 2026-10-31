@@ -20,6 +20,7 @@ import { TransitlandError } from "../transit/transitland/client";
 import { TflError } from "../transit/tfl/client";
 import { CheckFavoriteAvailabilityBody, CheckFavoriteAvailabilityResponse } from "@workspace/api-zod";
 import { favoriteAvailability } from "../transit/favorite-availability";
+import { idfmMethod } from "../transit/idfm/method";
 function sourceFailure(error:unknown,res:import("express").Response){
   if(error instanceof TflError){res.status(503).json({error:error.message});return true;}
   if(error instanceof Error&&["Invalid TfL identity","Invalid TfL direction"].includes(error.message)){res.status(400).json({error:error.message});return true;}
@@ -32,6 +33,9 @@ router.post("/transit/favorites/availability",async(req,res):Promise<void>=>{
   const input=CheckFavoriteAvailabilityBody.safeParse(req.body);
   if(!input.success){res.status(400).json({error:"Check between 1 and 20 saved stops or routes"});return;}
   res.json(CheckFavoriteAvailabilityResponse.parse(await favoriteAvailability(input.data.items)));
+});
+router.get("/transit/idfm/method",(_req,res):void=>{
+  res.type("text/plain").set("Content-Disposition",'inline; filename="transtop-idfm-method.txt"').send(idfmMethod);
 });
 router.get("/transit/trains/:id",async(req,res):Promise<void>=>{
   if(typeof req.params.id!=="string"||req.params.id.length>180){res.status(400).json({error:"Invalid train identity"});return;}

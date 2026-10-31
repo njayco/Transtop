@@ -1,5 +1,5 @@
 import { db, pool, stops, routes, feedSnapshots } from "@workspace/db";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { adapters } from "./adapters";
 import { demoArrivals, demoAlerts } from "./demo";
 import { feedsFor, fresh, liveAlerts, feedStatus, mapVehicles, reportedStopVehicles } from "./realtime";
@@ -30,11 +30,15 @@ import * as tfl from "./tfl/service";
 import { isTfl } from "./tfl/model";
 import { preferDirect, matchedRoutes } from "./tfl/crosswalk";
 import { odptEnabled, odptSource } from "./odpt/registry";
+import { isIdfm, idfmEnabled, IDFM_ZONE, expiredEdition } from "./idfm/model";
+import { directStop, findStops as parisStops, parisArrivals, parisRoute } from "./idfm/queries";
+import { enrichPrim } from "./idfm/prim";
+import { primEnabled } from "./idfm/prim-model";
 
 let stopCache:{at:number;demo:TransitStop[];live:TransitStop[]}|undefined;
 export async function allStops(mode:Mode) {
   if(!stopCache||Date.now()-stopCache.at>60000){
-    const data=(await db.select().from(stops).where(inArray(stops.mode,["live","demo"]))).filter(s=>!isRetiredResearchId(s.id));
+    const data=(await db.select().from(stops).where(and(inArray(stops.mode,["live","demo"]),ne(stops.agency,"idfm")))).filter(s=>!isRetiredResearchId(s.id));
     stopCache={at:Date.now(),demo:data.filter(s=>s.mode==="demo").map(s=>s.data as TransitStop),
       live:data.filter(s=>s.mode==="live").map(s=>s.data as TransitStop)};
   }
@@ -76,6 +80,10 @@ export function officialArrivals(stop:TransitStop,now=Date.now()) {
 }
 export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<TransitStop> {
   if(mode==="demo")return demoArrivals(stop);
+  if(isIdfm(stop.id)){
+    const scheduled={...stop,arrivals:await parisArrivals(stop)};
+    return deep?enrichPrim(scheduled):scheduled;
+  }
   if(isTfl(stop.id))return deep?tfl.enrich(stop):stop;
   if(isTransitland(stop.id))return deep?globalEnrich(stop):stop;
   if(stop.id.startsWith("amtrak:"))return {...stop,arrivals:await amtrakArrivals(stop)};
@@ -92,6 +100,9 @@ export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<Tran
   return {...stop,arrivals,alerts:liveAlerts().filter(a=>stop.routes.some(r=>a.routeIds.includes(r.id)))};
 }
 const knownPlaces=[
+  {terms:["paris","île-de-france","ile-de-france"],lat:48.8566,lon:2.3522},
+  {terms:["versailles"],lat:48.8049,lon:2.1204},
+  {terms:["saint-denis","saint denis"],lat:48.9362,lon:2.3574},
   {terms:["sendai","仙台"],lat:38.2602,lon:140.8824},
   {terms:["nishitokyo","西東京","hana bus","はなバス"],lat:35.7483,lon:139.5466},
   {terms:["kochi","kōchi","高知","tosaden","とさでん"],lat:33.5588,lon:133.5422},
@@ -123,19 +134,24 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
   let foundPlace=false;
   const known=q&&!/^\d+\s+\S/.test(q)?knownPlaces.find(p=>p.terms.some(t=>q.includes(t))):undefined;
   if(known){lat=known.lat;lon=known.lon;foundPlace=true;}
-  const all=await allStops(mode);
+  const onlyParis=mode==="live"&&params.agency==="idfm";
+  const all=onlyParis?[]:await allStops(mode);
+  const parisExact=mode==="live"&&q&&(!foundPlace||!known?.terms.includes(q))?(await parisStops({...params,q},undefined,1)).stops[0]:undefined;
+  if(parisExact&&(!foundPlace||parisExact.name.toLowerCase()===q)){lat=parisExact.lat;lon=parisExact.lon;foundPlace=true;}
   const localExact=q?all.find(s=>s.name.toLowerCase()===q||s.routes.some(r=>r.name.toLowerCase()===q)):undefined;
   if(q&&!foundPlace&&!localExact){
     const point=tfl.londonPlace(q)||await globalPlace(q);
     if(point){lat=point.lat;lon=point.lon;foundPlace=true;}
   }
-  let rows=all.filter(s=>!s.parent&&s.routes.length&&(!params.type||params.type==="all"||s.type===params.type)&&
+  const paris=mode==="live"?await parisStops({...params,q:foundPlace?undefined:q,lat,lon},
+    {south:lat-.10,north:lat+.10,west:lon-.15,east:lon+.15},80):{stops:[],total:0};
+  let rows=[...all,...paris.stops].filter(s=>(!s.parent||isIdfm(s.id))&&s.routes.length&&(!params.type||params.type==="all"||s.routes.some(r=>r.type===params.type))&&
     (!params.agency||s.id.split(":")[0]===params.agency||s.routes.some(r=>r.agencyId===params.agency))&&(!params.serviceClass||params.serviceClass==="all"||s.routes.some(r=>r.serviceClass===params.serviceClass)));
   const exact=q?rows.find(s=>s.name.toLowerCase().includes(q)):undefined;
   if(exact&&!foundPlace){lat=exact.lat;lon=exact.lon;}
-  const london=mode==="live"?await tfl.discover({...params,...(q&&!foundPlace&&!exact?{q}:{q:undefined,lat,lon})}):undefined;
+  const london=mode==="live"&&!onlyParis?await tfl.discover({...params,...(q&&!foundPlace&&!exact?{q}:{q:undefined,lat,lon})}):undefined;
   if(london?.stops.length&&q&&!foundPlace&&!exact){lat=london.stops[0].lat;lon=london.stops[0].lon;}
-  const foreign=mode==="live"?await discover({
+  const foreign=mode==="live"&&!onlyParis?await discover({
     ...params,...(q&&!foundPlace&&!exact?{q}:{q:undefined,lat,lon}),
   },unique([...all.flatMap(s=>s.routes),...(london?.routes||[])]),undefined,all):undefined;
   if(foreign?.stops.length&&!london?.stops.length&&q&&!foundPlace&&!exact){lat=foreign.stops[0].lat;lon=foreign.stops[0].lon;}
@@ -147,7 +163,9 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
   const londonNotices=mode==="live"?await tfl.withLineNotices(enriched.filter(s=>isTfl(s.id))):[];
   const londonById=new Map(londonNotices.map(s=>[s.id,s]));
   return {stops:enriched.map(s=>londonById.get(s.id)||s),mode,updatedAt:new Date().toISOString(),centerLat:lat,centerLon:lon,globalCoverage:foreign?.globalCoverage,tfl:london?.tfl,
-    message:mode==="demo"?"Demo data · illustrative arrivals, not for travel planning":rows.length?"Official feeds redistributed by Transtop. Predictions may be unavailable or stale.":"No matching imported stops. Integration not configured for this location or search. Try a station name or supported neighborhood."};
+    message:mode==="demo"?"Demo data · illustrative arrivals, not for travel planning":rows.length?
+      `Official feeds redistributed by Transtop. Predictions may be unavailable or stale.${paris.stops.length?" IDFM published schedules only; 80 geographic candidates, nearest 16 cards. Narrow the location or use paginated IDFM Search for more.":""}`:
+      "No matching imported stops. Integration not configured for this location or search. Try a station name or supported neighborhood."};
 }
 export async function stopDetail(id:string,mode:Mode) {
   if(isRetiredResearchId(id))return;
@@ -171,11 +189,12 @@ export async function stopDetail(id:string,mode:Mode) {
     }
     return globalEnrich(s);
   }
-  const s=(await allStops(mode)).find(s=>s.id===id);
+  const s=mode==="live"&&isIdfm(id)?await directStop(id):(await allStops(mode)).find(s=>s.id===id);
   return s?enrich(s,mode,true):undefined;
 }
 export async function routeDetail(id:string,mode:Mode,direction?:string,lookupGlobal:typeof globalRoute=globalRoute):Promise<RouteDetail|undefined> {
   if(isRetiredResearchId(id))return;
+  if(mode==="live"&&isIdfm(id))return parisRoute(id,direction);
   if(odptSource(id.split(":")[0])&&!odptEnabled())return;
   if(mode==="live"&&isTfl(id))return tfl.route(id,direction);
   // Saved worldwide route links always keep their source, even after exact
@@ -220,19 +239,30 @@ export async function sources() {
   const imports=await db.select().from(feedSnapshots).where(eq(feedSnapshots.mode,"live"));
   const today=DateTime.now().setZone(ZONE).toFormat("yyyyMMdd");
   const {rows:counts}=await pool.query(`SELECT agency,'routes' AS kind,count(*)::int AS count FROM transit_routes WHERE mode='live' GROUP BY agency
-    UNION ALL SELECT agency,'stops',count(*)::int FROM transit_stops WHERE mode='live' GROUP BY agency`);
+    UNION ALL SELECT agency,'stops',count(*)::int FROM transit_stops WHERE mode='live' GROUP BY agency
+    UNION ALL SELECT agency,'native:'||(data->>'route_type'),count(*)::int FROM transit_routes
+      WHERE mode='live' AND agency='idfm' GROUP BY agency,data->>'route_type'`);
   const result=adapters.map(a=>{
-    const sourceToday=odptSource(a.id)?DateTime.now().setZone("Asia/Tokyo").toFormat("yyyyMMdd"):today;
+    if(a.id==="idfm"&&!idfmEnabled())return {
+      id:a.id,agency:a.name,type:a.type,status:"disabled / public compliance pending",
+      description:a.setup+" Imported IDFM records and inventory are withheld until owner public-use confirmation.",
+      routeCount:0,stopCount:0,url:a.documentation,updatedAt:null,
+    };
+    const sourceToday=odptSource(a.id)?DateTime.now().setZone("Asia/Tokyo").toFormat("yyyyMMdd"):a.id==="idfm"?DateTime.now().setZone(IDFM_ZONE).toFormat("yyyyMMdd"):today;
     const imp=imports.find(i=>i.id===`${a.id}:static`),health=feedStatus(a.id),data=imp?.data;
     const lastError=imports.find(i=>i.id===`${a.id}:import-error`);
      const amtrak=a.id==="amtrak"?amtrakHealth():undefined;
-    const status=odptSource(a.id)&&!odptEnabled()?"disabled":!imp?(a.staticUrl?"not imported":a.status):data?.serviceEnd&&data.serviceEnd<sourceToday?"expired schedules":
+    const primState=a.id==="idfm"&&primEnabled()?imports.find(i=>i.id==="idfm:prim-status")?.data:undefined;
+    const status=a.id==="idfm"&&!idfmEnabled()?"disabled / public compliance pending":odptSource(a.id)&&!odptEnabled()?"disabled":!imp?(a.staticUrl?"not imported":a.status):(a.id==="idfm"?expiredEdition(data):data?.serviceEnd&&data.serviceEnd<sourceToday)?"expired schedules":
       data?.components?.some((c:any)=>c.serviceEnd<today)?"partial schedules":
        data?.serviceStart&&data.serviceStart>today?"future schedules":amtrak?.fresh?"schedules + live train reports":
-        health.fresh?(odptSource(a.id)?"schedules + fresh realtime feed":"schedules + live predictions"):"scheduled only";
+        health.fresh?(odptSource(a.id)?"schedules + fresh realtime feed":"schedules + live predictions"):
+        a.id==="idfm"&&primEnabled()?"schedules + PRIM on demand":"scheduled only";
     const failed=lastError&&(!data||lastError.data.at>data.importedAt)?lastError.data.message:undefined;
     return {id:a.id,agency:a.name,type:a.type,status,description:a.setup+
+      (a.id==="idfm"&&data?` Source publication ${data.lastModified}; last checked ${data.checkedAt}. Imported native route types/counts: ${JSON.stringify(Object.fromEntries(counts.filter(c=>c.agency==="idfm"&&c.kind.startsWith("native:")).map(c=>[c.kind.slice(7),c.count])))}. Supplied commercial agency networks (not a carrier-completeness guarantee): ${JSON.stringify(data.operators)}. Route details identify supplied operators from source attributions. Native legend: 0 tramway, 1 Métro, 2 RER/Transilien/TER train, 3 bus; type 3 does not reliably distinguish coaches. Exclusions by native type or demand-response: ${JSON.stringify(data.exclusions)}. Regional pages and shapes are capped; narrow the viewport or choose IDFM in Search. Published timetables remain scheduled; PRIM stop predictions are checked separately. No vehicle GPS. Rail accessibility can require assistance/reservation; unknown platform/accessibility remains unknown.`:"")+
       (data?.odpt?` Published ${data.odpt.publishedAt}; edition ${data.odpt.version}; resource valid ${data.odpt.validFrom}–${data.odpt.validThrough}. ${data.odpt.realtime}`:"")+
+      (a.id==="idfm"?` PRIM: ${primEnabled()?"enabled; stop details check predictions on demand":"disabled, missing key or public license confirmation pending"}. Last check: ${primState?.checkedAt||"not checked"}. ${primState?.message||""} Partial live coverage; no vehicle GPS, no bulk polling. Local cap 180 requests/day per environment, 60-second stop cache, 2-minute production-age limit. PRIM source/terms: https://prim.iledefrance-mobilites.fr/fr/jeux-de-donnees/idfm-ivtr-requete_unitaire . Publisher page lists Licence Mobilité and an ODbL footer; public use remains separately gated pending owner resolution.`:"")+
       (a.id==="mta-bus"&&!process.env.MTA_BUS_TIME_API_KEY?" Live Bus Time credentials are not configured.":"")+
        (amtrak?` ${amtrak.fresh} fresh train reports; ${amtrak.unresolved} unresolved identities. Tracking checked ${amtrak.checkedAt||"not yet"}. Unresolved trains never replace schedules.`:"")+
       (data&&data.components?.length>1?` Packages: ${data.components.map((c:any)=>`${c.id} (${c.serviceStart}–${c.serviceEnd})`).join(", ")}.`:"")+

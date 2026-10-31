@@ -11,6 +11,7 @@ test('availability distinguishes exact removals from source failures and stale c
   let permitted = true;
   const stubs = {
     ...tables, DateTime,
+    isIdfm: id => id.startsWith('idfm:'), idfmEnabled: () => true, IDFM_ZONE: 'Europe/Paris',
     db: { select: () => ({ from: table => ({ where: async () => table === tables.feedSnapshots ? snapshots : rows }) }) },
     and: () => null, eq: () => null,
     availabilityCache: fn => fn, uncertain: { status: 'unknown', message: 'Not verified' },

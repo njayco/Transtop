@@ -1,5 +1,5 @@
 import { db, pool, routes } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { DateTime } from "luxon";
 import { allStops } from "./service";
 import { activeService, serviceInstant, ZONE } from "./time";
@@ -17,6 +17,8 @@ import * as tfl from "./tfl/service";
 import { preferDirect, resultRouteAliases } from "./tfl/crosswalk";
 import { isTfl } from "./tfl/model";
 import { odptEnabled, odptSource } from "./odpt/registry";
+import { isIdfm } from "./idfm/model";
+import { findStops as parisStops, findRoutes as parisRoutes, parisTimetable } from "./idfm/queries";
 type CatalogParams=z.infer<typeof GetCatalogQueryParams>;
 type TimetableParams=z.infer<typeof GetTimetableQueryParams>;
 
@@ -33,11 +35,17 @@ export function resolvePattern(patterns:string[],requested?:string) {
 }
 export async function catalog(p:CatalogParams) {
   const mode=(p.mode||"live") as Mode, q=(p.q||"").trim().toLowerCase(),offset=p.offset||0,limit=p.limit||20;
+  if(mode==="live"&&p.agency==="idfm"){
+    const [ss,rr]=await Promise.all([parisStops(p,undefined,limit,offset),parisRoutes(p,limit,offset)]);
+    return {routes:rr.routes,stops:ss.stops,totalRoutes:rr.total,totalStops:ss.total,offset,limit,
+      message:"Île-de-France Mobilités · published schedules only. Source and Licence Mobilités links accompany results. Stop/route pages are independently paginated."};
+  }
   const match=(r:TransitRoute)=> (!p.agency||r.id.split(":")[0]===p.agency||r.agencyId===p.agency)&&
     (!p.type||p.type==="all"||r.type===p.type)&&(!p.serviceClass||p.serviceClass==="all"||r.serviceClass===p.serviceClass);
   const extra=mode==="live"?(await intercityCatalog()).routes:[];
-  const importedRoutes=[...(await db.select().from(routes).where(eq(routes.mode,mode))).map(r=>r.data as TransitRoute).filter(r=>!r.odpt||odptEnabled()),...extra];
-  const rr=importedRoutes
+  const importedRoutes=[...(await db.select().from(routes).where(and(eq(routes.mode,mode),ne(routes.agency,"idfm")))).map(r=>r.data as TransitRoute).filter(r=>!r.odpt||odptEnabled()),...extra];
+  const parisR=mode==="live"?await parisRoutes(p,Math.min(offset+limit,500)):{routes:[],total:0};
+  const rr=[...importedRoutes,...parisR.routes]
     .filter(r=>!isRetiredResearchId(r.id)&&match(r)&&(!q||`${r.name} ${r.longName||""} ${r.agency} ${r.searchNames?.join(" ")||""}`.toLowerCase().includes(q)))
     .sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
   const ss=(await allStops(mode)).filter(s=>!s.parent&&s.routes.some(match)&&
@@ -45,11 +53,13 @@ export async function catalog(p:CatalogParams) {
     .sort((a,b)=>a.name.localeCompare(b.name));
   const london=mode==="live"&&(q||p.agency?.startsWith("tfl"))?await tfl.discover({...p,q:q||"London"}):undefined;
   const foreign=mode==="live"&&(q||p.agency?.startsWith("tl:"))?await discover({...p,lat:undefined,lon:undefined},importedRoutes,undefined,await allStops(mode)):undefined;
-  const combinedStops=preferDirect(unique([...ss,...(foreign?.stops||[]),...(london?.stops||[])]));
+  const paris=mode==="live"?await parisStops(p,undefined,Math.min(offset+limit,500)):{stops:[],total:0};
+  const combinedStops=preferDirect(unique([...ss,...paris.stops,...(foreign?.stops||[]),...(london?.stops||[])]));
   const aliases=resultRouteAliases(foreign?.stops||[],london?.stops||[]);
   const combinedRoutes=unique([...rr,...(foreign?.routes||[]).filter(r=>!aliases.has(r.id)),...(london?.routes||[])]);
   return {routes:combinedRoutes.slice(offset,offset+limit),stops:combinedStops.slice(offset,offset+limit),
-    totalRoutes:combinedRoutes.length,totalStops:combinedStops.length,offset,limit,globalCoverage:foreign?.globalCoverage,tfl:london?.tfl};
+    totalRoutes:combinedRoutes.length,totalStops:combinedStops.length,offset,limit,globalCoverage:foreign?.globalCoverage,tfl:london?.tfl,
+    message:paris.total>paris.stops.length||parisR.total>parisR.routes.length?"Paris results are capped in the combined catalog. Select Île-de-France Mobilités for all paginated matching stops/routes.":undefined};
 }
 
 export async function timetable(p:TimetableParams) {
@@ -60,6 +70,7 @@ export async function timetable(p:TimetableParams) {
   // Check both identities before any provider dispatch, including mixed old links.
   if(isRetiredResearchId(p.stopId)||isRetiredResearchId(p.routeId))
     return {departures:[],total:0,offset:p.offset||0,limit:p.limit||40,date:p.date,message:"This service is not imported. Check coverage in Settings."};
+  if(p.mode!=="demo"&&(isIdfm(p.stopId)||isIdfm(p.routeId)))return parisTimetable(p);
   if(p.mode!=="demo"&&(isTfl(p.stopId)||isTfl(p.routeId)))return {departures:[],total:0,offset:p.offset||0,limit:p.limit||40,date:p.date,
     timezone:"Europe/London",message:"TfL direct data supplies predictions, not dated timetables. Open the stop for fresh official arrivals. No bulk schedules are imported."};
   if(p.mode!=="demo"&&(isTransitland(p.stopId)||isTransitland(p.routeId)))return globalTimetable(p);

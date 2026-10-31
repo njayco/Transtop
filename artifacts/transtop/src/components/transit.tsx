@@ -1,3 +1,4 @@
+import { IdfmDetails } from './idfm-details';
 import { Link } from 'wouter';
 import { Bus, BusFront, TrainFront, TrainFrontTunnel, Heart, AlertTriangle, Accessibility, RefreshCw, WifiOff } from 'lucide-react';
 import type { Alert, Arrival, Stop } from '@workspace/api-client-react';
@@ -132,6 +133,7 @@ export function StopCard({ stop, active, onHover, index = 0 }: { stop: Stop; act
             {stop.routes.slice(0, 10).map((r) => <RouteBadge key={r.id} name={r.name} color={r.color} size="sm" />)}
           </div>
           {stop.transitland&&<p className="mt-2 text-xs text-muted-foreground">Transitland · {stop.transitland.attribution} · source {stop.transitland.fetchedAt.slice(0,10)||'date unknown'}. Open for availability and source details.</p>}
+          <IdfmDetails info={stop.idfm} compact/>
           {stop.odpt&&<p className="mt-2 text-xs text-muted-foreground">ODPT · {stop.odpt.modeDetail} · {stop.agency} · CC BY 4.0 · source {stop.odpt.publishedAt.slice(0,10)}. Modified for Transtop. Open for credits, validity and live/scheduled details.</p>}
         </div>
         <FavButton active={isFavStop(stop.id)} onClick={() => toggleStop(stop)} label={stop.name} />

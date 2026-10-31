@@ -75,7 +75,11 @@ const publicService = await load('../../api-server/src/transit/service.ts', {
   './tfl/service': service, './tfl/model': model, './types': types, './tfl/crosswalk': crosswalk,
 }, {
   db: { select: () => ({ from: () => ({ where: async () => [] }) }) },
-  stops: { mode: 'mode' }, inArray: () => 'fixture query',
+  stops: { mode: 'mode', agency: 'agency' }, inArray: () => 'fixture query',
+  and: () => 'fixture query', ne: () => 'fixture query',
+  // Paris has no local SQL matches here. Its realtime transport stays fail-closed.
+  findStops: async () => ({ stops: [], total: 0 }),
+  isIdfm: id => id.startsWith('idfm:'),
   intercityCatalog: async () => ({ stops: [] }),
   discover: async () => ({ stops: [], routes: [] }),
   isTransitland: id => id.startsWith('tl:'),

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { providerName } from '@/lib/provider-name';
 import { Link } from 'wouter';
 import { Search as SearchIcon, ArrowUpRight } from 'lucide-react';
 import { getGetCatalogQueryKey, useGetCatalog, useGetSources, useGetIntercityProviders, getGetIntercityProvidersQueryKey, type GetCatalogParams, type GetCatalogServiceClass } from '@workspace/api-client-react';
@@ -10,6 +11,7 @@ import { usePrefs } from '@/lib/prefs';
 import { cn } from '@/lib/utils';
 import { GlobalCoverageNotice } from '@/components/global-coverage';
 import { TflDetails } from '@/components/tfl-details';
+import { IdfmDetails } from '@/components/idfm-details';
 
 const SUGGEST = ['Times Square', 'Grand Central', 'Penn Station', 'Jamaica', 'M15', 'Port Washington', 'n6'];
 const TYPES = [{ v: '', l: 'All modes' }, { v: 'subway', l: 'Subway' }, { v: 'bus', l: 'Bus' }, { v: 'rail', l: 'Rail / tram' }, { v: 'intercity', l: 'Intercity Bus Network' }];
@@ -36,15 +38,15 @@ export default function SearchPage() {
   const sources = useGetSources();
   const intercity = useGetIntercityProviders({ query: { queryKey: getGetIntercityProvidersQueryKey(), enabled: type === 'intercity' || type === '', staleTime: 300_000 } });
   const gaps = (intercity.data ?? []).filter((p) => providerStatus(p.status).k !== 'imported');
-  const pickType = (t: string) => { setType(t); if (agency && t && !(sources.data ?? []).some((s) => s.id === agency && s.type === t)) setAgency(''); if (t === 'intercity') setServiceClass('all'); };
+  const pickType = (t: string) => { setType(t); if (agency && t && !(sources.data ?? []).some((s) => s.id === agency && (s.type === t||s.id==="idfm"&&["bus","subway","rail"].includes(t)))) setAgency(''); if (t === 'intercity') setServiceClass('all'); };
   const params: GetCatalogParams = { mode, offset, limit: LIMIT, serviceClass,...(cursor?{cursor}:{}), ...(q ? { q } : {}), ...(agency ? { agency } : {}), ...(type ? { type } : {}) };
   const res = useGetCatalog(params, { query: { queryKey: getGetCatalogQueryKey(params), placeholderData: (p) => p, retry: 1 } });
   const d = res.data;
   const agencies=useMemo(()=>{
-    const all=new Map((sources.data??[]).filter(s=>(type?[type]:['subway','bus','rail','intercity']).includes(s.type||'')).map(s=>[s.id,{id:s.id,agency:s.agency}]));
+    const all=new Map((sources.data??[]).filter(s=>(type?[type]:['subway','bus','rail','intercity']).includes(s.type||'')||s.id==="idfm"&&type!=="intercity").map(s=>[s.id,{id:s.id,agency:s.agency}]));
     for(const r of [...(d?.routes||[]),...(d?.stops||[]).flatMap(s=>s.routes)])if(r.transitland&&r.agencyId)all.set(r.agencyId,{id:r.agencyId,agency:r.agency});
     if(agency&&!all.has(agency))all.set(agency,{id:agency,agency:"Selected provider · no matches on this page"});
-    return [...all.values()].sort((a,b)=>a.agency.localeCompare(b.agency));
+    return [...all.values()].map(s=>({...s,agency:providerName(s.id,s.agency)})).sort((a,b)=>a.agency.localeCompare(b.agency));
   },[sources.data,d,type,agency]);
   const total = Math.max(d?.totalRoutes ?? 0, d?.totalStops ?? 0);
   const sel = 'h-11 min-w-0 max-w-full rounded-xl border border-input bg-card px-3 text-sm';
@@ -89,6 +91,7 @@ export default function SearchPage() {
             {res.isError && <ErrorState title="Catalog unavailable" detail={apiErrorText(res.error, 'Check Settings for feed status.')} onRetry={() => res.refetch()} />}
             {d && (
               <div className={cn('space-y-6 transition-opacity', res.isFetching && 'opacity-60')}>
+                {d.message&&<p className="text-xs text-muted-foreground">{d.message}</p>}
                 <GlobalCoverageNotice data={d.globalCoverage} onNext={c=>{setCursor(c);setOffset(0);}} onReset={cursor?()=>{setCursor('');setOffset(0);}:undefined} />
                 <TflDetails info={d.tfl} />
                 <section>
@@ -99,9 +102,10 @@ export default function SearchPage() {
                         <Link key={r.id} href={`/routes/${encodeURIComponent(r.id)}`} data-testid={`link-route-${r.id}`} className="flex items-center gap-3 rounded-2xl border border-card-border bg-card p-3 hover:border-white/25">
                           <RouteBadge name={r.name} color={r.color} size="lg" />
                           <div className="min-w-0 flex-1">
-                            <p className="break-words font-bold">{r.name} {r.odpt?.modeDetail||MODE_NAME[r.type]}{r.serviceClass === 'express' && <span className="ml-2 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-primary">Express</span>}</p>
+                            <p className="break-words font-bold">{r.name} {r.idfm?.modeDetail||r.odpt?.modeDetail||MODE_NAME[r.type]}{r.serviceClass === 'express' && <span className="ml-2 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-primary">Express</span>}</p>
                             <p className="truncate text-sm text-muted-foreground">{r.longName ? `${r.longName} · ` : ''}{r.agency}</p>
                             {r.odpt&&<p className="text-xs text-muted-foreground">ODPT · CC BY 4.0 · modified for Transtop · source {r.odpt.publishedAt.slice(0,10)}. Open for full attribution and validity.</p>}
+                            <IdfmDetails info={r.idfm} compact/>
                           </div>
                           <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
                         </Link>

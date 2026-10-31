@@ -1,5 +1,11 @@
 # Transit import performance and operations
 
+**Paris regional exception:** IDFM uses a separate disk-backed, bounded importer
+and geographic/route-scoped readers rather than the small-feed memory path below.
+It has source-specific conditional refresh and a public-use compliance gate.
+See [IDFM limits, licensing, operation and verification](idfm.md). The 100 MiB
+small-feed limit below is unchanged for unrelated providers.
+
 ## Publication strategy
 
 No database schema migration or initial data rewrite is required. Existing

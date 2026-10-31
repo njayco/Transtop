@@ -10,6 +10,7 @@ import type { Stop } from './stop';
 import type { TflInfo } from './tflInfo';
 
 export interface CatalogResults {
+  message?: string;
   tfl?: TflInfo;
   globalCoverage?: GlobalCoverage;
   routes: Route[];

@@ -126,6 +126,23 @@ export const RouteServiceClass = {
   express: 'express',
 } as const;
 
+export interface IdfmInfo {
+  url: string;
+  license: string;
+  attribution: string;
+  timezone: string;
+  modeDetail?: string;
+  publishedAt?: string;
+  validFrom?: string;
+  validThrough?: string;
+  platform?: string;
+  accessibility?: string;
+  realtimeStatus?: string;
+  realtimeCheckedAt?: string;
+  realtimeUrl?: string;
+  realtimeLicense?: string;
+}
+
 export interface OdptInfo {
   attribution: string;
   url: string;
@@ -166,6 +183,7 @@ export interface TransitlandInfo {
 }
 
 export interface Route {
+  idfm?: IdfmInfo;
   odpt?: OdptInfo;
   tfl?: TflInfo;
   transitland?: TransitlandInfo;
@@ -239,6 +257,7 @@ export const StopType = {
 } as const;
 
 export interface Stop {
+  idfm?: IdfmInfo;
   odpt?: OdptInfo;
   tfl?: TflInfo;
   transitland?: TransitlandInfo;
@@ -369,6 +388,7 @@ export interface FeedSource {
 }
 
 export interface CatalogResults {
+  message?: string;
   tfl?: TflInfo;
   globalCoverage?: GlobalCoverage;
   routes: Route[];

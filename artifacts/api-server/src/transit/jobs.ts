@@ -9,6 +9,7 @@ import { maintainGenerations } from "./generations";
 import { refreshIntercity } from "./intercity/service";
 import { pollAmtrak } from "./amtrak-live";
 import { odptEnabled, odptSource, odptRefreshDue } from "./odpt/registry";
+import { idfmEnabled, refreshDue } from "./idfm/model";
 export async function startTransitJobs() {
   await seedDemo();
   for(const a of adapters) {
@@ -30,13 +31,20 @@ export async function startTransitJobs() {
   setInterval(()=>void cleanup().catch(()=>logger.warn("Retention cleanup failed")),60000).unref();
   await maintainGenerations();
   setInterval(()=>void maintainGenerations(),60000).unref();
+  // Three regional editions/day exceed the small-feed retirement budget.
+  // Offset from general maintenance; same lock, hard row/statement caps, IDFM only.
+  setTimeout(()=>{
+    const retireParis=()=>idfmEnabled()?maintainGenerations(100000,"idfm"):Promise.resolve();
+    void retireParis();
+    setInterval(()=>void retireParis(),60000).unref();
+  },30000).unref();
   // CLI imports and maintenance share the importer's cross-process advisory lock.
   // Opt-in resource control. Stale/missing datasets refresh on startup and
   // daily, with the same cross-process lock as the import CLI.
   if(process.env.TRANSIT_AUTO_IMPORT==="true"){
     const runImport=async()=>{
       try{
-        for(const a of adapters.filter(a=>a.staticUrl&&(!odptSource(a.id)||odptEnabled()))){
+        for(const a of adapters.filter(a=>a.id!=="idfm"&&a.staticUrl&&(!odptSource(a.id)||odptEnabled()))){
           const {rows}=await pool.query("SELECT data FROM transit_feed_snapshots WHERE mode='live' AND id=$1",[`${a.id}:static`]);
           if(odptSource(a.id)?!odptRefreshDue(rows[0]?.data):rows[0]&&Date.now()-Date.parse(rows[0].data.importedAt)<22*3600000)continue;
           try{await importGtfs(a.id);}catch{logger.warn({agency:a.id},"Scheduled import failed; previous dataset retained");}
@@ -60,4 +68,21 @@ export async function startTransitJobs() {
   };
   void refreshOdpt().catch(()=>logger.warn("ODPT refresh unavailable"));
   setInterval(()=>void refreshOdpt().catch(()=>logger.warn("ODPT refresh unavailable")),3600000).unref();
+  let importingParis=false;
+  const refreshParis=async()=>{
+    if(!idfmEnabled()||importingParis)return;
+    importingParis=true;
+    try{
+      const {rows}=await pool.query(`SELECT id,data FROM transit_feed_snapshots WHERE mode='live'
+        AND id IN('idfm:static','idfm:import-error')`);
+      const lastError=rows.find(r=>r.id==="idfm:import-error")?.data;
+      // Failed editions retry no more than hourly. A successful 304 clears failure.
+      if(lastError&&Date.now()-Date.parse(lastError.at)<3600_000)return;
+      if(refreshDue(rows.find(r=>r.id==="idfm:static")?.data))await importGtfs("idfm");
+    }finally{importingParis=false;}
+  };
+  // Start large downloads outside startup's awaited path. Shared advisory lock
+  // serializes CLI, maintenance, other providers and replica attempts.
+  const runParis=()=>void refreshParis().catch(()=>logger.warn("IDFM refresh failed; last complete generation retained"));
+  runParis();setInterval(runParis,15*60_000).unref();
 }

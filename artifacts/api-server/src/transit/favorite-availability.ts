@@ -11,6 +11,8 @@ import { intercityCatalog } from "./intercity/service";
 import { isDocumentId } from "./intercity/uploaded-service";
 import { documentStops, documentRoutes } from "./intercity/uploaded-data";
 import { isRetiredResearchId } from "./intercity/retired";
+import { idfmEnabled, IDFM_ZONE } from "./idfm/model";
+const isIdfm = (id:string) => id.split(":")[0]==="idfm";
 
 const missing: Verdict = {
   status: "unavailable",
@@ -24,6 +26,7 @@ const present = (name: string): Verdict => ({
 /** Check the saved identity only. No aliases, arrival fan-out or inferred replacements. */
 export async function lookupFavorite(item: FavoriteIdentity): Promise<Verdict> {
   const { id, kind } = item;
+  if (isIdfm(id) && !idfmEnabled()) return uncertain;
   if (isRetiredResearchId(id)) return missing;
   if (isTransitland(id)) {
     const [feed, rawId] = parseIdentity(id);
@@ -62,7 +65,7 @@ export async function lookupFavorite(item: FavoriteIdentity): Promise<Verdict> {
   const snapshots = await db.select().from(feedSnapshots).where(and(eq(feedSnapshots.mode, "live"), eq(feedSnapshots.agency, agency)));
   const snapshot = snapshots.find(s => s.id === `${agency}:static`)?.data;
   const failed = snapshots.find(s => s.id === `${agency}:import-error`)?.data;
-  const today = DateTime.now().setZone("America/New_York").toFormat("yyyyMMdd");
+  const today = DateTime.now().setZone(isIdfm(id) ? IDFM_ZONE : "America/New_York").toFormat("yyyyMMdd");
   if (!snapshot?.serviceEnd || snapshot.serviceEnd < today || snapshot.serviceStart > today ||
       snapshot.components?.some((c: { serviceEnd?: string }) => !c.serviceEnd || c.serviceEnd < today) ||
       failed && (!snapshot.importedAt || failed.at > snapshot.importedAt)) return uncertain;
@@ -74,4 +77,18 @@ export async function lookupFavorite(item: FavoriteIdentity): Promise<Verdict> {
   return record ? present(record.data.name) : missing;
 }
 
-export const favoriteAvailability = availabilityCache(lookupFavorite);
+const cachedAvailability = availabilityCache(lookupFavorite);
+export async function favoriteAvailability(items: FavoriteIdentity[]) {
+  const allowed = items.filter(item => !isIdfm(item.id) || idfmEnabled());
+  const checked = await cachedAvailability(allowed);
+  const byId = new Map(checked.map(item => [JSON.stringify([item.kind,item.id]),item]));
+  return items.map(item => {
+    // Recheck after awaiting: neither a warm cache nor an in-flight lookup may
+    // disclose a source name after public permission is withdrawn.
+    if (!isIdfm(item.id) || idfmEnabled()) {
+      const result = byId.get(JSON.stringify([item.kind,item.id]));
+      if (result) return result;
+    }
+    return {...item,...uncertain,checkedAt:new Date().toISOString()};
+  });
+}

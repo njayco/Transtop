@@ -42,6 +42,15 @@ paths:
               schema: {type: array, items: {$ref: "#/components/schemas/FavoriteAvailability"}}
         "400":
           description: Invalid or oversized batch
+  /transit/idfm/method:
+    get:
+      operationId: getIdfmMethod
+      responses:
+        "200":
+          description: Freely downloadable IDFM transformation method and Licence Mobilités reuse notice
+          content:
+            text/plain:
+              schema: {type: string}
   /transit/trains/{id}:
     get:
       operationId: getTrain
@@ -388,6 +397,7 @@ components:
       type: object
       required: [id, name, color, type, agency]
       properties:
+        idfm: {$ref: "#/components/schemas/IdfmInfo"}
         odpt: {$ref: "#/components/schemas/OdptInfo"}
         tfl: {$ref: "#/components/schemas/TflInfo"}
         transitland: {$ref: "#/components/schemas/TransitlandInfo"}
@@ -440,6 +450,7 @@ components:
       type: object
       required: [id, name, agency, type, lat, lon, distance, walkingMinutes, routes, arrivals, alerts, accessible, updatedAt]
       properties:
+        idfm: {$ref: "#/components/schemas/IdfmInfo"}
         odpt: {$ref: "#/components/schemas/OdptInfo"}
         tfl: {$ref: "#/components/schemas/TflInfo"}
         transitland: {$ref: "#/components/schemas/TransitlandInfo"}
@@ -560,6 +571,7 @@ components:
       type: object
       required: [routes, stops, totalRoutes, totalStops, offset, limit]
       properties:
+        message: {type: string}
         tfl: {$ref: "#/components/schemas/TflInfo"}
         globalCoverage: {$ref: "#/components/schemas/GlobalCoverage"}
         routes: {type: array, items: {$ref: "#/components/schemas/Route"}}
@@ -631,6 +643,24 @@ components:
         limit: {type: integer}
         date: {type: string}
         message: {type: string}
+    IdfmInfo:
+      type: object
+      required: [url, license, attribution, timezone]
+      properties:
+        url: {type: string}
+        license: {type: string}
+        attribution: {type: string}
+        timezone: {type: string}
+        modeDetail: {type: string}
+        publishedAt: {type: string}
+        validFrom: {type: string}
+        validThrough: {type: string}
+        platform: {type: string}
+        accessibility: {type: string}
+        realtimeStatus: {type: string}
+        realtimeCheckedAt: {type: string}
+        realtimeUrl: {type: string}
+        realtimeLicense: {type: string}
     OdptInfo:
       type: object
       required: [attribution, url, license, terms, timezone, version, publishedAt, validFrom, validThrough, modeDetail, realtime]

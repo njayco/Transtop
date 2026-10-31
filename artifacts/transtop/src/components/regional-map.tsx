@@ -1,3 +1,5 @@
+import { IdfmDetails } from './idfm-details';
+import { providerName } from '@/lib/provider-name';
 import { useCallback, useMemo, useState } from 'react';
 import { Link } from 'wouter';
 import { ArrowRight, Crosshair, Info, Layers, Search, X } from 'lucide-react';
@@ -91,13 +93,13 @@ export function RegionalMap({ onClose,initialCenter }: { onClose?: () => void;in
   const line = selLine ? routeIndex.get(selLine) ?? (data?.lines.find((l) => l.route.id === selLine)?.route) : undefined;
   const stop = selStop ? shownStops.find((s) => s.id === selStop) : undefined;
   const agencies = useMemo(() => [...new Map([...(sources.data ?? []),
-    ...shownLines.map(l=>({id:l.route.agencyId||'',agency:l.route.agency,type:l.route.type,status:l.route.odpt?'ODPT imported':l.route.tfl?'TfL direct':'Transitland on demand'})),
-    ...shownStops.flatMap(s=>s.routes.map(r=>({id:r.agencyId||'',agency:r.agency,type:r.type,status:r.odpt?'ODPT imported':r.tfl?'TfL direct':'Transitland on demand'}))),
-  ].filter((s)=>s.id&&modes.has(s.type as Mode)).map(s=>[s.id,s])).values()].sort((a,b)=>a.agency.localeCompare(b.agency)),[sources.data,modes,shownLines,shownStops]);
+    ...shownLines.map(l=>({id:l.route.agencyId||'',agency:l.route.agency,type:l.route.type,status:l.route.idfm?'IDFM published schedules':l.route.odpt?'ODPT imported':l.route.tfl?'TfL direct':'Transitland on demand'})),
+    ...shownStops.flatMap(s=>s.routes.map(r=>({id:r.agencyId||'',agency:r.agency,type:r.type,status:r.idfm?'IDFM published schedules':r.odpt?'ODPT imported':r.tfl?'TfL direct':'Transitland on demand'}))),
+  ].filter((s)=>s.id&&(modes.has(s.type as Mode)||s.id==="idfm"&&["bus","subway","rail"].some(t=>modes.has(t as Mode)))).map(s=>[s.id,{...s,agency:providerName(s.id,s.agency)}])).values()].sort((a,b)=>a.agency.localeCompare(b.agency)),[sources.data,modes,shownLines,shownStops]);
   const toggle = (m: Mode) => {
     const n = new Set(modes); if (n.has(m)) { if (n.size > 1) n.delete(m); } else n.add(m);
     setModes(n);
-    if (agency && !(sources.data ?? []).some((s) => s.id === agency && n.has(s.type as Mode))) setAgency('');
+    if (agency && !(sources.data ?? []).some((s) => s.id === agency && (n.has(s.type as Mode)||s.id==="idfm"&&["bus","subway","rail"].some(t=>n.has(t as Mode))))) setAgency('');
   };
   const pickLine = (id: string) => { setSelLine((p) => (p === id ? null : id)); setSelStop(null); };
   const pickStop = (id: string) => { setSelStop(id); setSelLine(null); };
@@ -167,6 +169,7 @@ export function RegionalMap({ onClose,initialCenter }: { onClose?: () => void;in
           {[...new Map([...shownLines.map(l=>l.route),...shownStops.flatMap(s=>s.routes)].flatMap(r=>r.odpt?[[r.odpt.url,r.odpt] as const]:[])).values()].map(info=>
             <p key={info.url} className="text-xs text-muted-foreground">{info.attribution} {info.modeDetail} · source {info.publishedAt.slice(0,10)} · <a href={info.url} target="_blank" rel="noreferrer" className="underline">Dataset / resources</a> · <a href={info.license} target="_blank" rel="noreferrer" className="underline">License</a>.</p>)}
           <TflDetails info={data?.tfl} />
+          <IdfmDetails info={[...shownLines.map(l=>l.route),...shownStops.flatMap(s=>s.routes)].find(r=>r.idfm)?.idfm} compact/>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span><span className="mr-1.5 inline-block h-2.5 w-2.5 rotate-45 bg-foreground align-middle" />Official vehicle position</span>
             <span><span className="mr-1.5 inline-block h-3 w-3 rounded-full border-2 border-foreground align-middle" />Stop or station at its published location</span>

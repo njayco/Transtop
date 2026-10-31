@@ -23,7 +23,7 @@ const LIMIT = 25;
 export function TimetablePanel({ stopId, routeId, direction, color, title = 'Published timetable', stopOptions, timezone }: { timezone?:string; stopOptions?: { id: string; name: string }[]; stopId?: string; routeId?: string; direction?: string; color?: string; title?: string }) {
   const { mode } = usePrefs();
   const international=!!(stopId?.startsWith('tl:')||routeId?.startsWith('tl:'));
-  const zone=timezone||([stopId,routeId].some(id=>id?.startsWith('odpt-'))?'Asia/Tokyo':international?'UTC':'America/New_York');
+  const zone=timezone||([stopId,routeId].some(id=>id?.startsWith('idfm:'))?'Europe/Paris':[stopId,routeId].some(id=>id?.startsWith('odpt-'))?'Asia/Tokyo':international?'UTC':'America/New_York');
   const [date, setDate] = useState(()=>zonedDate(new Date(),zone));
   const [from, setFrom] = useState(()=>zonedTime(new Date(),zone));
   useEffect(()=>{setDate(zonedDate(new Date(),zone));setFrom(zonedTime(new Date(),zone));setOffset(0);},[zone,stopId,routeId]);

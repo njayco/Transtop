@@ -13,6 +13,9 @@ const rt="https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/";
 // Allowlist verified against https://www.mta.info/developers and the linked
 // official realtime catalog on 2026-10-29. No caller-supplied fetch URLs.
 export const adapters:AgencyAdapter[]=[
+  {id:"idfm",name:"Île-de-France Mobilités",type:"rail",staticUrl:"https://eu.ftp.opendatasoft.com/stif/GTFS/IDFM-gtfs.zip",
+    realtimeUrls:[],documentation:"https://data.iledefrance-mobilites.fr/explore/dataset/offre-horaires-tc-gtfs-idfm/",status:"scheduled only",
+    setup:"Contient des informations des Horaires prévus Île-de-France Mobilités, sous Licence Mobilités (https://cloud.fabmob.io/s/eYWWJBdM3fQiFNm/download). Mixed Métro, RER/Transilien/train, tramway, fixed-route bus/coach schedules in Europe/Paris. Optional PRIM predictions on selected stop details use a server-side key; no GPS or bulk polling. Schedules publication 08:00, 13:00, 17:00 Paris time. Funicular and unsupported native types excluded. Public use is blocked until owner resolves required sharing/notification and PRIM license notices; see docs/idfm.md."},
   ...odptRegistry.map(s=>({id:s.id,name:s.name,type:s.type,staticUrl:catalogUrl(s),realtimeUrls:s.realtime.map(k=>realtimeUrl(s,k)),
     documentation:catalogUrl(s),status:"scheduled only",setup:`${attribution(s)} ${s.type==="rail"?"Tram / streetcar (GTFS route_type 0), not subway or commuter rail.":"Fixed-route buses."} GTFS/GTFS-JP, Asia/Tokyo. Initial selected ODPT coverage only; no national or Tokyo Metro/JR claim. Realtime only where fresh exact static matches are verified. Sendai has no supplied route shapes. License: https://creativecommons.org/licenses/by/4.0/ Credits: https://developer.odpt.org/en/faq-info#cc-by-credit`})),
   {id:"amtrak",name:"Amtrak",type:"rail",staticUrl:"https://content.amtrak.com/content/gtfs/GTFS.zip",

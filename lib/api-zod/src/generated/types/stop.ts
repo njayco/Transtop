@@ -6,6 +6,7 @@
  */
 import type { Alert } from './alert';
 import type { Arrival } from './arrival';
+import type { IdfmInfo } from './idfmInfo';
 import type { OdptInfo } from './odptInfo';
 import type { Route } from './route';
 import type { StopType } from './stopType';
@@ -13,6 +14,7 @@ import type { TflInfo } from './tflInfo';
 import type { TransitlandInfo } from './transitlandInfo';
 
 export interface Stop {
+  idfm?: IdfmInfo;
   odpt?: OdptInfo;
   tfl?: TflInfo;
   transitland?: TransitlandInfo;

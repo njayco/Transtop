@@ -16,3 +16,5 @@
 - [Saved-service identity trust](saved-service-trust.md) — missing source listings are not operator shutdowns; keep saved identities and labels until the rider chooses a change.
 - [Country styling ingress](entry-country-ingress.md) — verify actual proxy chains and edge header overwriting; the existing numeric Express trust setting does not prove visitor identity.
 - [Vite preview isolation](vite-preview-isolation.md) — disposable browser fixtures must not invalidate optimized dependencies used by the managed preview.
+- [IDFM access boundaries](idfm-access.md) — schedules and existing-account PRIM are approved; public sharing/license duties remain owner actions, not signup or paid-service permission.
+- [Regional import capacity](regional-import-capacity.md) — measure validation plans and abandoned-generation storage, not only ZIP size and parser memory.

@@ -5,6 +5,8 @@ import type { TransitRoute, TransitStop } from "../types";
 import type { Bounds } from "../map-geometry";
 import { rememberRoute, feedState } from "./tracking";
 import { odptCrosswalk, odptBoardingDuplicate } from "../odpt/crosswalk";
+import { verifiedIdfmFeed, boardingDuplicate as idfmBoardingDuplicate, routeDuplicate as idfmRouteDuplicate } from "../idfm/crosswalk";
+import { findStops as parisStops, findRoutes as parisRoutes } from "../idfm/queries";
 
 export const unique = <T extends {id:string}>(items: T[]) => [...new Map(items.map(v => [v.id,v])).values()];
 export async function feedInfo(id: string) {
@@ -57,9 +59,15 @@ export async function discover(p: GlobalQuery, direct: TransitRoute[], bbox?: Bo
     for (const raw of (Array.isArray(json.stops) ? json.stops : []).slice(0,60)) {
       try {
         const info = await infoFor(raw);
+        const officialParis=verifiedIdfmFeed(await feedInfo(info.feedId));
+        const coords=raw.geometry?.coordinates;
+        const paris=officialParis&&Array.isArray(coords)&&Number.isFinite(coords[0])&&Number.isFinite(coords[1])?
+          (await parisStops({lat:coords[1],lon:coords[0]},
+            {south:coords[1]-.0001,north:coords[1]+.0001,west:coords[0]-.0001,east:coords[0]+.0001},30)).stops:[];
         const routes:TransitRoute[] = (raw.route_stops || []).slice(0,100).flatMap((rs: any) => {
           const r = normalizeRoute(rs.route,info);
           if (!r || !matches(r,p)) return [];
+          if(officialParis&&idfmBoardingDuplicate(raw,rs.route,paris))return [];
           const duplicate=odptCrosswalk[info.feedId]
             ?odptBoardingDuplicate(info.feedId,raw,rs.route.route_id,r.type,direct,directStops)
             :directDuplicate(r,direct);
@@ -73,6 +81,8 @@ export async function discover(p: GlobalQuery, direct: TransitRoute[], bbox?: Bo
     for(const raw of (searched?.routes||[]).slice(0,60)){
       try{
         const info=await infoFor(raw),r=normalizeRoute(raw,info);
+        if(verifiedIdfmFeed(await feedInfo(info.feedId))&&idfmRouteDuplicate(raw,
+          (await parisRoutes({q:raw.route_short_name||raw.route_id},100)).routes))continue;
         if(r&&!directDuplicate(r,direct)&&matches(r,p)){rr.push(r);rawRoutes.push(raw);}
       }catch{withheld++;}
     }

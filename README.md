@@ -4,6 +4,18 @@ A mobile-first transit app based on the creator's original Transtop concept. Ver
 
 ## Current features and recent updates
 
+### Paris / Île-de-France published schedules
+
+Official IDFM GTFS is integrated into existing location search, Nearby, maps,
+filters, favorites and dated timetables, using Europe/Paris service days. Métro,
+RER/Transilien/train, tramway and fixed-route bus/coach services preserve supplied
+names and operators. With a server-side `PRIM_API_KEY`, selected stop details also
+check official PRIM predictions, supplied destinations/platforms and cancelled-call
+notices. Old estimates are withheld; timetables stay scheduled. No vehicle GPS is invented.
+Production use remains gated pending owner resolution of Licence Mobilités
+publication/notification duties. See [IDFM sources, compliance, operations and
+verification](docs/idfm.md).
+
 ### Japan public ODPT schedules and verified Sendai realtime
 
 Direct public GTFS/GTFS-JP adds Sendai buses, Nishitokyo Hana Bus and Tosaden

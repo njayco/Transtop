@@ -1,9 +1,10 @@
 export type Mode = "demo" | "live";
 export type TransitType = "subway" | "bus" | "rail" | "intercity";
+export interface IdfmInfo {url:string;license:string;attribution:string;timezone:string;modeDetail?:string;publishedAt?:string;validFrom?:string;validThrough?:string;platform?:string;accessibility?:string;realtimeStatus?:string;realtimeCheckedAt?:string;realtimeUrl?:string;realtimeLicense?:string}
 export interface OdptInfo {attribution:string;url:string;license:string;terms:string;timezone:string;version:string;publishedAt:string;validFrom:string;validThrough:string;modeDetail:string;realtime:string}
 export interface TflInfo {status:string;message:string;attribution:string;url:string;timezone:string;lastSuccess?:string;platform?:string;parentId?:string}
 export interface TransitlandInfo {feedId:string;fetchedAt:string;license:string;attribution:string;url:string;timezone?:string;platform?:string;parentStation?:string;accessibility?:string;modeDetail?:string;notes?:string[]}
-export interface TransitRoute { id:string; name:string; color:string; type:TransitType; agency:string;agencyId?:string;serviceClass?:"local"|"express";longName?:string;scheduleNotes?:string[];sourceUrl?:string;referenceDate?:string;transitland?:TransitlandInfo;tfl?:TflInfo;odpt?:OdptInfo;searchNames?:string[] }
+export interface TransitRoute { id:string; name:string; color:string; type:TransitType; agency:string;agencyId?:string;serviceClass?:"local"|"express";longName?:string;scheduleNotes?:string[];sourceUrl?:string;referenceDate?:string;transitland?:TransitlandInfo;tfl?:TflInfo;odpt?:OdptInfo;idfm?:IdfmInfo;searchNames?:string[] }
 export interface Arrival {
   id:string; routeId:string; routeName:string; color:string; direction:string; destination:string;
   minutes:number; source:"demo"|"live"|"scheduled"|"community"|"unavailable"; updatedAt:string;
@@ -17,6 +18,7 @@ export interface TransitStop {
   rawId?:string; parent?:string;
   stop_timezone?:string;
   odpt?:OdptInfo;
+  idfm?:IdfmInfo;
   searchNames?:string[];
   transitland?:TransitlandInfo;
    tfl?:TflInfo;

@@ -21,8 +21,11 @@ Post-merge setup must regenerate both API clients and server Zod schemas before 
 
 **How to apply:** Retain the API-spec codegen step in shared merge setup. Resolve contract mismatches at their source rather than manually patching generated files.
 
-Check for missing generated API files before completing a task, even when their deletion was already present in the initial working tree.
+Generated bindings must match the merged source contract before completion.
 
-**Why:** Completion can include pre-existing working-tree deletions. Isolated tests do not exercise the browser imports, so they cannot establish that generated bindings are intact.
+**Why:** Isolated tests do not exercise all browser imports, so passing them cannot
+establish that generated bindings are complete or current.
 
-**How to apply:** If the client barrel imports absent generated modules, run the existing codegen workflow, confirm regenerated files preserve the baseline, and run the full typecheck before completing.
+**How to apply:** Regenerate from the merged specification and typecheck the full
+workspace. Repair the source contract or generator configuration, not generated
+files by hand.

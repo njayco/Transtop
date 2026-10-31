@@ -12,7 +12,10 @@ const records = (name: string) => pgTable(name, {
   data: jsonb("data").$type<Record<string, any>>().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, t => [primaryKey({ columns: [t.mode, t.id] }), index(`${name}_agency_idx`).on(t.mode, t.agency),
-  ...(name==="transit_trips"?[index("transit_trips_route_idx").on(t.mode,t.agency,sql`(${t.data}->>'route_id')`)]:[])]);
+  ...(name==="transit_trips"?[index("transit_trips_route_idx").on(t.mode,t.agency,sql`(${t.data}->>'route_id')`)]:[]),
+  ...(name==="transit_stops"?[index("transit_stops_region_idx").on(t.mode,t.agency,sql`((${t.data}->>'lat')::double precision)`,sql`((${t.data}->>'lon')::double precision)`),
+    index("transit_stops_parent_idx").on(t.mode,t.agency,sql`(${t.data}->>'parent')`)]:[]),
+  ...(name==="transit_calendar_exceptions"?[index("transit_exceptions_service_date_idx").on(t.mode,t.agency,sql`(${t.data}->>'service_id')`,sql`(${t.data}->>'date')`)]:[])]);
 
 export const agencies = records("transit_agencies");
 export const feedSources = records("transit_feed_sources");
@@ -27,6 +30,15 @@ export const stopTimes = pgTable("transit_stop_times", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, t => [primaryKey({columns:[t.mode,t.id]}), index("stop_times_lookup_idx").on(t.mode,t.stopId), index("stop_times_trip_idx").on(t.mode,t.tripId)]);
 export const calendars = records("transit_calendars");
+// Empty managed parent. IDFM's immutable children live in idfm_data, are indexed
+// before publication, and can be retired by DROP instead of millions of deletes.
+export const idfmStopTimes = pgTable("transit_idfm_stop_times", {
+  id:text("id").notNull(),mode:text("mode").notNull(),agency:text("agency").notNull(),
+  tripId:text("trip_id").notNull(),stopId:text("stop_id").notNull(),sequence:integer("sequence").notNull(),
+  arrivalSeconds:integer("arrival_seconds").notNull(),departureSeconds:integer("departure_seconds").notNull(),
+  data:jsonb("data").$type<Record<string,any>>().notNull(),
+  updatedAt:timestamp("updated_at",{withTimezone:true}).notNull().defaultNow(),
+});
 export const calendarExceptions = records("transit_calendar_exceptions");
 export const shapes = records("transit_shapes");
 export const feedSnapshots = records("transit_feed_snapshots");

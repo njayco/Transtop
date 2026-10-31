@@ -62,7 +62,7 @@ test("packaged licensed snapshot covers all four countries and IPv6", async () =
   for (const [address, country] of [
     ["8.8.8.8", "US"], ["81.2.69.142", "GB"], ["80.12.0.1", "FR"], ["133.242.0.1", "JP"],
     ["2404:7a80::1", "JP"], ["2001:4860:4860::8888", null],
-  ]) assert.equal(await lookup(address), country, address);
+  ] as const) assert.equal(await lookup(address), country, address);
 });
 
 test("endpoint is bounded, private, country-only; input country/IP values are ignored", async () => {

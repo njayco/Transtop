@@ -15,9 +15,11 @@ import { odptSource, catalogUrl, attribution, odptLicense, odptTerms } from "./o
 import { resolveEdition, odptFetch, type Edition } from "./odpt/client";
 import { validateArchive, translations } from "./odpt/gtfs";
 import type { OdptInfo } from "./types";
+import { importIdfm } from "./idfm/import";
 const tables=[agencies,routes,trips,stopTimes,calendars,calendarExceptions,shapes,stops];
 
 export async function importGtfs(agency:string) {
+  if(agency==="idfm")return importIdfm();
   const lock=await pool.connect();
   let locked=false;
   try {

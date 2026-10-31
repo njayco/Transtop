@@ -268,6 +268,101 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(getCheckFavoriteAvailabilityMutationOptions(options), queryClient);
     }
 
+export const getGetIdfmMethodUrl = () => {
+
+
+
+
+  return `/api/transit/idfm/method`
+}
+
+export const getIdfmMethod = async ( options?: Parameters<typeof customFetch>[1]): Promise<string> => {
+
+  return customFetch<string>(getGetIdfmMethodUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetIdfmMethodQueryKey = () => {
+    return [
+    `/api/transit/idfm/method`
+    ] as const;
+    }
+
+
+export const getGetIdfmMethodQueryOptions = <TData = Awaited<ReturnType<typeof getIdfmMethod>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIdfmMethod>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetIdfmMethodQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getIdfmMethod>>> = ({ signal }) => getIdfmMethod({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getIdfmMethod>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetIdfmMethodQueryResult = NonNullable<Awaited<ReturnType<typeof getIdfmMethod>>>
+export type GetIdfmMethodQueryError = ErrorType<unknown>
+
+
+export function useGetIdfmMethod<TData = Awaited<ReturnType<typeof getIdfmMethod>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIdfmMethod>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getIdfmMethod>>,
+          TError,
+          Awaited<ReturnType<typeof getIdfmMethod>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetIdfmMethod<TData = Awaited<ReturnType<typeof getIdfmMethod>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIdfmMethod>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getIdfmMethod>>,
+          TError,
+          Awaited<ReturnType<typeof getIdfmMethod>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetIdfmMethod<TData = Awaited<ReturnType<typeof getIdfmMethod>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIdfmMethod>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetIdfmMethod<TData = Awaited<ReturnType<typeof getIdfmMethod>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIdfmMethod>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetIdfmMethodQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getGetTrainUrl = (id: string,) => {
 
 
