@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import type { WmataInfo } from "@workspace/api-client-react";
+import { WmataAccess } from "./wmata-access";
 
 export function WmataDetails({info}:{info?:WmataInfo}){
   if(!info)return null;
@@ -13,6 +14,7 @@ export function WmataDetails({info}:{info?:WmataInfo}){
     {!!info.locations?.length&&<details><summary className="cursor-pointer py-2 text-sm font-semibold">Platforms and station locations ({info.locations.length})</summary>
       <ul className="space-y-1">{info.locations.map(location=><li key={location.id}><Link className="block min-h-11 py-2 text-sm underline" href={`/stops/${encodeURIComponent(location.id)}`}>{location.name} · {location.kind}</Link></li>)}</ul>
     </details>}
+    {info.access&&<WmataAccess access={info.access}/>}
     <p className="text-xs text-muted-foreground">{info.attribution} <a className="underline" href={info.url} target="_blank" rel="noreferrer">Official WMATA source</a> · <a className="underline" href="https://developer.wmata.com/license" target="_blank" rel="noreferrer">Data terms</a></p>
   </section>;
 }

@@ -10,9 +10,12 @@ export const operations={
   "bus-alerts":"bus-gtfsrt-alerts.pb",
   "rail-alerts":"rail-gtfsrt-alerts.pb",
   "bus-vehicles":"bus-gtfsrt-vehiclepositions.pb",
+  "station-list":"/Rail.svc/json/jStations",
+  "station-entrances":"/Rail.svc/json/jStationEntrances",
+  "equipment-outages":"/Incidents.svc/json/ElevatorIncidents",
 } as const;
 export type Operation=keyof typeof operations;
-export const sourceUrl=(op:Operation)=>`https://api.wmata.com/gtfs/${operations[op]}`;
+export const sourceUrl=(op:Operation)=>`https://api.wmata.com${operations[op].startsWith("/")?operations[op]:`/gtfs/${operations[op]}`}`;
 export const operationFor=(url:string)=> (Object.keys(operations) as Operation[]).find(op=>sourceUrl(op)===url);
 export const enabled=()=>process.env.WMATA_ENABLED!=="false";
 /** The configured value is an owner-verified allowance, not an inferred entitlement.
@@ -77,7 +80,7 @@ export function createClient(deps:{fetch:typeof fetch;key:()=>string|undefined;n
     const work=(async()=>{
       const blocked=await deps.budget.status?.(op,deps.now());
       if(blocked)throw new WmataError(blocked,blocked==="access denied"?
-        "WMATA denied this product; check the saved key and subscribed GTFS product after backoff":
+        "WMATA denied this product; check the saved key and subscribed product after backoff":
         blocked==="throttled"?"WMATA throttled requests; retry after backoff":"WMATA product backoff active; schedules remain available");
       let reserved=await deps.budget.reserve(op,deps.now(),limit);
       if(!reserved){
@@ -97,7 +100,7 @@ export function createClient(deps:{fetch:typeof fetch;key:()=>string|undefined;n
           await deps.budget.block(response.status===429?"all":op,denied?deps.now()+3600_000:until,
             denied?"access denied":response.status===429?"throttled":"unavailable");
           throw new WmataError(denied?"access denied":response.status===429?"throttled":"unavailable",
-            denied?"WMATA denied this product; check the saved key and subscribed GTFS product":
+            denied?"WMATA denied this product; check the saved key and subscribed product":
               response.status===429?"WMATA throttled requests; retry after backoff":"WMATA product temporarily unavailable");
         }
         if(!response.body)throw new Error();

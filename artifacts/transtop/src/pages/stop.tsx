@@ -50,11 +50,12 @@ export default function StopPage() {
               <div className="min-w-0 flex-1">
                 <h1 className="break-words font-display text-4xl leading-[0.95] md:text-6xl" data-testid="text-stop-name">{stop.name}</h1>
                 <p className="mt-2 text-muted-foreground">{stop.agency}{stop.neighborhood ? ` · ${stop.neighborhood}` : ''}
-                  {stop.accessible ? <span className="ml-2 inline-flex items-center gap-1 text-foreground"><Accessibility className="h-4 w-4" />Accessible</span> : <span className="ml-2">· Accessibility not confirmed</span>}
+                  {stop.wmata ? <span className="ml-2">· Step-free access not verified</span> : stop.accessible ? <span className="ml-2 inline-flex items-center gap-1 text-foreground"><Accessibility className="h-4 w-4" />Accessible</span> : <span className="ml-2">· Accessibility not confirmed</span>}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {stop.routes.map((r) => <Link key={r.id} href={`/routes/${encodeURIComponent(r.id)}?stop=${encodeURIComponent(stop.id)}`} aria-label={`Route ${r.name} details`} className="transition-transform hover:scale-110"><RouteBadge name={r.name} color={r.color} size="md" /></Link>)}
                 </div>
+                {stop.wmata?.access && <a className="inline-block min-h-11 py-3 text-sm underline" href="#wmata-station-access">View entrances and equipment outages</a>}
               </div>
               <FavButton active={isFavStop(stop.id)} onClick={() => toggleStop(stop)} label={stop.name} />
             </div>

@@ -211,6 +211,36 @@ export const GetStopsResponse = zod.object({
   "timezone": zod.string(),
   "predictions": zod.string().optional(),
   "alerts": zod.string().optional(),
+  "access": zod.object({
+  "stationCodes": zod.array(zod.string()),
+  "scope": zod.string(),
+  "mappingStatus": zod.string(),
+  "entrancesStatus": zod.string(),
+  "outagesStatus": zod.string(),
+  "mappingCheckedAt": zod.string().optional(),
+  "entrancesCheckedAt": zod.string().optional(),
+  "outagesCheckedAt": zod.string().optional(),
+  "url": zod.string(),
+  "outageUrl": zod.string(),
+  "entrances": zod.array(zod.object({
+  "name": zod.string(),
+  "description": zod.string(),
+  "stationCodes": zod.array(zod.string()),
+  "lat": zod.number(),
+  "lon": zod.number()
+})),
+  "outages": zod.array(zod.object({
+  "equipmentId": zod.string(),
+  "equipmentType": zod.string(),
+  "stationCode": zod.string(),
+  "location": zod.string(),
+  "symptom": zod.string(),
+  "reportedAt": zod.string(),
+  "updatedAt": zod.string(),
+  "estimatedReturn": zod.string().optional(),
+  "status": zod.string()
+}))
+}).optional(),
   "locations": zod.array(zod.object({
   "id": zod.string(),
   "name": zod.string(),
@@ -418,6 +448,36 @@ export const GetStopResponse = zod.object({
   "timezone": zod.string(),
   "predictions": zod.string().optional(),
   "alerts": zod.string().optional(),
+  "access": zod.object({
+  "stationCodes": zod.array(zod.string()),
+  "scope": zod.string(),
+  "mappingStatus": zod.string(),
+  "entrancesStatus": zod.string(),
+  "outagesStatus": zod.string(),
+  "mappingCheckedAt": zod.string().optional(),
+  "entrancesCheckedAt": zod.string().optional(),
+  "outagesCheckedAt": zod.string().optional(),
+  "url": zod.string(),
+  "outageUrl": zod.string(),
+  "entrances": zod.array(zod.object({
+  "name": zod.string(),
+  "description": zod.string(),
+  "stationCodes": zod.array(zod.string()),
+  "lat": zod.number(),
+  "lon": zod.number()
+})),
+  "outages": zod.array(zod.object({
+  "equipmentId": zod.string(),
+  "equipmentType": zod.string(),
+  "stationCode": zod.string(),
+  "location": zod.string(),
+  "symptom": zod.string(),
+  "reportedAt": zod.string(),
+  "updatedAt": zod.string(),
+  "estimatedReturn": zod.string().optional(),
+  "status": zod.string()
+}))
+}).optional(),
   "locations": zod.array(zod.object({
   "id": zod.string(),
   "name": zod.string(),
@@ -686,6 +746,36 @@ export const GetRouteResponse = zod.object({
   "timezone": zod.string(),
   "predictions": zod.string().optional(),
   "alerts": zod.string().optional(),
+  "access": zod.object({
+  "stationCodes": zod.array(zod.string()),
+  "scope": zod.string(),
+  "mappingStatus": zod.string(),
+  "entrancesStatus": zod.string(),
+  "outagesStatus": zod.string(),
+  "mappingCheckedAt": zod.string().optional(),
+  "entrancesCheckedAt": zod.string().optional(),
+  "outagesCheckedAt": zod.string().optional(),
+  "url": zod.string(),
+  "outageUrl": zod.string(),
+  "entrances": zod.array(zod.object({
+  "name": zod.string(),
+  "description": zod.string(),
+  "stationCodes": zod.array(zod.string()),
+  "lat": zod.number(),
+  "lon": zod.number()
+})),
+  "outages": zod.array(zod.object({
+  "equipmentId": zod.string(),
+  "equipmentType": zod.string(),
+  "stationCode": zod.string(),
+  "location": zod.string(),
+  "symptom": zod.string(),
+  "reportedAt": zod.string(),
+  "updatedAt": zod.string(),
+  "estimatedReturn": zod.string().optional(),
+  "status": zod.string()
+}))
+}).optional(),
   "locations": zod.array(zod.object({
   "id": zod.string(),
   "name": zod.string(),
@@ -1055,6 +1145,36 @@ export const GetCatalogResponse = zod.object({
   "timezone": zod.string(),
   "predictions": zod.string().optional(),
   "alerts": zod.string().optional(),
+  "access": zod.object({
+  "stationCodes": zod.array(zod.string()),
+  "scope": zod.string(),
+  "mappingStatus": zod.string(),
+  "entrancesStatus": zod.string(),
+  "outagesStatus": zod.string(),
+  "mappingCheckedAt": zod.string().optional(),
+  "entrancesCheckedAt": zod.string().optional(),
+  "outagesCheckedAt": zod.string().optional(),
+  "url": zod.string(),
+  "outageUrl": zod.string(),
+  "entrances": zod.array(zod.object({
+  "name": zod.string(),
+  "description": zod.string(),
+  "stationCodes": zod.array(zod.string()),
+  "lat": zod.number(),
+  "lon": zod.number()
+})),
+  "outages": zod.array(zod.object({
+  "equipmentId": zod.string(),
+  "equipmentType": zod.string(),
+  "stationCode": zod.string(),
+  "location": zod.string(),
+  "symptom": zod.string(),
+  "reportedAt": zod.string(),
+  "updatedAt": zod.string(),
+  "estimatedReturn": zod.string().optional(),
+  "status": zod.string()
+}))
+}).optional(),
   "locations": zod.array(zod.object({
   "id": zod.string(),
   "name": zod.string(),

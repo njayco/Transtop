@@ -1,6 +1,6 @@
 export type Mode = "demo" | "live";
 export type TransitType = "subway" | "bus" | "rail" | "intercity";
-export interface WmataInfo {kind:string;platform?:string;parentId?:string;attribution:string;url:string;timezone:string;predictions?:string;alerts?:string;locations?:{id:string;name:string;kind:string}[]}
+export interface WmataInfo {kind:string;platform?:string;parentId?:string;attribution:string;url:string;timezone:string;predictions?:string;alerts?:string;access?:import("./wmata/access-model").AccessInfo;locations?:{id:string;name:string;kind:string}[]}
 export interface IdfmInfo {url:string;license:string;attribution:string;timezone:string;modeDetail?:string;publishedAt?:string;validFrom?:string;validThrough?:string;platform?:string;accessibility?:string;realtimeStatus?:string;realtimeCheckedAt?:string;realtimeUrl?:string;realtimeLicense?:string}
 export interface OdptInfo {attribution:string;url:string;license:string;terms:string;timezone:string;version:string;publishedAt:string;validFrom:string;validThrough:string;modeDetail:string;realtime:string}
 export interface TflInfo {status:string;message:string;attribution:string;url:string;timezone:string;lastSuccess?:string;platform?:string;parentId?:string}

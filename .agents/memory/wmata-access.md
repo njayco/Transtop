@@ -17,3 +17,17 @@ apps' consumption.
 
 **How to apply:** Keep development and production within conservative reserved
 portions of this allowance and verify access separately per operation.
+
+Treat WMATA entrance and equipment sources as station-wide reports, not a
+step-free route guarantee. The official entrance API's ID is deprecated and
+does not establish a GTFS entrance/equipment relationship. Equipment unit names
+are unique only within type. An estimated return is not proof of repair.
+
+**Why:** Official station-entrance and incident documentation supplies neither
+a verified step-free path nor a complete working-equipment inventory; its return
+times are estimates and may pass while the unit remains listed as impaired.
+
+**How to apply:** Require exact published station-code relationships, keep
+entrance/equipment identities separate, and preserve explicit uncertainty when
+extending accessibility features. Research authoritative path/inventory data
+before promising entrance-specific or step-free navigation.

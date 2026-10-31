@@ -28,9 +28,11 @@ The production GTFS operations used are on `https://api.wmata.com/gtfs/`:
 | Metrobus GPS | `bus-gtfsrt-vehiclepositions.pb` |
 
 All five returned authorized HTTP 200, decoded ZIP/protobuf data during bounded
-checks. Separate JSON prediction/incident, GTFS Metro Alert and vehicle-position
-products were **not** requested or claimed as verified during the initial integration.
-Metrobus GPS access was subsequently checked independently; see below. No QA feed, guest key,
+checks. Separate JSON predictions, bus/rail incidents, GTFS Metro Alert and vehicle-position
+products were **not** requested or claimed as verified in the initial integration.
+Station information and elevator/escalator incidents were subsequently verified
+as described below. Metrobus GPS access was also subsequently checked independently;
+see below. No QA feed, guest key,
 account registration, subscription upgrade or additional agreement was used.
 Empty rail alerts are a valid upstream result, not a promise of no disruptions.
 
@@ -197,12 +199,100 @@ independent fresh prediction/alert/GPS notes. Counts vary with time and viewport
 These were development checks on the existing account, not a production import,
 deployment or claim that every bus currently has usable GPS.
 
+## Station entrances and equipment access
+
+Official documentation and the already accepted
+[Transit Data Terms](https://developer.wmata.com/license) were checked again
+October 31, 2026. The terms explicitly include elevator/escalator incidents;
+the application-only use and independent API redistribution restrictions above
+still apply. No new account, product subscription, paid tier or agreement was
+created or accepted. Bounded calls using the existing server-only key and the
+same PostgreSQL-backed quota client successfully validated all three products:
+
+| Product | Fixed HTTPS path | Point-in-time records |
+| --- | --- | --- |
+| [Station list](https://developer.wmata.com/api-details#api=5476364f031f590f38092507&operation=5476364f031f5909e4fe3311) | `/Rail.svc/json/jStations` | 102 |
+| [Station entrances](https://developer.wmata.com/api-details#api=5476364f031f590f38092507&operation=5476364f031f5909e4fe330f) | `/Rail.svc/json/jStationEntrances` | 275 |
+| [Elevator/escalator outages](https://developer.wmata.com/api-details#api=54763641281d83086473f232&operation=54763641281d830c946a3d76) | `/Incidents.svc/json/ElevatorIncidents` | 27 |
+
+These successes establish access to those operations at that time, not permanent
+entitlement, additional quota, complete inventory or working elevators. Operation
+names in `check-wmata-access.ts` are a fixed allowlist, not user-provided URLs.
+No key appears in URLs, browser bundles, results or logs. Recheck deliberately:
+
+```sh
+cd artifacts/api-server
+pnpm exec tsx scripts/check-wmata-access.ts
+# Optional bounded official ZIP check, processed in memory; no import or archive saved:
+pnpm exec tsx scripts/check-wmata-access.ts --static-identity
+```
+
+Station details now show a distinct access panel, accessible from the station
+header, independently of prediction and service-alert status. Parent, platform,
+entrance and passage IDs and parent links are unchanged. WMATA's published
+station `Code` plus reciprocal `StationTogether1/2` sets must exactly agree with
+the complete current GTFS `STN_...` parent identifier. Platform `PF_...` codes
+must also belong to that exact parent; published numeric and `_C` platform
+suffixes are supported. Names, distance, line colors and wheelchair flags do not
+establish a crosswalk. Partial, missing, inconsistent or changed sets are unknown.
+The current official ZIP was checked against these identities, including island
+platforms, not just example fixtures: **2,176/2,176** station-related locations
+matched complete published station-code sets.
+
+Entrances are selected only by the publisher's exact `StationCode1/2` membership.
+Their names, descriptions, coordinates and station codes are shown. JSON entrance
+`ID` is deprecated and is **not** treated as a GTFS entrance ID. The API supplies
+no verified entrance-to-equipment edge or step-free capability flag. All access
+results remain explicitly station-wide even when opened from a particular
+entrance or platform; there is no guessed equipment assignment to that location.
+
+Outages use the exact composite identity **station code + unit type + unit name**;
+WMATA documents that an elevator and escalator may share a `UnitName`.
+The station-wide list retains each unit's location, symptom, reported/updated
+times and estimated return. Escalators are clearly distinguished from elevators
+and are not step-free paths. Source wall times use `America/New_York`, presented
+as localized instants. Future report dates are explicitly uncertain.
+**Estimated return is not an active-period end, expiry, or proof of repair**:
+if it has passed but WMATA still reports the incident, the panel says repair is
+unconfirmed. An old individual update can describe a still-reported long outage;
+it is not automatically dropped as resolved.
+
+Access sources are fetched only from station-detail requests, without a background
+timer. Shared leases, persisted snapshots, per-process coalescing and the existing
+global quota/backoff apply. Station-code and entrance snapshots refresh/expire
+after 24 hours. Equipment snapshots refresh after 120 seconds and expire after
+180 seconds from the request's start. These JSON APIs supply no full-list source
+timestamp; the UI says the check time is a retrieval observation, not proof of a
+new upstream publication. Incident update times remain separately visible.
+Persisted snapshots retain their original check times across restarts. Retrieval
+does not extend an incident's source update time.
+The browser independently ages these check times every five seconds and on
+window focus, so failed refetches or an offline tab cannot retain a fresh label
+indefinitely. An initially cold detail request can require several serial,
+quota-spaced upstream operations; subsequent requests reuse the shared snapshots.
+
+Disabled/missing credentials, unconfirmed quota, denial, throttling, exhausted
+allowance, invalid payloads, stale snapshots and unavailable shared storage are
+explicit states. Denial retries no sooner than one hour; other errors no sooner
+than one minute, still subject to client-level backoff. Failures do not clear
+another product's status or create healthy empty results. Stale records are
+withheld, and a stale/missing station crosswalk withholds assignments from both
+products. Healthy empty means only that WMATA returned no matching reports;
+neither it nor the GTFS wheelchair field certifies accessibility. The station
+header and panel explicitly say **step-free access is not verified**, retain
+WMATA attribution and link to official elevator status before travel.
+
+No full accessibility certification, verified healthy-equipment inventory,
+entrance-specific elevator matching, accessible journey planning or pathway
+navigation is claimed.
+
 ## Verification
 
 ```sh
 pnpm --filter @workspace/api-server run test:wmata
 # Explicit one-request access/GPS matching check, not part of automated fixtures:
 pnpm --filter @workspace/api-server run check:wmata-vehicles-live
+pnpm --filter @workspace/transtop exec node --experimental-vm-modules --test tests/wmata-access.test.mjs
 # Disposable PostgreSQL only: see transit-imports.md (fixed port 55439).
 pnpm --filter @workspace/api-server run test:wmata-import
 pnpm --filter @workspace/api-server run test:gtfs-import

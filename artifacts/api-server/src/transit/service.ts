@@ -1,6 +1,7 @@
 import { db, pool, stops, routes, feedSnapshots } from "@workspace/db";
 import { and, eq, inArray, ne } from "drizzle-orm";
 import { adapters } from "./adapters";
+import { stationAccess } from "./wmata/access";
 import { demoArrivals, demoAlerts } from "./demo";
 import { feedsFor, fresh, liveAlerts, feedStatus, mapVehicles, reportedStopVehicles } from "./realtime";
 import { catalogVehicles } from "./vehicle-catalog";
@@ -105,6 +106,8 @@ export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<Tran
     // Platform-targeted advisories are visible at the parent with their original
     // stop scope, never promoted to route-wide alerts.
     enriched.alerts=wmata.alerts().filter(a=>wmataApplies(a,stop)||children.some(s=>wmataApplies(a,s)));
+    if(deep && stop.wmata && ["station","platform","entrance","passage","boarding area"].includes(stop.wmata.kind))
+      enriched.wmata!.access=await stationAccess(stop);
     return enriched;
   }
   const {arrivals:official,excluded}=officialArrivals(stop);

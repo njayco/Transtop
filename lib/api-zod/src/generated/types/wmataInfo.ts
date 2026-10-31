@@ -4,6 +4,7 @@
  * Api
  * OpenAPI spec version: 0.1.0
  */
+import type { WmataAccess } from './wmataAccess';
 import type { WmataInfoLocationsItem } from './wmataInfoLocationsItem';
 
 export interface WmataInfo {
@@ -15,5 +16,6 @@ export interface WmataInfo {
   timezone: string;
   predictions?: string;
   alerts?: string;
+  access?: WmataAccess;
   locations?: WmataInfoLocationsItem[];
 }

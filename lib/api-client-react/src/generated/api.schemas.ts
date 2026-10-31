@@ -284,6 +284,41 @@ export const StopType = {
   intercity: 'intercity',
 } as const;
 
+export type WmataAccessEntrancesItem = {
+  name: string;
+  description: string;
+  stationCodes: string[];
+  lat: number;
+  lon: number;
+};
+
+export type WmataAccessOutagesItem = {
+  equipmentId: string;
+  equipmentType: string;
+  stationCode: string;
+  location: string;
+  symptom: string;
+  reportedAt: string;
+  updatedAt: string;
+  estimatedReturn?: string;
+  status: string;
+};
+
+export interface WmataAccess {
+  stationCodes: string[];
+  scope: string;
+  mappingStatus: string;
+  entrancesStatus: string;
+  outagesStatus: string;
+  mappingCheckedAt?: string;
+  entrancesCheckedAt?: string;
+  outagesCheckedAt?: string;
+  url: string;
+  outageUrl: string;
+  entrances: WmataAccessEntrancesItem[];
+  outages: WmataAccessOutagesItem[];
+}
+
 export type WmataInfoLocationsItem = {
   id: string;
   name: string;
@@ -299,6 +334,7 @@ export interface WmataInfo {
   timezone: string;
   predictions?: string;
   alerts?: string;
+  access?: WmataAccess;
   locations?: WmataInfoLocationsItem[];
 }
 

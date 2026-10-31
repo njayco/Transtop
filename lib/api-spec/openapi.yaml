@@ -676,6 +676,7 @@ components:
         timezone: {type: string}
         predictions: {type: string}
         alerts: {type: string}
+        access: {$ref: "#/components/schemas/WmataAccess"}
         locations:
           type: array
           items:
@@ -685,6 +686,46 @@ components:
               id: {type: string}
               name: {type: string}
               kind: {type: string}
+    WmataAccess:
+      type: object
+      required: [stationCodes, scope, mappingStatus, entrancesStatus, outagesStatus, entrances, outages, url, outageUrl]
+      properties:
+        stationCodes: {type: array, items: {type: string}}
+        scope: {type: string}
+        mappingStatus: {type: string}
+        entrancesStatus: {type: string}
+        outagesStatus: {type: string}
+        mappingCheckedAt: {type: string}
+        entrancesCheckedAt: {type: string}
+        outagesCheckedAt: {type: string}
+        url: {type: string}
+        outageUrl: {type: string}
+        entrances:
+          type: array
+          items:
+            type: object
+            required: [name, description, stationCodes, lat, lon]
+            properties:
+              name: {type: string}
+              description: {type: string}
+              stationCodes: {type: array, items: {type: string}}
+              lat: {type: number}
+              lon: {type: number}
+        outages:
+          type: array
+          items:
+            type: object
+            required: [equipmentId, equipmentType, stationCode, location, symptom, reportedAt, updatedAt, status]
+            properties:
+              equipmentId: {type: string}
+              equipmentType: {type: string}
+              stationCode: {type: string}
+              location: {type: string}
+              symptom: {type: string}
+              reportedAt: {type: string}
+              updatedAt: {type: string}
+              estimatedReturn: {type: string}
+              status: {type: string}
     IdfmInfo:
       type: object
       required: [url, license, attribution, timezone]
