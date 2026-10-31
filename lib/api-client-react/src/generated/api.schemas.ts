@@ -770,6 +770,77 @@ export const GetMobilityFeedsKind = {
   gtfs_rt: 'gtfs_rt',
 } as const;
 
+export type GetEntryLocation200Theme = typeof GetEntryLocation200Theme[keyof typeof GetEntryLocation200Theme];
+
+
+export const GetEntryLocation200Theme = {
+  default: 'default',
+  'new-york': 'new-york',
+  'new-jersey': 'new-jersey',
+  connecticut: 'connecticut',
+  'san-francisco': 'san-francisco',
+  philadelphia: 'philadelphia',
+  dallas: 'dallas',
+  miami: 'miami',
+  atlanta: 'atlanta',
+  detroit: 'detroit',
+  cincinnati: 'cincinnati',
+  chicago: 'chicago',
+  'los-angeles': 'los-angeles',
+} as const;
+
+export type GetEntryLocation200Accuracy = typeof GetEntryLocation200Accuracy[keyof typeof GetEntryLocation200Accuracy];
+
+
+export const GetEntryLocation200Accuracy = {
+  approximate: 'approximate',
+  unknown: 'unknown',
+} as const;
+
+export type GetEntryLocation200MatchedBy = typeof GetEntryLocation200MatchedBy[keyof typeof GetEntryLocation200MatchedBy];
+
+
+export const GetEntryLocation200MatchedBy = {
+  city: 'city',
+  region: 'region',
+  country: 'country',
+  default: 'default',
+} as const;
+
+export type GetEntryLocation200Source = typeof GetEntryLocation200Source[keyof typeof GetEntryLocation200Source];
+
+
+export const GetEntryLocation200Source = {
+  'db-ip-lite': 'db-ip-lite',
+} as const;
+
+export type GetEntryLocation200 = {
+  /**
+     * @maxLength 2
+     * @nullable
+     */
+  country: string | null;
+  /**
+     * @maxLength 100
+     * @nullable
+     */
+  city: string | null;
+  /**
+     * @maxLength 100
+     * @nullable
+     */
+  region: string | null;
+  /**
+     * @maxLength 100
+     * @nullable
+     */
+  operator: string | null;
+  theme: GetEntryLocation200Theme;
+  accuracy: GetEntryLocation200Accuracy;
+  matchedBy: GetEntryLocation200MatchedBy;
+  source: GetEntryLocation200Source;
+};
+
 /**
  * @nullable
  */

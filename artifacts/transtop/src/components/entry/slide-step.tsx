@@ -10,7 +10,7 @@ export function SlideStep({ onAdvance, leaving, locale = 'en' }: Props) {
     ? { label: 'Avancer la carte de 10 %', help: 'Appuyez plusieurs fois pour entrer sans glisser.' }
     : locale === 'ja'
       ? { label: 'カードを10%進める', help: '繰り返しタップすると、ドラッグせずに入れます。' }
-      : { label: 'Slide card 10%', help: 'Tap or click repeatedly to enter without dragging.' };
+      : { label: 'Slide to enter · 10%', help: 'Tap or click repeatedly to enter without dragging.' };
   return (
     <div className="mx-auto mt-3 max-w-6xl px-[5vw] md:px-10">
       <button type="button" onClick={onAdvance} disabled={leaving}

@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { TrainFront, Bus, Plane, Ship, TrainFrontTunnel } from 'lucide-react';
 import { prefersReducedMotion, useSwipeGesture } from '@/hooks/use-swipe-gesture';
-import { fetchEntryVariant, readStoredVariant, storeVariant, type EntryVariant } from '@/lib/entry-country';
+import { DESIGN_LABELS, EXTRA_THEMES, THEMES, fetchEntryLocation, isDesign, readChoice, readDetected, storeChoice, storeDetected, type EntryDesign, type EntryLocation } from '@/lib/entry-location';
+import { CityEntry } from '@/components/entry/city-entry';
 import { RegionalEntry, EntryPrivacy } from '@/components/entry/regional-entry';
 import { SlideStep } from '@/components/entry/slide-step';
 import { trackEvent } from '@/lib/analytics';
@@ -33,20 +34,22 @@ export function EntryGate({ children }: { children: ReactNode }) {
       if (element) element.hidden = entered || !hasPublicContent;
     }
   }, [entered]);
-  const [variant, setVariant] = useState<EntryVariant | null>(readStoredVariant);
+  const [choice, setChoice] = useState<EntryDesign | null>(readChoice);
+  const [location, setLocation] = useState<EntryLocation | null>(readDetected);
   const asked = useRef(false);
   useEffect(() => {
-    if (entered || variant || asked.current) return;
+    if (entered || location || asked.current) return;
     asked.current = true;
     let live = true;
     const ac = new AbortController();
-    fetchEntryVariant(BASE, fetch, undefined, ac.signal).then((v) => {
+    fetchEntryLocation(BASE, fetch, undefined, ac.signal).then((l) => {
       if (!live) return;
-      storeVariant(v);
-      setVariant((cur) => cur ?? v); // first resolution wins
+      storeDetected(l);
+      setLocation((cur) => cur ?? l); // first resolution wins; never overrides an explicit choice
     });
     return () => { live = false; asked.current = false; ac.abort(); };
-  }, [entered, variant]);
+  }, [entered, location]);
+  const pick = useCallback((v: EntryDesign | null) => { storeChoice(v); setChoice(v); }, []);
   const enter = useCallback(() => {
     try { sessionStorage.setItem(KEY, '1'); } catch { /* ignore */ }
     trackEvent('entry_completed');
@@ -59,8 +62,14 @@ export function EntryGate({ children }: { children: ReactNode }) {
   }, []);
   let body: ReactNode;
   if (entered) body = children;
-  else if (!variant) body = <div className="min-h-[100dvh] bg-[#050506]" aria-busy="true" data-testid="screen-entry-loading" />;
-  else body = <Intro key={variant} variant={variant} onDone={enter} />;
+  else {
+    const design = choice ?? location?.theme ?? null;
+    body = <>
+      <ThemePicker choice={choice} detected={location} onPick={pick} />
+      {design ? <Intro key={design} variant={design} location={location} onDone={enter} />
+        : <div className="min-h-[100dvh] bg-[#050506]" aria-busy="true" data-testid="screen-entry-loading" />}
+    </>;
+  }
   return <Ctx.Provider value={{ replay }}>{body}</Ctx.Provider>;
 }
 
@@ -114,7 +123,22 @@ function Arrows() {
 
 const STYLE = `@keyframes entry-nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(-4px)}}.entry-nudge,[style*="entry-nudge"]{}.entry-nudge{animation:entry-nudge 1.8s ease-in-out infinite}.entry-title{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif}.reduce-motion .entry-nudge,.reduce-motion [style*="entry-nudge"]{animation:none!important}@media (prefers-reduced-motion:reduce){.entry-nudge,[style*="entry-nudge"]{animation:none!important}}@media (max-height:500px) and (orientation:landscape){[data-entry-variant] h1{font-size:clamp(2.4rem,9vh,4rem)!important}[data-entry-variant] ul[aria-label^="Modes"] li{width:clamp(2.6rem,11vh,3.6rem)!important}}`;
 
-export function Intro({ onDone, variant = 'us' }: { onDone: () => void; variant?: EntryVariant }) {
+function ThemePicker({ choice, detected, onPick }: { choice: EntryDesign | null; detected: EntryLocation | null; onPick: (v: EntryDesign | null) => void }) {
+  const auto = detected ? (detected.theme === 'default' ? (detected.city ?? 'farebox') : DESIGN_LABELS[detected.theme]) : 'detecting';
+  return (
+    <label className="fixed right-[max(0.75rem,env(safe-area-inset-right))] top-[calc(4.75rem+env(safe-area-inset-top))] z-50 flex items-center gap-2 rounded-full border border-white/20 bg-[#0b0d14]/80 py-1 pl-3 pr-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#f4f1ea]/80 backdrop-blur md:top-[calc(3.5rem+env(safe-area-inset-top))]">
+      <span className="hidden min-[400px]:inline">City</span>
+      <select value={choice ?? 'auto'} onChange={(e) => onPick(isDesign(e.target.value) ? e.target.value : null)} data-testid="select-entry-theme"
+        aria-label="Entry design city" className="max-w-[8.5rem] min-[480px]:max-w-[13rem] cursor-pointer rounded-full bg-[#1a1e2a] px-3 py-1.5 text-xs font-semibold normal-case tracking-normal text-[#f4f1ea] outline-none focus-visible:ring-2 focus-visible:ring-[#3fc1f2]">
+        <option value="auto">Automatic ({auto})</option>
+        <optgroup label="United States">{THEMES.map((t) => <option key={t} value={t}>{DESIGN_LABELS[t]}</option>)}</optgroup>
+        <optgroup label="More designs">{EXTRA_THEMES.map((t) => <option key={t} value={t}>{DESIGN_LABELS[t]}</option>)}</optgroup>
+      </select>
+    </label>
+  );
+}
+
+export function Intro({ onDone, variant = 'new-york', location = null }: { onDone: () => void; variant?: EntryDesign; location?: EntryLocation | null }) {
   const [leaving, setLeaving] = useState(false);
   const doneRef = useRef(onDone);
   doneRef.current = onDone;
@@ -128,7 +152,8 @@ export function Intro({ onDone, variant = 'us' }: { onDone: () => void; variant?
       {child}
     </div>
   );
-  if (variant !== 'us') return wrap(<RegionalEntry region={variant} onDone={() => { setLeaving(true); done(); }} />);
+  if (variant === 'london' || variant === 'paris' || variant === 'tokyo') return wrap(<RegionalEntry region={variant} onDone={() => { setLeaving(true); done(); }} />);
+  if (variant !== 'new-york') return wrap(<CityEntry theme={variant} location={location} onDone={() => { setLeaving(true); done(); }} />);
   return wrap(<UsEntry onLeave={() => setLeaving(true)} onDone={done} />);
 }
 

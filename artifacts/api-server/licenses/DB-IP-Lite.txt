@@ -14,5 +14,10 @@ are given. This notice is an attribution summary, not a replacement for the lice
 DB-IP Lite has reduced coverage and accuracy and is updated monthly.
 Licensing requirements: https://db-ip.com/db/lite.php
 Transtop uses the database locally for approximate entry-screen styling only.
-The country result is restricted to US, GB, FR, JP or unknown.
+The legacy country result is restricted to US, GB, FR, JP or unknown.
+The city result uses DB-IP IP to City Lite, October 2026, downloaded from
+https://download.db-ip.com/free/dbip-city-lite-2026-10.mmdb.gz
+under the same CC BY 4.0 license. City and state/region are approximate,
+not a verified municipal boundary, and are used only for entry styling.
+https://db-ip.com/db/download/ip-to-city-lite
 Neither the database nor this use implies endorsement by DB-IP.

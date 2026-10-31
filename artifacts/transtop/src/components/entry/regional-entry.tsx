@@ -211,7 +211,7 @@ export function EntryPrivacy() {
   return (
     <div className="max-w-[23rem] space-y-1 text-[11px] leading-snug text-[#f4f1ea]/75" data-testid="text-unaffiliated">
       <p>Transtop is independent, not affiliated with any agency or card issuer. Artwork is decorative, not a ticket, payment or coverage promise.</p>
-      <p>Approximate IP country picks the style locally on our server. VPNs can select the wrong country. No GPS permission is requested; Transtop does not store or log your IP for this lookup.</p>
+      <p>An approximate city or region from your IP address picks the design, looked up locally on our server. It is not your exact location, and VPNs can pick the wrong place. No GPS or external lookup service is used; Transtop does not store or log your IP for this.</p>
       <p><a href="https://db-ip.com" className="underline focus-visible:outline focus-visible:outline-2">IP Geolocation by DB-IP</a> · <a href="https://creativecommons.org/licenses/by/4.0/" className="underline">CC BY 4.0</a></p>
     </div>
   );

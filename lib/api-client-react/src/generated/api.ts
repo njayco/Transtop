@@ -32,6 +32,7 @@ import type {
   GetAlertsParams,
   GetCatalogParams,
   GetEntryCountry200,
+  GetEntryLocation200,
   GetIntercityDeparturesParams,
   GetMapVehiclesParams,
   GetMobilityFeedsParams,
@@ -182,6 +183,108 @@ export function useGetMobilityFeeds<TData = Awaited<ReturnType<typeof getMobilit
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetMobilityFeedsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetEntryLocationUrl = () => {
+
+
+
+
+  return `/api/entry/location`
+}
+
+/**
+ * No inputs accepted. Uses a local DB-IP Lite lookup on verified ingress only. Never returns IP or coordinates. City matching is approximate and is not proof of municipal boundaries. Unknown and failed lookups use the generic farebox screen. No visitor geolocation request is sent to a third party.
+ * @summary Approximate local city and regional welcome styling
+ */
+export const getEntryLocation = async ( options?: Parameters<typeof customFetch>[1]): Promise<GetEntryLocation200> => {
+
+  return customFetch<GetEntryLocation200>(getGetEntryLocationUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetEntryLocationQueryKey = () => {
+    return [
+    `/api/entry/location`
+    ] as const;
+    }
+
+
+export const getGetEntryLocationQueryOptions = <TData = Awaited<ReturnType<typeof getEntryLocation>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEntryLocation>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetEntryLocationQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEntryLocation>>> = ({ signal }) => getEntryLocation({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getEntryLocation>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetEntryLocationQueryResult = NonNullable<Awaited<ReturnType<typeof getEntryLocation>>>
+export type GetEntryLocationQueryError = ErrorType<unknown>
+
+
+export function useGetEntryLocation<TData = Awaited<ReturnType<typeof getEntryLocation>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEntryLocation>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEntryLocation>>,
+          TError,
+          Awaited<ReturnType<typeof getEntryLocation>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetEntryLocation<TData = Awaited<ReturnType<typeof getEntryLocation>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEntryLocation>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEntryLocation>>,
+          TError,
+          Awaited<ReturnType<typeof getEntryLocation>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetEntryLocation<TData = Awaited<ReturnType<typeof getEntryLocation>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEntryLocation>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Approximate local city and regional welcome styling
+ */
+
+export function useGetEntryLocation<TData = Awaited<ReturnType<typeof getEntryLocation>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEntryLocation>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetEntryLocationQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

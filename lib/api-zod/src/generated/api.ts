@@ -58,6 +58,32 @@ export const GetMobilityFeedsResponse = zod.object({
 
 
 /**
+ * No inputs accepted. Uses a local DB-IP Lite lookup on verified ingress only. Never returns IP or coordinates. City matching is approximate and is not proof of municipal boundaries. Unknown and failed lookups use the generic farebox screen. No visitor geolocation request is sent to a third party.
+ * @summary Approximate local city and regional welcome styling
+ */
+export const getEntryLocationResponseCountryMax = 2;
+
+export const getEntryLocationResponseCityMax = 100;
+
+export const getEntryLocationResponseRegionMax = 100;
+
+export const getEntryLocationResponseOperatorMax = 100;
+
+
+
+export const GetEntryLocationResponse = zod.object({
+  "country": zod.string().max(getEntryLocationResponseCountryMax).nullable(),
+  "city": zod.string().max(getEntryLocationResponseCityMax).nullable(),
+  "region": zod.string().max(getEntryLocationResponseRegionMax).nullable(),
+  "operator": zod.string().max(getEntryLocationResponseOperatorMax).nullable(),
+  "theme": zod.enum(['default', 'new-york', 'new-jersey', 'connecticut', 'san-francisco', 'philadelphia', 'dallas', 'miami', 'atlanta', 'detroit', 'cincinnati', 'chicago', 'los-angeles']),
+  "accuracy": zod.enum(['approximate', 'unknown']),
+  "matchedBy": zod.enum(['city', 'region', 'country', 'default']),
+  "source": zod.enum(['db-ip-lite'])
+})
+
+
+/**
  * No inputs accepted. Only country is returned, never an IP. Unknown or failed lookups return null. Responses are private and no-store.
  * @summary Approximate entry styling using a local country database
  */

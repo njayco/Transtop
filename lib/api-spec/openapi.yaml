@@ -22,6 +22,34 @@ paths:
               schema: {$ref: "#/components/schemas/MobilityFeeds"}
         "503":
           description: Catalog unavailable; previously imported transit data remains available
+  /entry/location:
+    get:
+      operationId: getEntryLocation
+      summary: Approximate local city and regional welcome styling
+      description: No inputs accepted. Uses a local DB-IP Lite lookup on verified ingress only. Never returns IP or coordinates. City matching is approximate and is not proof of municipal boundaries. Unknown and failed lookups use the generic farebox screen. No visitor geolocation request is sent to a third party.
+      responses:
+        "200":
+          description: Approximate welcome metadata or a safe unknown default
+          headers:
+            Cache-Control:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [country, city, region, theme, operator, accuracy, matchedBy, source]
+                properties:
+                  country: {type: [string, "null"], maxLength: 2}
+                  city: {type: [string, "null"], maxLength: 100}
+                  region: {type: [string, "null"], maxLength: 100}
+                  operator: {type: [string, "null"], maxLength: 100}
+                  theme:
+                    type: string
+                    enum: [default, new-york, new-jersey, connecticut, san-francisco, philadelphia, dallas, miami, atlanta, detroit, cincinnati, chicago, los-angeles]
+                  accuracy: {type: string, enum: [approximate, unknown]}
+                  matchedBy: {type: string, enum: [city, region, country, default]}
+                  source: {type: string, enum: [db-ip-lite]}
   /entry/country:
     get:
       operationId: getEntryCountry

@@ -51,7 +51,9 @@ export function useSwipeGesture(onDone: () => void, inset = 16) {
 
   useEffect(() => {
     measure();
-    card.current?.focus({ preventScroll: true });
+    // Don't steal focus from a control the rider is using (e.g. the city selector).
+    const active = document.activeElement;
+    if (!active || active === document.body) card.current?.focus({ preventScroll: true });
     const onResize = () => { measure(); cancel(); };
     window.addEventListener('resize', onResize);
     window.addEventListener('orientationchange', onResize);

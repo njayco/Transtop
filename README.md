@@ -4,6 +4,16 @@ A mobile-first transit app based on the creator's original Transtop concept. Ver
 
 ## Current features and recent updates
 
+### City-aware welcome screens
+
+Transtop now includes the ten supplied US regional welcome designs, the retained
+New York entry and a new Connecticut design. Approximate local IP lookup selects
+a supported city or state; other visitors get a city-labeled default with a
+horizontal transit-dollar/farebox interaction. A selector lets anyone preview and
+choose every available design. City cards retain accessible swipe, tap and
+keyboard entry. IP location is approximate, not proof of city limits; no visitor
+IP is sent to a lookup vendor. See [city welcome behavior and privacy](docs/city-welcome.md).
+
 ### Mobility Database worldwide feeds
 
 Mobility Database now supplements direct sources and Transitland with worldwide
