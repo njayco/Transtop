@@ -10,6 +10,9 @@ import { amtrakPositions } from "./amtrak-live";
 import type { TransitVehicle } from "./types";
 import {matchVehicleTrips} from "./vehicle-trips";
 import {trackedVehicleId} from "./vehicle-catalog";
+import { odptSource, odptEnabled } from "./odpt/registry";
+import { odptFetch,verifyRealtimeAccess } from "./odpt/client";
+import { matchOdptRealtime } from "./odpt/realtime";
 export interface LiveFeed { timestamp:number; fetchedAt:number; entities:any[]; error?:string }
 const cache=new Map<string,LiveFeed>(), inflight=new Map<string,Promise<void>>();
 export const FRESH_MS=60_000;
@@ -18,12 +21,16 @@ export async function pollFeed(url:string,agency:string) {
   if(inflight.has(url))return inflight.get(url);
   const task=(async()=>{
     try {
-      const response=await fetch(busRequestUrl(url),{signal:AbortSignal.timeout(15000),redirect:"error"});
+      const odpt=odptSource(agency);
+      if(odpt&&!odptEnabled()){cache.delete(url);return;}
+      const odptVersion=odpt?await verifyRealtimeAccess(odpt,url):undefined;
+      const response=odpt?new Response(new Uint8Array(await odptFetch(url,odpt,"realtime",60000))):await fetch(busRequestUrl(url),{signal:AbortSignal.timeout(15000),redirect:"error"});
       if(!response.ok)throw new Error(`Feed HTTP ${response.status}`);
       const data=GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(new Uint8Array(await response.arrayBuffer()));
       if(agency==="cttransit")normalizeCtRealtime(data.entity);
       if(agency==="mta-bus"&&url.endsWith("/tripUpdates"))await matchBusTrips(data.entity);
       if(agency==="mta-mnr"||agency==="mta-lirr")await matchVehicleTrips(data.entity,agency);
+      if(odpt)data.entity=await matchOdptRealtime(data.entity,agency,Date.now(),odptVersion);
       const f:LiveFeed={timestamp:Number(data.header.timestamp),fetchedAt:Date.now(),entities:data.entity};
       cache.set(url,f);
       const snapshot={feedTimestamp:f.timestamp,fetchedAt:new Date(f.fetchedAt).toISOString(),fresh:fresh(f),entities:f.entities};
@@ -44,6 +51,7 @@ export async function pollRealtime() {
   for(let i=0;i<jobs.length;i+=4)await Promise.all(jobs.slice(i,i+4).map(j=>pollFeed(j.u,j.a)));
 }
 export function feedsFor(agency:string) {
+  if(odptSource(agency)&&!odptEnabled())return [];
   return (adapters.find(a=>a.id===agency)?.realtimeUrls||[]).map(u=>cache.get(u)).filter((f):f is LiveFeed=>!!f);
 }
 export function feedStatus(agency:string) {
@@ -101,7 +109,7 @@ export function reportedStopVehicles(mode:"live"|"demo"="live"){
 }
 export function liveAlerts():TransitAlert[] {
   const feeds=[{feed:cache.get(alertUrl),agency:undefined as string|undefined},
-    ...["mta-bus","cttransit"].flatMap(agency=>feedsFor(agency).map(feed=>({feed,agency})))];
+    ...["mta-bus","cttransit","odpt-sendai"].flatMap(agency=>feedsFor(agency).map(feed=>({feed,agency})))];
   const now=Date.now()/1000;
   const alerts=feeds.flatMap(({feed,agency})=> !feed||!fresh(feed)?[]:feed.entities.filter(e=>e.alert).filter(e=>{
     const periods=e.alert.activePeriod||[];

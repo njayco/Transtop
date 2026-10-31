@@ -16,6 +16,7 @@ import { globalTimetable } from "./transitland/departures";
 import * as tfl from "./tfl/service";
 import { preferDirect, resultRouteAliases } from "./tfl/crosswalk";
 import { isTfl } from "./tfl/model";
+import { odptEnabled, odptSource } from "./odpt/registry";
 type CatalogParams=z.infer<typeof GetCatalogQueryParams>;
 type TimetableParams=z.infer<typeof GetTimetableQueryParams>;
 
@@ -35,15 +36,15 @@ export async function catalog(p:CatalogParams) {
   const match=(r:TransitRoute)=> (!p.agency||r.id.split(":")[0]===p.agency||r.agencyId===p.agency)&&
     (!p.type||p.type==="all"||r.type===p.type)&&(!p.serviceClass||p.serviceClass==="all"||r.serviceClass===p.serviceClass);
   const extra=mode==="live"?(await intercityCatalog()).routes:[];
-  const importedRoutes=[...(await db.select().from(routes).where(eq(routes.mode,mode))).map(r=>r.data as TransitRoute),...extra];
+  const importedRoutes=[...(await db.select().from(routes).where(eq(routes.mode,mode))).map(r=>r.data as TransitRoute).filter(r=>!r.odpt||odptEnabled()),...extra];
   const rr=importedRoutes
-    .filter(r=>!isRetiredResearchId(r.id)&&match(r)&&(!q||`${r.name} ${r.longName||""} ${r.agency}`.toLowerCase().includes(q)))
+    .filter(r=>!isRetiredResearchId(r.id)&&match(r)&&(!q||`${r.name} ${r.longName||""} ${r.agency} ${r.searchNames?.join(" ")||""}`.toLowerCase().includes(q)))
     .sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
   const ss=(await allStops(mode)).filter(s=>!s.parent&&s.routes.some(match)&&
-    (!q||s.name.toLowerCase().includes(q)||s.routes.some(r=>match(r)&&`${r.name} ${r.longName||""}`.toLowerCase().includes(q))))
+    (!q||`${s.name} ${s.agency} ${s.searchNames?.join(" ")||""}`.toLowerCase().includes(q)||s.routes.some(r=>match(r)&&`${r.name} ${r.longName||""}`.toLowerCase().includes(q))))
     .sort((a,b)=>a.name.localeCompare(b.name));
   const london=mode==="live"&&(q||p.agency?.startsWith("tfl"))?await tfl.discover({...p,q:q||"London"}):undefined;
-  const foreign=mode==="live"&&(q||p.agency?.startsWith("tl:"))?await discover({...p,lat:undefined,lon:undefined},importedRoutes):undefined;
+  const foreign=mode==="live"&&(q||p.agency?.startsWith("tl:"))?await discover({...p,lat:undefined,lon:undefined},importedRoutes,undefined,await allStops(mode)):undefined;
   const combinedStops=preferDirect(unique([...ss,...(foreign?.stops||[]),...(london?.stops||[])]));
   const aliases=resultRouteAliases(foreign?.stops||[],london?.stops||[]);
   const combinedRoutes=unique([...rr,...(foreign?.routes||[]).filter(r=>!aliases.has(r.id)),...(london?.routes||[])]);
@@ -52,7 +53,8 @@ export async function catalog(p:CatalogParams) {
 }
 
 export async function timetable(p:TimetableParams) {
-  const date=DateTime.fromISO(p.date,{zone:ZONE}),from=p.from||"00:00";
+  const odpt=odptSource((p.stopId||p.routeId||"").split(":")[0]),zone=odpt?"Asia/Tokyo":ZONE;
+  const date=DateTime.fromISO(p.date,{zone}),from=p.from||"00:00";
   if(!date.isValid||date.toISODate()!==p.date||!/^([01]\d|2[0-3]):[0-5]\d$/.test(from))throw new Error("Invalid timetable date or time");
   if(!p.stopId&&!p.routeId)throw new Error("Select a stop or route");
   // Check both identities before any provider dispatch, including mixed old links.
@@ -66,7 +68,8 @@ export async function timetable(p:TimetableParams) {
     return intercityTimetable(p);
   }
   const offset=p.offset||0,limit=p.limit||40,serviceDate=date.toFormat("yyyyMMdd");
-  const empty={departures:[],total:0,offset,limit,date:p.date,message:"Published service-day timetable · America/New_York. Overnight departures may fall on the following calendar day; not live predictions."};
+  const empty={departures:[],total:0,offset,limit,date:p.date,...(odpt?{timezone:zone}:{}),message:`Published service-day timetable · ${zone}. Overnight departures may fall on the following calendar day; not live predictions.`};
+  if(odpt&&!odptEnabled())return {...empty,message:"ODPT is disabled. No current departures supplied."};
   if(p.mode==="demo")return {...empty,message:"Published timetables are available in Live mode only. Demo arrivals are illustrative."};
   const agency=(p.stopId||p.routeId)!.split(":")[0];
   if(p.stopId&&p.routeId&&p.routeId.split(":")[0]!==agency)throw new Error("Stop and route must belong to the same operator");
@@ -97,7 +100,7 @@ export async function timetable(p:TimetableParams) {
     JOIN transit_routes r ON r.mode=t.mode AND r.id=(t.agency||':'||(t.data->>'route_id'))
     LEFT JOIN transit_calendars c ON c.mode=t.mode AND c.id=(t.agency||':'||(t.data->>'service_id'))
     WHERE t.mode='live' AND t.agency=$1 AND ($2::text IS NULL OR t.data->>'route_id'=$2)
-      AND st.departure_seconds>=0 AND ($1<>'amtrak' OR (COALESCE(st.data->>'pickup_type','0')<>'1'
+      AND st.departure_seconds>=0 AND ($1 NOT LIKE 'odpt-%' OR COALESCE(st.data->>'pickup_type','0')<>'1') AND ($1<>'amtrak' OR (COALESCE(st.data->>'pickup_type','0')<>'1'
         AND st.sequence < (SELECT max(last_call.sequence) FROM transit_stop_times last_call
           WHERE last_call.mode=st.mode AND last_call.trip_id=st.trip_id)))`,
     ids?[agency,rawRoute,ids]:[agency,rawRoute]);
@@ -108,9 +111,9 @@ export async function timetable(p:TimetableParams) {
     date.set({hour:Number(from.slice(0,2)),minute:Number(from.slice(3))}).toMillis();
   const departures=rows.filter(row=>matchesPattern(row.trip,p.direction)&&activeService(row.calendar,exceptions.get(row.trip.service_id)||[],serviceDate))
     .map(row=>({id:`${row.trip_id}:${serviceDate}:${row.timing.stop_sequence}`,tripId:row.trip_id,stopId:row.stop.id,stopName:row.stop.name,
-      routeId:row.route.id,routeName:row.route.name,destination:row.trip.trip_headsign||"See route direction",direction:patternLabel(row.trip),
+      routeId:row.route.id,routeName:row.route.name,destination:(odpt?row.timing.stop_headsign:undefined)||row.trip.trip_headsign||"See route direction",direction:patternLabel(row.trip),
       time:new Date(serviceInstant(serviceDate,row.departure_seconds,row.trip.agency_timezone||ZONE)).toISOString(),
-      ...(agency==="amtrak"?{trainNumber:row.trip.trip_short_name,timezone:row.stop.stop_timezone||row.trip.agency_timezone,
+      ...(odpt?{timezone:zone}:{}),...(agency==="amtrak"?{trainNumber:row.trip.trip_short_name,timezone:row.stop.stop_timezone||row.trip.agency_timezone,
         runId:scheduledRunId(row.trip_id,serviceDate)}:{})}))
     .filter(row=>Date.parse(row.time)>=fromAt)
     .sort((a,b)=>Date.parse(a.time)-Date.parse(b.time)||a.tripId.localeCompare(b.tripId));

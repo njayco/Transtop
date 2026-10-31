@@ -29,6 +29,7 @@ import { globalFeedStates } from "./transitland/tracking";
 import * as tfl from "./tfl/service";
 import { isTfl } from "./tfl/model";
 import { preferDirect, matchedRoutes } from "./tfl/crosswalk";
+import { odptEnabled, odptSource } from "./odpt/registry";
 
 let stopCache:{at:number;demo:TransitStop[];live:TransitStop[]}|undefined;
 export async function allStops(mode:Mode) {
@@ -37,7 +38,7 @@ export async function allStops(mode:Mode) {
     stopCache={at:Date.now(),demo:data.filter(s=>s.mode==="demo").map(s=>s.data as TransitStop),
       live:data.filter(s=>s.mode==="live").map(s=>s.data as TransitStop)};
   }
-  return mode==="live"?[...stopCache.live,...(await intercityCatalog()).stops]:stopCache[mode];
+  return mode==="live"?[...stopCache.live.filter(s=>!s.odpt||odptEnabled()),...(await intercityCatalog()).stops]:stopCache[mode];
 }
 export async function trackedVehicles(mode:Mode="live",bounds?:{west:number;east:number;south:number;north:number}){
   if(mode==="demo")return [];
@@ -54,19 +55,20 @@ export function officialArrivals(stop:TransitStop,now=Date.now()) {
       const trip=t.trip, tripId=`${agency}:${trip.tripId}`;
       if(trip.scheduleRelationship===3||trip.scheduleRelationship===7){excluded.add(tripId);continue;}
       for(const st of t.stopTimeUpdate||[]){
-        const matches=st.stopId===raw||st.stopId===raw+"N"||st.stopId===raw+"S";
+        const matches=st.stopId===raw||!stop.odpt&&(st.stopId===raw+"N"||st.stopId===raw+"S");
         if(st.scheduleRelationship===1){excluded.add(`${tripId}|${st.stopId}`);continue;}
-        if(!matches||st.scheduleRelationship===2)continue;
+        if(st.scheduleRelationship===2){if(stop.odpt)excluded.add(`${tripId}|${st.stopId}`);continue;}
+        if(!matches)continue;
         const when=Number(st.arrival?.time||st.departure?.time);
         if(!when||when*1000<now-30000||when*1000>now+7200000)continue;
         const route=stop.routes.find(r=>r.id===`${agency}:${trip.routeId}`);
         if(!route)continue;
         const north=st.stopId.endsWith("N");
-        const direction=agency==="mta-subway"?(north?"Uptown":"Downtown"):agency==="mta-bus"?(trip.directionId===1?"Downtown":"Uptown"):(trip.directionId===1?"Inbound":"Outbound");
-        const destination=agency==="mta-subway"?(north?"Uptown & The Bronx / Queens":"Downtown & Brooklyn"):trip.transtopHeadsign|| (agency==="mta-bus"?`${route.name} · direction ${trip.directionId??"not reported"}`:direction);
+        const direction=stop.odpt?(t.transtopHeadsign||`Direction ${trip.directionId??"not supplied"}`):agency==="mta-subway"?(north?"Uptown":"Downtown"):agency==="mta-bus"?(trip.directionId===1?"Downtown":"Uptown"):(trip.directionId===1?"Inbound":"Outbound");
+        const destination=stop.odpt?st.transtopHeadsign||t.transtopHeadsign||direction:agency==="mta-subway"?(north?"Uptown & The Bronx / Queens":"Downtown & Brooklyn"):trip.transtopHeadsign|| (agency==="mta-bus"?`${route.name} · direction ${trip.directionId??"not reported"}`:direction);
         arrivals.push({id:`live:${tripId}:${st.stopId}`,routeId:route.id,routeName:route.name,color:route.color,direction,destination,
-          minutes:Math.max(0,Math.ceil((when*1000-now)/60000)),source:"live",updatedAt:new Date(f.timestamp*1000).toISOString(),
-          status:"Live agency prediction",scheduledAt:new Date(when*1000).toISOString(),tripId});
+          minutes:Math.max(0,Math.ceil((when*1000-now)/60000)),source:"live",updatedAt:new Date((stop.odpt?Number(t.timestamp):f.timestamp)*1000).toISOString(),
+          status:"Live agency prediction",scheduledAt:new Date(when*1000).toISOString(),tripId,...(stop.odpt?{timezone:stop.odpt.timezone,expiresAt:new Date(Math.min(Number(t.timestamp),f.timestamp)*1000+60000).toISOString()}:{})});
       }
     }
   }
@@ -90,6 +92,9 @@ export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<Tran
   return {...stop,arrivals,alerts:liveAlerts().filter(a=>stop.routes.some(r=>a.routeIds.includes(r.id)))};
 }
 const knownPlaces=[
+  {terms:["sendai","仙台"],lat:38.2602,lon:140.8824},
+  {terms:["nishitokyo","西東京","hana bus","はなバス"],lat:35.7483,lon:139.5466},
+  {terms:["kochi","kōchi","高知","tosaden","とさでん"],lat:33.5588,lon:133.5422},
   {terms:["new haven"],lat:41.297172,lon:-72.925945},
   {terms:["hartford"],lat:41.768960,lon:-72.681831},
   {terms:["stamford"],lat:41.0469,lon:-73.5415},
@@ -132,9 +137,9 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
   if(london?.stops.length&&q&&!foundPlace&&!exact){lat=london.stops[0].lat;lon=london.stops[0].lon;}
   const foreign=mode==="live"?await discover({
     ...params,...(q&&!foundPlace&&!exact?{q}:{q:undefined,lat,lon}),
-  },unique([...all.flatMap(s=>s.routes),...(london?.routes||[])])):undefined;
+  },unique([...all.flatMap(s=>s.routes),...(london?.routes||[])]),undefined,all):undefined;
   if(foreign?.stops.length&&!london?.stops.length&&q&&!foundPlace&&!exact){lat=foreign.stops[0].lat;lon=foreign.stops[0].lon;}
-  if(q&&!foundPlace)rows=rows.filter(s=>s.name.toLowerCase().includes(q)||s.neighborhood?.toLowerCase().includes(q)||s.routes.some(r=>r.name.toLowerCase()===q||r.id.toLowerCase()===q));
+  if(q&&!foundPlace)rows=rows.filter(s=>`${s.name} ${s.searchNames?.join(" ")||""}`.toLowerCase().includes(q)||s.neighborhood?.toLowerCase().includes(q)||s.routes.some(r=>r.name.toLowerCase()===q||r.id.toLowerCase()===q));
   rows=preferDirect(unique([...rows,...(foreign?.stops||[]),...(london?.stops||[])])).map(s=>{const d=distance(lat,lon,s.lat,s.lon);return {...s,distance:Math.round(d),walkingMinutes:Math.max(1,Math.round(d/75))};})
     .filter(s=>s.distance<=(s.type==="intercity"||s.id.startsWith("nj-transit:")?3000:10000))
     .sort((a,b)=>a.distance-b.distance).slice(0,16);
@@ -169,6 +174,7 @@ export async function stopDetail(id:string,mode:Mode) {
 }
 export async function routeDetail(id:string,mode:Mode,direction?:string,lookupGlobal:typeof globalRoute=globalRoute):Promise<RouteDetail|undefined> {
   if(isRetiredResearchId(id))return;
+  if(odptSource(id.split(":")[0])&&!odptEnabled())return;
   if(mode==="live"&&isTfl(id))return tfl.route(id,direction);
   // Saved worldwide route links always keep their source, even after exact
   // stop matches elsewhere or when TfL is disabled/unavailable.
@@ -214,15 +220,17 @@ export async function sources() {
   const {rows:counts}=await pool.query(`SELECT agency,'routes' AS kind,count(*)::int AS count FROM transit_routes WHERE mode='live' GROUP BY agency
     UNION ALL SELECT agency,'stops',count(*)::int FROM transit_stops WHERE mode='live' GROUP BY agency`);
   const result=adapters.map(a=>{
+    const sourceToday=odptSource(a.id)?DateTime.now().setZone("Asia/Tokyo").toFormat("yyyyMMdd"):today;
     const imp=imports.find(i=>i.id===`${a.id}:static`),health=feedStatus(a.id),data=imp?.data;
     const lastError=imports.find(i=>i.id===`${a.id}:import-error`);
      const amtrak=a.id==="amtrak"?amtrakHealth():undefined;
-     const status=!imp?(a.staticUrl?"not imported":a.status):data?.serviceEnd&&data.serviceEnd<today?"expired schedules":
+    const status=odptSource(a.id)&&!odptEnabled()?"disabled":!imp?(a.staticUrl?"not imported":a.status):data?.serviceEnd&&data.serviceEnd<sourceToday?"expired schedules":
       data?.components?.some((c:any)=>c.serviceEnd<today)?"partial schedules":
        data?.serviceStart&&data.serviceStart>today?"future schedules":amtrak?.fresh?"schedules + live train reports":
-        health.fresh?"schedules + live predictions":"scheduled only";
+        health.fresh?(odptSource(a.id)?"schedules + fresh realtime feed":"schedules + live predictions"):"scheduled only";
     const failed=lastError&&(!data||lastError.data.at>data.importedAt)?lastError.data.message:undefined;
     return {id:a.id,agency:a.name,type:a.type,status,description:a.setup+
+      (data?.odpt?` Published ${data.odpt.publishedAt}; edition ${data.odpt.version}; resource valid ${data.odpt.validFrom}–${data.odpt.validThrough}. ${data.odpt.realtime}`:"")+
       (a.id==="mta-bus"&&!process.env.MTA_BUS_TIME_API_KEY?" Live Bus Time credentials are not configured.":"")+
        (amtrak?` ${amtrak.fresh} fresh train reports; ${amtrak.unresolved} unresolved identities. Tracking checked ${amtrak.checkedAt||"not yet"}. Unresolved trains never replace schedules.`:"")+
       (data&&data.components?.length>1?` Packages: ${data.components.map((c:any)=>`${c.id} (${c.serviceStart}–${c.serviceEnd})`).join(", ")}.`:"")+
@@ -238,7 +246,11 @@ export async function sources() {
   const globalFeeds=[...globalFeedStates.entries()].map(([id,v])=>({id:`tl-feed:${id}`,agency:v.name,type:"global feed",status:v.status,
     description:"Discovered on demand this server session. License checks and realtime feed permissions are separate from schedule availability; no feed is imported wholesale.",
     url:`https://www.transit.land/data/feeds/${encodeURIComponent(id)}`,updatedAt:v.updatedAt}));
-  return [...result,...intercity,...tfl.sourceRows(),...globalFeeds,{id:"transitland",agency:"Transitland worldwide",type:"global coverage",status:world.status,
+  return [...result,...intercity,...tfl.sourceRows(),...globalFeeds,
+    {id:"odpt-restricted",agency:"Other ODPT datasets",type:"Japan coverage",status:"disabled / unsupported",
+      description:"Kyoto City Bus and Yokohama municipal candidates require separate agreements and a server-only consumer key; not enabled. Challenge Limited sources are excluded, including challenge-limited Kyoto subway descriptions. ODPT Basic is not a redistribution license. JSON-LD-only railway/timetable data is unsupported in this integration. No Tokyo Metro/JR or nationwide coverage is claimed.",
+      url:"https://ckan.odpt.org/dataset",updatedAt:null},
+    {id:"transitland",agency:"Transitland worldwide",type:"global coverage",status:world.status,
     description:`${world.message} ${budget.used} of ${budget.limit} app requests reserved this UTC month. Bounded on-demand coverage, not every carrier. Feed licenses are checked; unknown rights and old schedules are withheld. Credits and source dates appear with results.`,
     url:"https://www.transit.land/terms",updatedAt:null},
     {id:"google-routes",agency:"Google journey planning",type:"journey planner",

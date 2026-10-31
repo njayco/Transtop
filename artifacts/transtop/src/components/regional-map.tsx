@@ -91,8 +91,8 @@ export function RegionalMap({ onClose,initialCenter }: { onClose?: () => void;in
   const line = selLine ? routeIndex.get(selLine) ?? (data?.lines.find((l) => l.route.id === selLine)?.route) : undefined;
   const stop = selStop ? shownStops.find((s) => s.id === selStop) : undefined;
   const agencies = useMemo(() => [...new Map([...(sources.data ?? []),
-    ...shownLines.map(l=>({id:l.route.agencyId||'',agency:l.route.agency,type:l.route.type,status:'Transitland on demand'})),
-    ...shownStops.flatMap(s=>s.routes.map(r=>({id:r.agencyId||'',agency:r.agency,type:r.type,status:'Transitland on demand'}))),
+    ...shownLines.map(l=>({id:l.route.agencyId||'',agency:l.route.agency,type:l.route.type,status:l.route.odpt?'ODPT imported':l.route.tfl?'TfL direct':'Transitland on demand'})),
+    ...shownStops.flatMap(s=>s.routes.map(r=>({id:r.agencyId||'',agency:r.agency,type:r.type,status:r.odpt?'ODPT imported':r.tfl?'TfL direct':'Transitland on demand'}))),
   ].filter((s)=>s.id&&modes.has(s.type as Mode)).map(s=>[s.id,s])).values()].sort((a,b)=>a.agency.localeCompare(b.agency)),[sources.data,modes,shownLines,shownStops]);
   const toggle = (m: Mode) => {
     const n = new Set(modes); if (n.has(m)) { if (n.size > 1) n.delete(m); } else n.add(m);
@@ -164,12 +164,14 @@ export function RegionalMap({ onClose,initialCenter }: { onClose?: () => void;in
           )}
           {data?.message && <p className="text-xs text-muted-foreground">{data.message}</p>}
           <GlobalCoverageNotice data={data?.globalCoverage} credits={shownLines.map(l=>l.route.transitland?.attribution)} onNext={setCursor} onReset={cursor?()=>setCursor(''):undefined} />
+          {[...new Map([...shownLines.map(l=>l.route),...shownStops.flatMap(s=>s.routes)].flatMap(r=>r.odpt?[[r.odpt.url,r.odpt] as const]:[])).values()].map(info=>
+            <p key={info.url} className="text-xs text-muted-foreground">{info.attribution} {info.modeDetail} · source {info.publishedAt.slice(0,10)} · <a href={info.url} target="_blank" rel="noreferrer" className="underline">Dataset / resources</a> · <a href={info.license} target="_blank" rel="noreferrer" className="underline">License</a>.</p>)}
           <TflDetails info={data?.tfl} />
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span><span className="mr-1.5 inline-block h-2.5 w-2.5 rotate-45 bg-foreground align-middle" />Official vehicle position</span>
             <span><span className="mr-1.5 inline-block h-3 w-3 rounded-full border-2 border-foreground align-middle" />Stop or station at its published location</span>
           </div>
-          <p className="text-xs text-muted-foreground">Mode outlines: green subway, purple commuter rail (wide line), gold bus (dashed). Intercity Bus Network boarding points appear as orange stops; no road paths are drawn for them. Inner colors follow the operator’s published line colors. Express classification comes from the published route metadata; other commuter bus classifications are not inferred.</p>
+          <p className="text-xs text-muted-foreground">Mode outlines: green subway, purple rail / tram (wide line), gold bus (dashed). Rail includes streetcars where identified by the source; it does not mean every service is commuter rail. Intercity Bus Network boarding points appear as orange stops; no road paths are drawn for them. Inner colors follow the operator’s published line colors. Express classification comes from the published route metadata; other commuter bus classifications are not inferred.</p>
           {veh.isError && <p className="text-xs text-muted-foreground" role="status">Vehicle feed unavailable. Old positions expire automatically; static paths are still routes, not live vehicles.</p>}
         </div>
 

@@ -23,7 +23,7 @@ const LIMIT = 25;
 export function TimetablePanel({ stopId, routeId, direction, color, title = 'Published timetable', stopOptions, timezone }: { timezone?:string; stopOptions?: { id: string; name: string }[]; stopId?: string; routeId?: string; direction?: string; color?: string; title?: string }) {
   const { mode } = usePrefs();
   const international=!!(stopId?.startsWith('tl:')||routeId?.startsWith('tl:'));
-  const zone=timezone||(international?'UTC':'America/New_York');
+  const zone=timezone||([stopId,routeId].some(id=>id?.startsWith('odpt-'))?'Asia/Tokyo':international?'UTC':'America/New_York');
   const [date, setDate] = useState(()=>zonedDate(new Date(),zone));
   const [from, setFrom] = useState(()=>zonedTime(new Date(),zone));
   useEffect(()=>{setDate(zonedDate(new Date(),zone));setFrom(zonedTime(new Date(),zone));setOffset(0);},[zone,stopId,routeId]);
@@ -77,13 +77,13 @@ export function TimetablePanel({ stopId, routeId, direction, color, title = 'Pub
         {rows.length > 0 && (
           <ol>
             {rows.map((d) => (
-              <li key={d.id} className="flex items-center gap-3 border-b border-white/5 px-4 py-2.5 last:border-0" data-testid={`row-timetable-${d.id}`}>
+              <li key={d.id} className="grid grid-cols-[6rem_minmax(0,1fr)] items-start gap-x-3 gap-y-2 border-b border-white/5 px-4 py-2.5 last:border-0 sm:flex sm:items-center" data-testid={`row-timetable-${d.id}`}>
                 <span className="w-24 shrink-0 font-mono text-base font-bold tabular-nums">{clock(d.time,d.timezone)}{d.timezone?<span className="block text-[10px] text-muted-foreground">{new Date(d.time).toLocaleDateString('en-US',{timeZone:d.timezone})} · {d.timezone}</span>:newYorkDate(new Date(d.time))!==date&&<span className="block text-[10px] text-muted-foreground">{newYorkDate(new Date(d.time))}</span>}</span>
-                <span className="inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-md px-1.5 text-xs font-extrabold text-black" style={{ background: color ?? '#d9d4c7' }}>{d.routeName}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold">to {d.destination}</p>
+                <span className="col-start-2 row-start-2 inline-flex min-h-7 min-w-7 max-w-full items-center justify-center justify-self-start break-words rounded-md px-1.5 py-1 text-xs font-extrabold text-black sm:max-w-36 sm:shrink-0" style={{ background: color ?? '#d9d4c7' }}>{d.routeName}</span>
+                <div className="col-start-2 row-start-1 min-w-0 sm:flex-1">
+                  <p className="break-words font-semibold">to {d.destination}</p>
                   {d.runId&&<Link href={`/trains/${encodeURIComponent(d.runId)}`} className="text-sm font-bold underline">Train {d.trainNumber} · all stops</Link>}
-                  <p className="truncate text-xs text-muted-foreground">{routeId ? d.stopName : d.direction}</p>
+                  <p className="break-words text-xs text-muted-foreground">{routeId ? d.stopName : d.direction}</p>
                 </div>
               </li>
             ))}

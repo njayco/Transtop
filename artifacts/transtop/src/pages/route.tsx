@@ -12,6 +12,7 @@ import { honest, usePrefs } from '@/lib/prefs';
 import { ago } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { TflDetails, tflErrorDetail } from '@/components/tfl-details';
+import { OdptDetails } from '@/components/odpt-details';
 
 export default function RoutePage() {
   const { id = '' } = useParams<{ id: string }>();
@@ -76,6 +77,7 @@ export default function RoutePage() {
           <div className="mt-6 grid gap-6 md:grid-cols-[1fr_1.1fr]">
             <div className="space-y-4">
               <TransitlandDetails info={d.route.transitland}/>
+              <OdptDetails info={d.route.odpt}/>
               {dirs.length > 0 && <p className="text-xs text-muted-foreground" data-testid="text-patterns">{dirs.length} {d.route.tfl?'TfL direction choices':'published service patterns'}. Stops shown for {activeDir}.</p>}
               {((d.route.scheduleNotes?.length ?? 0) > 0 || d.route.sourceUrl) && (
                 <section aria-labelledby="h-published-schedule" className="rounded-2xl border border-card-border bg-card p-4 text-sm" data-testid="section-published-schedule">

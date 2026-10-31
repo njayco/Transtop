@@ -18,7 +18,7 @@ import { GlobalCoverageNotice } from '@/components/global-coverage';
 import { TflDetails } from '@/components/tfl-details';
 
 const FILTERS = [
-  { v: 'all', l: 'All' }, { v: 'subway', l: 'Subway' }, { v: 'bus', l: 'Bus' }, { v: 'rail', l: 'Trains & Commuter Rail' }, { v: 'intercity', l: 'Intercity Bus Network' },
+  { v: 'all', l: 'All' }, { v: 'subway', l: 'Subway' }, { v: 'bus', l: 'Bus' }, { v: 'rail', l: 'Rail / tram' }, { v: 'intercity', l: 'Intercity Bus Network' },
 ] as const;
 type Place = { lat: number; lon: number; label: string } | { q: string; label: string };
 

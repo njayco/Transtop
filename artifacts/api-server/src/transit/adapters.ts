@@ -1,4 +1,5 @@
 import { busRealtimeUrls } from "./bus-time";
+import { odptRegistry, catalogUrl, attribution, realtimeUrl } from "./odpt/registry";
 
 export interface AgencyAdapter {
   id:string; name:string; type:"subway"|"bus"|"rail"; staticUrl?:string; realtimeUrls:string[];
@@ -12,6 +13,8 @@ const rt="https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/";
 // Allowlist verified against https://www.mta.info/developers and the linked
 // official realtime catalog on 2026-10-29. No caller-supplied fetch URLs.
 export const adapters:AgencyAdapter[]=[
+  ...odptRegistry.map(s=>({id:s.id,name:s.name,type:s.type,staticUrl:catalogUrl(s),realtimeUrls:s.realtime.map(k=>realtimeUrl(s,k)),
+    documentation:catalogUrl(s),status:"scheduled only",setup:`${attribution(s)} ${s.type==="rail"?"Tram / streetcar (GTFS route_type 0), not subway or commuter rail.":"Fixed-route buses."} GTFS/GTFS-JP, Asia/Tokyo. Initial selected ODPT coverage only; no national or Tokyo Metro/JR claim. Realtime only where fresh exact static matches are verified. Sendai has no supplied route shapes. License: https://creativecommons.org/licenses/by/4.0/ Credits: https://developer.odpt.org/en/faq-info#cc-by-credit`})),
   {id:"amtrak",name:"Amtrak",type:"rail",staticUrl:"https://content.amtrak.com/content/gtfs/GTFS.zip",
     staticAgencyIds:["51"],staticRouteTypes:["2"],realtimeUrls:[],
     documentation:"https://github.com/piemadd/amtrak",status:"scheduled only",

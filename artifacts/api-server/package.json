@@ -8,6 +8,8 @@
     "restore-legacy-gtfs": "tsx src/transit/legacy-rollback-cli.ts",
     "test:gtfs-import": "tsx tests/gtfs-import.ts",
     "test:catalog-timetable": "tsx --experimental-test-module-mocks --test tests/catalog-timetable.ts",
+    "test:odpt": "tsx tests/odpt.ts",
+    "check:odpt-live": "tsx tests/odpt-live.ts",
     "test:tfl": "tsx tests/tfl.ts",
     "check:tfl-live": "tsx tests/tfl-live.ts",
     "bench:gtfs": "tsx tests/gtfs-performance.ts && tsx tests/gtfs-cleanup-performance.ts",

@@ -7,7 +7,7 @@ import { honest, usePrefs } from '@/lib/prefs';
 import { useFreshArrivals } from '@/lib/amtrak-arrivals';
 
 export const MODE_COLOR: Record<string, string> = { subway: '#2fb36b', bus: '#e5a823', rail: '#a33a62', intercity: '#e0662f' };
-export const MODE_NAME: Record<string, string> = { subway: 'Subway', bus: 'Bus', rail: 'Commuter Rail', intercity: 'Intercity Bus Network' };
+export const MODE_NAME: Record<string, string> = { subway: 'Subway', bus: 'Bus', rail: 'Rail / tram', intercity: 'Intercity Bus Network' };
 
 export function ModeIcon({ type, size = 40, className }: { type: string; size?: number; className?: string }) {
   const Icon = type === 'bus' ? Bus : type === 'intercity' ? BusFront : type === 'rail' ? TrainFront : TrainFrontTunnel;
@@ -24,7 +24,8 @@ export function RouteBadge({ name, color, size = 'md', className }: { name: stri
   const dims = size === 'sm' ? 'h-6 min-w-6 text-[12px]' : size === 'lg' ? 'h-12 min-w-12 text-[22px]' : 'h-8 min-w-8 text-[15px]';
   return (
     <span aria-label={`Route ${name}`} className={cn('inline-flex shrink-0 items-center justify-center font-extrabold leading-none tracking-tight', short ? 'rounded-full' : 'rounded-md px-1.5', dims,
-      name.length > 12 && 'h-auto min-h-8 max-w-[9rem] whitespace-normal break-words py-1 text-center text-sm leading-tight', className)}
+      !short && 'h-auto min-h-8 max-w-[9rem] whitespace-normal break-words py-1 text-center leading-tight',
+      name.length > 8 && 'text-sm', className)}
       style={{ background: color, color: textOn(color) }}>{name}</span>
   );
 }
@@ -62,7 +63,7 @@ export function Countdown({ a, big }: { a: Arrival; big?: boolean }) {
   const text = arrivalText(a);
   const due = a.minutes <= 0 && a.source !== 'unavailable';
   return (
-    <span className={cn('tabular font-bold leading-none whitespace-nowrap', big ? 'text-3xl' : 'text-xl', due ? 'text-primary' : 'text-foreground')}
+    <span className={cn('tabular font-bold leading-none whitespace-nowrap', big ? 'text-xl sm:text-3xl' : 'text-xl', due ? 'text-primary' : 'text-foreground')}
       aria-label={`${a.routeName} ${text}${a.confidence ? `, ${a.confidence} confidence` : ''}`}>{text}</span>
   );
 }
@@ -117,6 +118,7 @@ export function StopCard({ stop, active, onHover, index = 0 }: { stop: Stop; act
             {stop.routes.slice(0, 10).map((r) => <RouteBadge key={r.id} name={r.name} color={r.color} size="sm" />)}
           </div>
           {stop.transitland&&<p className="mt-2 text-xs text-muted-foreground">Transitland · {stop.transitland.attribution} · source {stop.transitland.fetchedAt.slice(0,10)||'date unknown'}. Open for availability and source details.</p>}
+          {stop.odpt&&<p className="mt-2 text-xs text-muted-foreground">ODPT · {stop.odpt.modeDetail} · {stop.agency} · CC BY 4.0 · source {stop.odpt.publishedAt.slice(0,10)}. Modified for Transtop. Open for credits, validity and live/scheduled details.</p>}
         </div>
         <FavButton active={isFavStop(stop.id)} onClick={() => toggleStop(stop)} label={stop.name} />
       </div>

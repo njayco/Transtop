@@ -11,6 +11,7 @@ import { honest, usePrefs } from '@/lib/prefs';
 import { ago, clock } from '@/lib/format';
 import { useFreshArrivals } from '@/lib/amtrak-arrivals';
 import { TransitlandDetails } from '@/components/global-coverage';
+import { OdptDetails } from '@/components/odpt-details';
 import { TflDetails, tflErrorDetail } from '@/components/tfl-details';
 
 export default function StopPage() {
@@ -45,7 +46,7 @@ export default function StopPage() {
             <div className="rise flex items-start gap-4">
               <ModeIcon type={stop.type} size={56} className="hidden sm:inline-flex" />
               <div className="min-w-0 flex-1">
-                <h1 className="font-display text-4xl leading-[0.95] md:text-6xl" data-testid="text-stop-name">{stop.name}</h1>
+                <h1 className="break-words font-display text-4xl leading-[0.95] md:text-6xl" data-testid="text-stop-name">{stop.name}</h1>
                 <p className="mt-2 text-muted-foreground">{stop.agency}{stop.neighborhood ? ` · ${stop.neighborhood}` : ''}
                   {stop.accessible ? <span className="ml-2 inline-flex items-center gap-1 text-foreground"><Accessibility className="h-4 w-4" />Accessible</span> : <span className="ml-2">· Accessibility not confirmed</span>}
                 </p>
@@ -58,8 +59,8 @@ export default function StopPage() {
           )}
         </div>
       </div>
-      <div className="grid gap-6 p-4 md:grid-cols-[1fr_340px] md:p-8">
-        <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 p-4 md:grid-cols-[minmax(0,1fr)_340px] md:p-8">
+        <div className="min-w-0 space-y-6">
           {q.isLoading && <SkeletonCards n={3} />}
           {q.isError && <ErrorState title={q.error?.status === 404 ? "Stop unavailable" : "Could not load this stop"} detail={q.error?.status === 404 ? "This stop is not available in the current coverage. Browse nearby services or check coverage in Settings." : stopId.startsWith('tfl:') ? tflErrorDetail(q.error) : undefined} onRetry={q.error?.status === 404 ? undefined : () => q.refetch()} />}
           {stop && stop.alerts.length > 0 && <div className="space-y-2">{stop.alerts.map((a) => <AlertRow key={a.id} alert={a} />)}</div>}
@@ -71,32 +72,33 @@ export default function StopPage() {
           )}
           {groups.map((g, gi) => (
             <section key={g.key} className="rise overflow-hidden rounded-2xl border border-card-border bg-card" style={{ animationDelay: `${gi * 50}ms` }}>
-              <header className="flex items-baseline justify-between gap-2 border-b border-white/5 px-4 py-3">
+              <header className="flex flex-col gap-1 border-b border-white/5 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
                 <h2 className="text-xl font-bold tracking-tight">{g.direction} <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Now</span></h2>
                 <p className="truncate text-sm text-muted-foreground">to {g.destination}</p>
               </header>
               <ul>
                 {g.arr.map((a) => (
-                  <li key={a.id} className="flex items-center gap-3 border-b border-white/5 px-4 py-3 last:border-0" data-testid={`row-arrival-${a.id}`}>
-                    <RouteBadge name={a.routeName} color={a.color} size="lg" />
-                    <div className="min-w-0 flex-1">
+                  <li key={a.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-white/5 px-4 py-3 last:border-0 sm:flex sm:items-center" data-testid={`row-arrival-${a.id}`}>
+                    <div className="min-w-0 sm:shrink-0"><RouteBadge name={a.routeName} color={a.color} size="lg" className="max-w-full sm:max-w-36" /></div>
+                    <div className="col-span-2 min-w-0 sm:flex-1">
                       <p className="flex flex-wrap items-center gap-x-2 font-semibold">{a.destination} <StatusText status={a.status} /></p>
                       {a.runId&&<Link href={`/trains/${encodeURIComponent(a.runId)}`} className="text-sm font-bold underline">Train {a.trainNumber} · all stops</Link>}
                       <p className="text-xs text-muted-foreground">{a.source==='live'?'Estimated':'Scheduled'} {clock(a.scheduledAt,a.timezone)}{a.timezone?` · ${a.timezone}`:''}{a.confidence ? ` · ${a.confidence} confidence (heuristic)` : ''}</p>
                       <div className="mt-1.5"><SourceLabel source={a.trainNumber&&a.source==='live'?'Amtraker · unofficial':a.source} updatedAt={a.updatedAt} /></div>
                     </div>
-                    <Countdown a={a} big />
+                    <div className="col-start-2 row-start-1 self-center sm:shrink-0"><Countdown a={a} big /></div>
                   </li>
                 ))}
               </ul>
             </section>
           ))}
           {stop&&<TransitlandDetails info={stop.transitland}/>}
+          {stop&&<OdptDetails info={stop.odpt}/>}
           <TflDetails info={stop?.tfl} />
-          {stop?.tfl?<p className="text-xs text-muted-foreground">TfL predictions are not a dated timetable. A missing prediction does not mean service has stopped.</p>:stop?.type==='intercity'&&!stop.transitland?<IntercityModule center={{lat:stop.lat,lon:stop.lon}} provider={providerFor(undefined, stop.id)} stopId={stop.id}/>:stop&&<TimetablePanel stopId={stop.id} timezone={stop.transitland?.timezone} title="Timetable for any date" />}
+          {stop?.tfl?<p className="text-xs text-muted-foreground">TfL predictions are not a dated timetable. A missing prediction does not mean service has stopped.</p>:stop?.type==='intercity'&&!stop.transitland?<IntercityModule center={{lat:stop.lat,lon:stop.lon}} provider={providerFor(undefined, stop.id)} stopId={stop.id}/>:stop&&<TimetablePanel stopId={stop.id} timezone={stop.odpt?.timezone||stop.transitland?.timezone} title="Timetable for any date" />}
           {stop && <p className="text-xs text-muted-foreground">Stop data updated {ago(stop.updatedAt)}. Times refresh every 30 seconds while open.</p>}
         </div>
-        <aside className="space-y-4">
+        <aside className="min-w-0 space-y-4">
           {stop && <TransitMap center={{ lat: stop.lat, lon: stop.lon }} stops={mapStops} activeId={stop.id} zoom={15.5} className="h-64 w-full overflow-hidden rounded-2xl border border-border" label={`Map of ${stop.name}`} />}
           {stop && !stop.tfl && stop.routes[0] && (
             <Link href={`/ride?route=${encodeURIComponent(stop.routes[0].id)}&stop=${encodeURIComponent(stop.id)}`} data-testid="link-ride-from-stop"

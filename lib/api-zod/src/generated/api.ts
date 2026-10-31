@@ -166,6 +166,19 @@ export const GetStopsResponse = zod.object({
   "limit": zod.number().int().optional()
 }).optional(),
   "stops": zod.array(zod.object({
+  "odpt": zod.object({
+  "attribution": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "terms": zod.string(),
+  "timezone": zod.string(),
+  "version": zod.string(),
+  "publishedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string(),
+  "modeDetail": zod.string(),
+  "realtime": zod.string()
+}).optional(),
   "tfl": zod.object({
   "status": zod.string(),
   "message": zod.string(),
@@ -198,6 +211,19 @@ export const GetStopsResponse = zod.object({
   "distance": zod.number(),
   "walkingMinutes": zod.number().int(),
   "routes": zod.array(zod.object({
+  "odpt": zod.object({
+  "attribution": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "terms": zod.string(),
+  "timezone": zod.string(),
+  "version": zod.string(),
+  "publishedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string(),
+  "modeDetail": zod.string(),
+  "realtime": zod.string()
+}).optional(),
   "tfl": zod.object({
   "status": zod.string(),
   "message": zod.string(),
@@ -286,6 +312,19 @@ export const GetStopQueryParams = zod.object({
 })
 
 export const GetStopResponse = zod.object({
+  "odpt": zod.object({
+  "attribution": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "terms": zod.string(),
+  "timezone": zod.string(),
+  "version": zod.string(),
+  "publishedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string(),
+  "modeDetail": zod.string(),
+  "realtime": zod.string()
+}).optional(),
   "tfl": zod.object({
   "status": zod.string(),
   "message": zod.string(),
@@ -318,6 +357,19 @@ export const GetStopResponse = zod.object({
   "distance": zod.number(),
   "walkingMinutes": zod.number().int(),
   "routes": zod.array(zod.object({
+  "odpt": zod.object({
+  "attribution": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "terms": zod.string(),
+  "timezone": zod.string(),
+  "version": zod.string(),
+  "publishedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string(),
+  "modeDetail": zod.string(),
+  "realtime": zod.string()
+}).optional(),
   "tfl": zod.object({
   "status": zod.string(),
   "message": zod.string(),
@@ -402,6 +454,19 @@ export const GetRouteQueryParams = zod.object({
 
 export const GetRouteResponse = zod.object({
   "route": zod.object({
+  "odpt": zod.object({
+  "attribution": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "terms": zod.string(),
+  "timezone": zod.string(),
+  "version": zod.string(),
+  "publishedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string(),
+  "modeDetail": zod.string(),
+  "realtime": zod.string()
+}).optional(),
   "tfl": zod.object({
   "status": zod.string(),
   "message": zod.string(),
@@ -438,6 +503,19 @@ export const GetRouteResponse = zod.object({
   "referenceDate": zod.string().optional().describe('Suggested historical service date for research-reference routes only')
 }),
   "stops": zod.array(zod.object({
+  "odpt": zod.object({
+  "attribution": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "terms": zod.string(),
+  "timezone": zod.string(),
+  "version": zod.string(),
+  "publishedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string(),
+  "modeDetail": zod.string(),
+  "realtime": zod.string()
+}).optional(),
   "tfl": zod.object({
   "status": zod.string(),
   "message": zod.string(),
@@ -470,6 +548,19 @@ export const GetRouteResponse = zod.object({
   "distance": zod.number(),
   "walkingMinutes": zod.number().int(),
   "routes": zod.array(zod.object({
+  "odpt": zod.object({
+  "attribution": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "terms": zod.string(),
+  "timezone": zod.string(),
+  "version": zod.string(),
+  "publishedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string(),
+  "modeDetail": zod.string(),
+  "realtime": zod.string()
+}).optional(),
   "tfl": zod.object({
   "status": zod.string(),
   "message": zod.string(),
@@ -640,6 +731,19 @@ export const GetCatalogResponse = zod.object({
   "limit": zod.number().int().optional()
 }).optional(),
   "routes": zod.array(zod.object({
+  "odpt": zod.object({
+  "attribution": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "terms": zod.string(),
+  "timezone": zod.string(),
+  "version": zod.string(),
+  "publishedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string(),
+  "modeDetail": zod.string(),
+  "realtime": zod.string()
+}).optional(),
   "tfl": zod.object({
   "status": zod.string(),
   "message": zod.string(),
@@ -676,6 +780,19 @@ export const GetCatalogResponse = zod.object({
   "referenceDate": zod.string().optional().describe('Suggested historical service date for research-reference routes only')
 })),
   "stops": zod.array(zod.object({
+  "odpt": zod.object({
+  "attribution": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "terms": zod.string(),
+  "timezone": zod.string(),
+  "version": zod.string(),
+  "publishedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string(),
+  "modeDetail": zod.string(),
+  "realtime": zod.string()
+}).optional(),
   "tfl": zod.object({
   "status": zod.string(),
   "message": zod.string(),
@@ -708,6 +825,19 @@ export const GetCatalogResponse = zod.object({
   "distance": zod.number(),
   "walkingMinutes": zod.number().int(),
   "routes": zod.array(zod.object({
+  "odpt": zod.object({
+  "attribution": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "terms": zod.string(),
+  "timezone": zod.string(),
+  "version": zod.string(),
+  "publishedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string(),
+  "modeDetail": zod.string(),
+  "realtime": zod.string()
+}).optional(),
   "tfl": zod.object({
   "status": zod.string(),
   "message": zod.string(),
@@ -952,6 +1082,19 @@ export const GetNetworkResponse = zod.object({
   "lines": zod.array(zod.object({
   "shapeId": zod.string(),
   "route": zod.object({
+  "odpt": zod.object({
+  "attribution": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "terms": zod.string(),
+  "timezone": zod.string(),
+  "version": zod.string(),
+  "publishedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string(),
+  "modeDetail": zod.string(),
+  "realtime": zod.string()
+}).optional(),
   "tfl": zod.object({
   "status": zod.string(),
   "message": zod.string(),
@@ -1012,6 +1155,19 @@ export const GetNetworkResponse = zod.object({
   "lon": zod.number(),
   "type": zod.string(),
   "routes": zod.array(zod.object({
+  "odpt": zod.object({
+  "attribution": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "terms": zod.string(),
+  "timezone": zod.string(),
+  "version": zod.string(),
+  "publishedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string(),
+  "modeDetail": zod.string(),
+  "realtime": zod.string()
+}).optional(),
   "tfl": zod.object({
   "status": zod.string(),
   "message": zod.string(),
@@ -1051,6 +1207,19 @@ export const GetNetworkResponse = zod.object({
   "totalLines": zod.number().int(),
   "totalStops": zod.number().int(),
   "missingGeometry": zod.array(zod.object({
+  "odpt": zod.object({
+  "attribution": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "terms": zod.string(),
+  "timezone": zod.string(),
+  "version": zod.string(),
+  "publishedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string(),
+  "modeDetail": zod.string(),
+  "realtime": zod.string()
+}).optional(),
   "tfl": zod.object({
   "status": zod.string(),
   "message": zod.string(),

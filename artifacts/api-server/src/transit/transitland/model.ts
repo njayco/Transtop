@@ -1,4 +1,5 @@
 import type { TransitRoute, TransitStop, TransitType, TransitlandInfo } from "../types";
+import { odptRouteDuplicate } from "../odpt/crosswalk";
 
 export const isTransitland = (id?: string) => !!id?.startsWith("tl:");
 export function identity(feed: string, raw: string) { return `tl:${Buffer.from(JSON.stringify([feed,raw])).toString("base64url")}`; }
@@ -88,6 +89,10 @@ export function normalizeAlerts(values:any,id:string,routeIds:string[]){
 }
 /** Only explicit operator crosswalks; partial imports suppress only covered routes. */
 export function directDuplicate(r: TransitRoute, direct: TransitRoute[]) {
+  if(r.transitland){
+    const [feed,raw]=parseIdentity(r.id);
+    if(odptRouteDuplicate(feed,raw,r.type,direct))return true;
+  }
   const aliases: Record<string,string[]> = {
     "mta-subway": ["mta new york city transit","mta nyct","new york city transit"],
     "mta-bus": ["mta new york city transit","mta bus company","mta nyct"],

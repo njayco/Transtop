@@ -8,6 +8,7 @@ import { adapters } from "./adapters";
 import { maintainGenerations } from "./generations";
 import { refreshIntercity } from "./intercity/service";
 import { pollAmtrak } from "./amtrak-live";
+import { odptEnabled, odptSource, odptRefreshDue } from "./odpt/registry";
 export async function startTransitJobs() {
   await seedDemo();
   for(const a of adapters) {
@@ -35,9 +36,9 @@ export async function startTransitJobs() {
   if(process.env.TRANSIT_AUTO_IMPORT==="true"){
     const runImport=async()=>{
       try{
-        for(const a of adapters.filter(a=>a.staticUrl)){
+        for(const a of adapters.filter(a=>a.staticUrl&&(!odptSource(a.id)||odptEnabled()))){
           const {rows}=await pool.query("SELECT data FROM transit_feed_snapshots WHERE mode='live' AND id=$1",[`${a.id}:static`]);
-          if(rows[0]&&Date.now()-Date.parse(rows[0].data.importedAt)<22*3600000)continue;
+          if(odptSource(a.id)?!odptRefreshDue(rows[0]?.data):rows[0]&&Date.now()-Date.parse(rows[0].data.importedAt)<22*3600000)continue;
           try{await importGtfs(a.id);}catch{logger.warn({agency:a.id},"Scheduled import failed; previous dataset retained");}
         }
       }catch{logger.warn("Scheduled GTFS import failed; previous complete dataset retained");}
@@ -47,4 +48,16 @@ export async function startTransitJobs() {
     setInterval(()=>void runImport(),3600000).unref();
     void runImport();
   }
+  // Small approved public Japanese imports are independent of regional opt-in
+  // and Transitland. Refresh each generation at most daily; retry failures hourly.
+  const refreshOdpt=async()=>{
+    if(!odptEnabled()||process.env.TRANSIT_AUTO_IMPORT==="true")return;
+    for(const a of adapters.filter(a=>odptSource(a.id))){
+      const {rows}=await pool.query("SELECT data FROM transit_feed_snapshots WHERE mode='live' AND id=$1",[`${a.id}:static`]);
+      if(!odptRefreshDue(rows[0]?.data))continue;
+      try{await importGtfs(a.id);}catch{logger.warn({agency:a.id},"ODPT refresh failed; previous complete generation retained");}
+    }
+  };
+  void refreshOdpt().catch(()=>logger.warn("ODPT refresh unavailable"));
+  setInterval(()=>void refreshOdpt().catch(()=>logger.warn("ODPT refresh unavailable")),3600000).unref();
 }

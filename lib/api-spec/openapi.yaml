@@ -326,6 +326,7 @@ components:
       type: object
       required: [id, name, color, type, agency]
       properties:
+        odpt: {$ref: "#/components/schemas/OdptInfo"}
         tfl: {$ref: "#/components/schemas/TflInfo"}
         transitland: {$ref: "#/components/schemas/TransitlandInfo"}
         id: {type: string}
@@ -377,6 +378,7 @@ components:
       type: object
       required: [id, name, agency, type, lat, lon, distance, walkingMinutes, routes, arrivals, alerts, accessible, updatedAt]
       properties:
+        odpt: {$ref: "#/components/schemas/OdptInfo"}
         tfl: {$ref: "#/components/schemas/TflInfo"}
         transitland: {$ref: "#/components/schemas/TransitlandInfo"}
         id: {type: string}
@@ -567,6 +569,21 @@ components:
         limit: {type: integer}
         date: {type: string}
         message: {type: string}
+    OdptInfo:
+      type: object
+      required: [attribution, url, license, terms, timezone, version, publishedAt, validFrom, validThrough, modeDetail, realtime]
+      properties:
+        attribution: {type: string}
+        url: {type: string}
+        license: {type: string}
+        terms: {type: string}
+        timezone: {type: string}
+        version: {type: string}
+        publishedAt: {type: string}
+        validFrom: {type: string}
+        validThrough: {type: string}
+        modeDetail: {type: string}
+        realtime: {type: string}
     TflInfo:
       type: object
       required: [status, message, attribution, url, timezone]

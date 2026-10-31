@@ -75,6 +75,20 @@ export const RouteServiceClass = {
   express: 'express',
 } as const;
 
+export interface OdptInfo {
+  attribution: string;
+  url: string;
+  license: string;
+  terms: string;
+  timezone: string;
+  version: string;
+  publishedAt: string;
+  validFrom: string;
+  validThrough: string;
+  modeDetail: string;
+  realtime: string;
+}
+
 export interface TflInfo {
   status: string;
   message: string;
@@ -101,6 +115,7 @@ export interface TransitlandInfo {
 }
 
 export interface Route {
+  odpt?: OdptInfo;
   tfl?: TflInfo;
   transitland?: TransitlandInfo;
   id: string;
@@ -173,6 +188,7 @@ export const StopType = {
 } as const;
 
 export interface Stop {
+  odpt?: OdptInfo;
   tfl?: TflInfo;
   transitland?: TransitlandInfo;
   id: string;

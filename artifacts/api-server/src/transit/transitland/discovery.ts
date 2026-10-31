@@ -4,6 +4,7 @@ import { sourceId, sourceDate, licensed, sourceInfo, normalizeRoute, normalizeSt
 import type { TransitRoute, TransitStop } from "../types";
 import type { Bounds } from "../map-geometry";
 import { rememberRoute, feedState } from "./tracking";
+import { odptCrosswalk, odptBoardingDuplicate } from "../odpt/crosswalk";
 
 export const unique = <T extends {id:string}>(items: T[]) => [...new Map(items.map(v => [v.id,v])).values()];
 export async function feedInfo(id: string) {
@@ -32,7 +33,7 @@ export function matches(r: TransitRoute, p: GlobalQuery) {
     (!p.serviceClass || p.serviceClass === "all" || p.serviceClass === r.serviceClass);
 }
 /** A page is bounded, not a world import. Unreviewed licenses are excluded, not inferred from HTTP success. */
-export async function discover(p: GlobalQuery, direct: TransitRoute[], bbox?: Bounds) {
+export async function discover(p: GlobalQuery, direct: TransitRoute[], bbox?: Bounds, directStops:TransitStop[]=[] ) {
   const empty = { stops: [] as TransitStop[], routes: [] as TransitRoute[], rawRoutes: [] as any[], globalCoverage: coverage() };
   if (!enabled() || p.agency && !p.agency.startsWith("tl:")) return empty;
   if (bbox && (Math.abs(bbox.east - bbox.west) > 8 || bbox.north - bbox.south > 8)) return {
@@ -58,7 +59,11 @@ export async function discover(p: GlobalQuery, direct: TransitRoute[], bbox?: Bo
         const info = await infoFor(raw);
         const routes:TransitRoute[] = (raw.route_stops || []).slice(0,100).flatMap((rs: any) => {
           const r = normalizeRoute(rs.route,info);
-          if (!r || directDuplicate(r,direct) || !matches(r,p)) return [];
+          if (!r || !matches(r,p)) return [];
+          const duplicate=odptCrosswalk[info.feedId]
+            ?odptBoardingDuplicate(info.feedId,raw,rs.route.route_id,r.type,direct,directStops)
+            :directDuplicate(r,direct);
+          if(duplicate)return [];
           rawRoutes.push({ ...rs.route, feed_version: raw.feed_version }); return [r];
         });
         const stop = normalizeStop(raw,routes,info);
@@ -123,8 +128,8 @@ export async function globalRoute(id: string, direction?: string) {
     patterns.meta?.hasNext ? "More trip patterns are available from the source; this view is bounded to twelve." : "No additional pattern page reported.");
   return { route, stops, shape, vehicles: [], alerts: normalizeAlerts(raw.alerts,id,[id]), directions };
 }
-export async function globalNetwork(b: Bounds, p: GlobalQuery, direct: TransitRoute[]) {
-  const page = await discover(p,direct,b), lines: {route:TransitRoute;shape:number[][];shapeId:string;vehicles:never[]}[] = [];
+export async function globalNetwork(b: Bounds, p: GlobalQuery, direct: TransitRoute[],directStops:TransitStop[]=[]) {
+  const page = await discover(p,direct,b,directStops), lines: {route:TransitRoute;shape:number[][];shapeId:string;vehicles:never[]}[] = [];
   // Geometry is fetched only for a bounded selection; expose absent lines rather than inventing paths.
   for (const route of page.routes.slice(0,12)) {
     try {

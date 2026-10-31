@@ -11,8 +11,8 @@ export function gtfsSeconds(value:string) {
 export function serviceInstant(date:string,seconds:number,zone=ZONE) {
   return DateTime.fromFormat(date,"yyyyMMdd",{zone}).set({hour:12}).minus({hours:12}).plus({seconds}).toMillis();
 }
-export function serviceDates(now=Date.now()) {
-  const day=DateTime.fromMillis(now,{zone:ZONE});
+export function serviceDates(now=Date.now(),zone=ZONE) {
+  const day=DateTime.fromMillis(now,{zone});
   return [-2,-1,0,1,2].map(d=>day.plus({days:d}).toFormat("yyyyMMdd"));
 }
 export function activeService(calendar:Record<string,any>|undefined,exceptions:Record<string,any>[],date:string) {

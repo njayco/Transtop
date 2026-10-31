@@ -12,7 +12,7 @@ import { GlobalCoverageNotice } from '@/components/global-coverage';
 import { TflDetails } from '@/components/tfl-details';
 
 const SUGGEST = ['Times Square', 'Grand Central', 'Penn Station', 'Jamaica', 'M15', 'Port Washington', 'n6'];
-const TYPES = [{ v: '', l: 'All modes' }, { v: 'subway', l: 'Subway' }, { v: 'bus', l: 'Bus' }, { v: 'rail', l: 'Commuter Rail' }, { v: 'intercity', l: 'Intercity Bus Network' }];
+const TYPES = [{ v: '', l: 'All modes' }, { v: 'subway', l: 'Subway' }, { v: 'bus', l: 'Bus' }, { v: 'rail', l: 'Rail / tram' }, { v: 'intercity', l: 'Intercity Bus Network' }];
 const CLASSES: { v: GetCatalogServiceClass; l: string }[] = [{ v: 'all', l: 'Local + express' }, { v: 'local', l: 'Local' }, { v: 'express', l: 'Express' }];
 const LIMIT = 20;
 
@@ -47,7 +47,7 @@ export default function SearchPage() {
     return [...all.values()].sort((a,b)=>a.agency.localeCompare(b.agency));
   },[sources.data,d,type,agency]);
   const total = Math.max(d?.totalRoutes ?? 0, d?.totalStops ?? 0);
-  const sel = 'h-11 rounded-xl border border-input bg-card px-3 text-sm';
+  const sel = 'h-11 min-w-0 max-w-full rounded-xl border border-input bg-card px-3 text-sm';
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -94,13 +94,14 @@ export default function SearchPage() {
                 <section>
                   <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground" data-testid="text-total-routes">Routes · {d.totalRoutes.toLocaleString()}</h2>
                   {d.routes.length === 0 ? <p className="text-sm text-muted-foreground">{offset > 0 && d.totalRoutes > 0 ? 'No more routes on this page.' : 'No routes match these filters.'}</p> : (
-                    <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                       {d.routes.map((r) => (
                         <Link key={r.id} href={`/routes/${encodeURIComponent(r.id)}`} data-testid={`link-route-${r.id}`} className="flex items-center gap-3 rounded-2xl border border-card-border bg-card p-3 hover:border-white/25">
                           <RouteBadge name={r.name} color={r.color} size="lg" />
                           <div className="min-w-0 flex-1">
-                            <p className="font-bold">{r.name} {MODE_NAME[r.type]}{r.serviceClass === 'express' && <span className="ml-2 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-primary">Express</span>}</p>
+                            <p className="break-words font-bold">{r.name} {r.odpt?.modeDetail||MODE_NAME[r.type]}{r.serviceClass === 'express' && <span className="ml-2 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-primary">Express</span>}</p>
                             <p className="truncate text-sm text-muted-foreground">{r.longName ? `${r.longName} · ` : ''}{r.agency}</p>
+                            {r.odpt&&<p className="text-xs text-muted-foreground">ODPT · CC BY 4.0 · modified for Transtop · source {r.odpt.publishedAt.slice(0,10)}. Open for full attribution and validity.</p>}
                           </div>
                           <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
                         </Link>

@@ -4,6 +4,16 @@ A mobile-first transit app based on the creator's original Transtop concept. Ver
 
 ## Current features and recent updates
 
+### Japan public ODPT schedules and verified Sendai realtime
+
+Direct public GTFS/GTFS-JP adds Sendai buses, Nishitokyo Hana Bus and Tosaden
+streetcars to the existing search, nearby, map and timetable screens. Dates use
+Asia/Tokyo; trams remain identified as trams within the rail filter. Fresh,
+exactly matched Sendai trip updates and GPS observations are supported; Hana
+and Tosaden remain scheduled. These are selected CC BY 4.0 datasets, not complete
+Japan, Tokyo Metro or JR coverage. No ODPT account or Transitland dependency.
+See [ODPT setup, credits, verified data, limits and exclusions](docs/odpt.md).
+
 ### London official live predictions
 
 Direct TfL Unified API data complements Transitland, without using its requests
