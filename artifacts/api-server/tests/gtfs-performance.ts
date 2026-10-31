@@ -87,7 +87,7 @@ async function run(strategy: "before" | "after") {
     reader("catalog", () => catalog({ mode: "live", agency, limit: 20, offset: 0 })),
     reader("stopTimetable", () => timetable({ mode: "live", stopId: "mta-bus:S0", date: "2026-10-30", from: "00:00", limit: 40, offset: 0 })),
     reader("routeTimetable", () => timetable({ mode: "live", routeId: "mta-bus:R0", date: "2026-10-30", from: "00:00", limit: 40, offset: 0 })),
-    reader("network", () => network("live")),
+    reader("network", () => network({ mode: "live", zoom: 12 })),
   ];
   try {
     await client.query("SELECT pg_advisory_lock($1)", [IMPORT_LOCK]);

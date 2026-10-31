@@ -88,7 +88,7 @@ try {
   const stop = (await allStops("live")).find(s => s.id === "mta-bus:S")!;
   assert.equal((await scheduledArrivals(stop, new Set(), Date.parse("2026-10-30T13:50:00Z"))).length, 6);
   assert.equal((await routeDetail("mta-bus:R0", "live"))!.stops.length, 2);
-  assert.equal((await network("live")).length, 6);
+  assert.equal((await network({ mode: "live", zoom: 12 })).lines.length, 6);
   const published = await dumpPublished();
   // The sixth package fails after five have been staged: no partial coverage.
   failPackage = 5;
