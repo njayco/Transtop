@@ -51,7 +51,7 @@ export const GetMobilityFeedsResponse = zod.object({
   "sizeMb": zod.number().optional(),
   "entityTypes": zod.array(zod.string()).optional()
 })),
-  "offset": zod.number().int(),
+  "offset": zod.int(),
   "hasMore": zod.boolean(),
   "status": zod.string()
 })
@@ -142,7 +142,7 @@ export const GetTrainResponse = zod.object({
   "calls": zod.array(zod.object({
   "code": zod.string(),
   "name": zod.string(),
-  "sequence": zod.number().int(),
+  "sequence": zod.int(),
   "timezone": zod.string().nullable(),
   "status": zod.string(),
   "scheduledArrival": zod.string().nullable(),
@@ -223,7 +223,7 @@ export const GetIntercityDeparturesResponse = zod.object({
   "stops": zod.array(zod.object({
   "id": zod.string(),
   "name": zod.string(),
-  "sequence": zod.number().int(),
+  "sequence": zod.int(),
   "time": zod.string().optional(),
   "address": zod.string().optional(),
   "lat": zod.number().optional(),
@@ -234,7 +234,7 @@ export const GetIntercityDeparturesResponse = zod.object({
 })),
   "message": zod.string(),
   "updatedAt": zod.string(),
-  "radiusMeters": zod.number().int()
+  "radiusMeters": zod.int()
 })
 
 
@@ -274,8 +274,8 @@ export const GetStopsResponse = zod.object({
   "message": zod.string(),
   "hasMore": zod.boolean(),
   "cursor": zod.string().optional(),
-  "used": zod.number().int().optional(),
-  "limit": zod.number().int().optional()
+  "used": zod.int().optional(),
+  "limit": zod.int().optional()
 }).optional(),
   "stops": zod.array(zod.object({
   "mobility": zod.object({
@@ -395,7 +395,7 @@ export const GetStopsResponse = zod.object({
   "lat": zod.number(),
   "lon": zod.number(),
   "distance": zod.number(),
-  "walkingMinutes": zod.number().int(),
+  "walkingMinutes": zod.int(),
   "routes": zod.array(zod.object({
   "mobility": zod.object({
   "transitlandId": zod.string().optional(),
@@ -482,13 +482,13 @@ export const GetStopsResponse = zod.object({
   "color": zod.string(),
   "direction": zod.string(),
   "destination": zod.string(),
-  "minutes": zod.number().int(),
+  "minutes": zod.int(),
   "source": zod.enum(['demo', 'live', 'community', 'scheduled', 'unavailable']),
   "updatedAt": zod.string(),
   "status": zod.string(),
   "scheduledAt": zod.string(),
   "tripId": zod.string().optional(),
-  "rangeMax": zod.number().int().optional(),
+  "rangeMax": zod.int().optional(),
   "confidence": zod.string().optional(),
   "trainNumber": zod.string().optional(),
   "runId": zod.string().optional(),
@@ -658,7 +658,7 @@ export const GetStopResponse = zod.object({
   "lat": zod.number(),
   "lon": zod.number(),
   "distance": zod.number(),
-  "walkingMinutes": zod.number().int(),
+  "walkingMinutes": zod.int(),
   "routes": zod.array(zod.object({
   "mobility": zod.object({
   "transitlandId": zod.string().optional(),
@@ -745,13 +745,13 @@ export const GetStopResponse = zod.object({
   "color": zod.string(),
   "direction": zod.string(),
   "destination": zod.string(),
-  "minutes": zod.number().int(),
+  "minutes": zod.int(),
   "source": zod.enum(['demo', 'live', 'community', 'scheduled', 'unavailable']),
   "updatedAt": zod.string(),
   "status": zod.string(),
   "scheduledAt": zod.string(),
   "tripId": zod.string().optional(),
-  "rangeMax": zod.number().int().optional(),
+  "rangeMax": zod.int().optional(),
   "confidence": zod.string().optional(),
   "trainNumber": zod.string().optional(),
   "runId": zod.string().optional(),
@@ -995,7 +995,7 @@ export const GetRouteResponse = zod.object({
   "lat": zod.number(),
   "lon": zod.number(),
   "distance": zod.number(),
-  "walkingMinutes": zod.number().int(),
+  "walkingMinutes": zod.int(),
   "routes": zod.array(zod.object({
   "mobility": zod.object({
   "transitlandId": zod.string().optional(),
@@ -1082,13 +1082,13 @@ export const GetRouteResponse = zod.object({
   "color": zod.string(),
   "direction": zod.string(),
   "destination": zod.string(),
-  "minutes": zod.number().int(),
+  "minutes": zod.int(),
   "source": zod.enum(['demo', 'live', 'community', 'scheduled', 'unavailable']),
   "updatedAt": zod.string(),
   "status": zod.string(),
   "scheduledAt": zod.string(),
   "tripId": zod.string().optional(),
-  "rangeMax": zod.number().int().optional(),
+  "rangeMax": zod.int().optional(),
   "confidence": zod.string().optional(),
   "trainNumber": zod.string().optional(),
   "runId": zod.string().optional(),
@@ -1165,7 +1165,7 @@ export const GetRouteResponse = zod.object({
   "timetableStops": zod.array(zod.object({
   "id": zod.string(),
   "name": zod.string(),
-  "sequence": zod.number().int(),
+  "sequence": zod.int(),
   "time": zod.string().optional(),
   "address": zod.string().optional(),
   "lat": zod.number().optional(),
@@ -1183,8 +1183,8 @@ export const GetSourcesResponseItem = zod.object({
   "url": zod.string(),
   "updatedAt": zod.string().nullable(),
   "type": zod.string().optional(),
-  "routeCount": zod.number().int().optional(),
-  "stopCount": zod.number().int().optional(),
+  "routeCount": zod.int().optional(),
+  "stopCount": zod.int().optional(),
   "serviceStart": zod.string().optional(),
   "serviceEnd": zod.string().optional(),
   "importedAt": zod.string().optional(),
@@ -1235,8 +1235,8 @@ export const GetCatalogResponse = zod.object({
   "message": zod.string(),
   "hasMore": zod.boolean(),
   "cursor": zod.string().optional(),
-  "used": zod.number().int().optional(),
-  "limit": zod.number().int().optional()
+  "used": zod.int().optional(),
+  "limit": zod.int().optional()
 }).optional(),
   "routes": zod.array(zod.object({
   "mobility": zod.object({
@@ -1434,7 +1434,7 @@ export const GetCatalogResponse = zod.object({
   "lat": zod.number(),
   "lon": zod.number(),
   "distance": zod.number(),
-  "walkingMinutes": zod.number().int(),
+  "walkingMinutes": zod.int(),
   "routes": zod.array(zod.object({
   "mobility": zod.object({
   "transitlandId": zod.string().optional(),
@@ -1521,13 +1521,13 @@ export const GetCatalogResponse = zod.object({
   "color": zod.string(),
   "direction": zod.string(),
   "destination": zod.string(),
-  "minutes": zod.number().int(),
+  "minutes": zod.int(),
   "source": zod.enum(['demo', 'live', 'community', 'scheduled', 'unavailable']),
   "updatedAt": zod.string(),
   "status": zod.string(),
   "scheduledAt": zod.string(),
   "tripId": zod.string().optional(),
-  "rangeMax": zod.number().int().optional(),
+  "rangeMax": zod.int().optional(),
   "confidence": zod.string().optional(),
   "trainNumber": zod.string().optional(),
   "runId": zod.string().optional(),
@@ -1561,10 +1561,10 @@ export const GetCatalogResponse = zod.object({
   "updatedAt": zod.string(),
   "neighborhood": zod.string().optional()
 })),
-  "totalRoutes": zod.number().int(),
-  "totalStops": zod.number().int(),
-  "offset": zod.number().int(),
-  "limit": zod.number().int()
+  "totalRoutes": zod.int(),
+  "totalStops": zod.int(),
+  "offset": zod.int(),
+  "limit": zod.int()
 })
 
 
@@ -1598,8 +1598,8 @@ export const GetTimetableResponse = zod.object({
   "message": zod.string(),
   "hasMore": zod.boolean(),
   "cursor": zod.string().optional(),
-  "used": zod.number().int().optional(),
-  "limit": zod.number().int().optional()
+  "used": zod.int().optional(),
+  "limit": zod.int().optional()
 }).optional(),
   "departures": zod.array(zod.object({
   "id": zod.string(),
@@ -1615,9 +1615,9 @@ export const GetTimetableResponse = zod.object({
   "runId": zod.string().optional(),
   "timezone": zod.string().optional()
 })),
-  "total": zod.number().int(),
-  "offset": zod.number().int(),
-  "limit": zod.number().int(),
+  "total": zod.int(),
+  "offset": zod.int(),
+  "limit": zod.int(),
   "date": zod.string(),
   "message": zod.string()
 })
@@ -1730,8 +1730,8 @@ export const GetNetworkResponse = zod.object({
   "message": zod.string(),
   "hasMore": zod.boolean(),
   "cursor": zod.string().optional(),
-  "used": zod.number().int().optional(),
-  "limit": zod.number().int().optional()
+  "used": zod.int().optional(),
+  "limit": zod.int().optional()
 }).optional(),
   "lines": zod.array(zod.object({
   "shapeId": zod.string(),
@@ -1916,8 +1916,8 @@ export const GetNetworkResponse = zod.object({
   "referenceDate": zod.string().optional().describe('Suggested historical service date for research-reference routes only')
 }))
 })),
-  "totalLines": zod.number().int(),
-  "totalStops": zod.number().int(),
+  "totalLines": zod.int(),
+  "totalStops": zod.int(),
   "missingGeometry": zod.array(zod.object({
   "mobility": zod.object({
   "transitlandId": zod.string().optional(),
@@ -1997,8 +1997,8 @@ export const GetNetworkResponse = zod.object({
   "referenceDate": zod.string().optional().describe('Suggested historical service date for research-reference routes only')
 })),
   "truncated": zod.boolean(),
-  "busDetailZoom": zod.number().int(),
-  "stopsZoom": zod.number().int(),
+  "busDetailZoom": zod.int(),
+  "stopsZoom": zod.int(),
   "generation": zod.string(),
   "message": zod.string()
 })

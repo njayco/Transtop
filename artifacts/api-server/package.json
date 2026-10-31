@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:dependencies": "tsx --test tests/dependency-compatibility.ts",
     "test:mobility": "tsx --experimental-test-module-mocks --test tests/mobility.ts tests/mobility-client.ts tests/mobility-registry.ts tests/mobility-realtime.ts tests/mobility-schedules.ts",
     "test:mobility-import": "tsx --experimental-test-module-mocks tests/mobility-import.ts",
     "bench:mobility": "tsx tests/mobility-storage.ts",
