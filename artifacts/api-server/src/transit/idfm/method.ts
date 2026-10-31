@@ -71,7 +71,10 @@ Separate optional PRIM working cache (not part of the scheduled GTFS edition):
 Source and API terms:
 https://prim.iledefrance-mobilites.fr/fr/jeux-de-donnees/idfm-ivtr-requete_unitaire
 The publisher page lists Licence Mobilité and separately links ODbL/API conditions.
-Both boundaries must be resolved by the owner before affected public use.
+The owner confirmed that this discrepancy and the applicable public-use obligations
+are resolved for this use, and authorized separate PRIM public-use confirmation.
+Both notices remain linked; this method does not claim either supersedes the other.
+This is an owner confirmation, not an independent legal determination.
 Requests use existing account credentials server-side; no signup or new terms
 are accepted. Only selected-stop queries run, not full-network polling.
 GTFS numeric boarding/station IDs map to documented SIRI references. Exact
@@ -84,14 +87,15 @@ notices expire without extending their production timestamps on refresh failure.
 No GPS is produced, no vehicle path inferred, and no general traffic/fare/planner
 API is enabled. The small independent working cache is not a historical archive.
 
-Owner action before public use:
+Owner confirmation before public use:
 Licence 5.6(d) can require PAN publication under the original dataset in original
 format for derivatives of the same nature/granularity/time/geographic extent.
 This normalized regional database is treated conservatively as affected. The owner
-must publish the applicable original-format derivative and notify IDFM/PAN as
-required (including 5.10 notifications), or obtain documented confirmation that
-these actions are not required for this transformation. This downloadable method
-implements the 5.8(b) method option, not a substitute for any 5.6(d) duty.
-No external upload/contact/account creation is performed by Transtop.
-Published deployments withhold IDFM browsing until owner confirmation.
+confirmed that all applicable original-format PAN publication and required IDFM/PAN
+notifications (including 5.10 notifications) are complete, and authorized the
+separate schedule public-use confirmation. This downloadable method implements the
+5.8(b) method option, not a substitute for any 5.6(d) duty. Transtop did not perform
+an external upload or contact; the owner's confirmation was not independently
+verified against external evidence. Published deployments withhold IDFM browsing
+until owner confirmation.
 `;

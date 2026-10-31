@@ -79,11 +79,12 @@ coverage, GPS, all operators, all APIs or the account's formal quota.
 The current PRIM page's header says Licence Mobilité, while its API/data terms
 explicitly link ODbL and July 2022 API conditions. Both notices are linked in the
 UI; they are not silently treated as the schedule license. Live records remain
-separate working-cache records. Before affected public use, the owner must resolve
-this discrepancy and applicable sharing/notice obligations along with the
-schedule obligations below. **Do not turn on the public confirmation flag merely
-because the key authenticates.** Neither public confirmation flag is set by this
-integration.
+separate working-cache records. The owner has confirmed that the PRIM license
+discrepancy and applicable public-use obligations are resolved for this use, and
+explicitly authorized the separate PRIM public-use confirmation. Both notices
+remain linked; this integration does not claim that either supersedes the other.
+This is the owner's confirmation, not an independent legal determination.
+**A working API key alone is not public-use confirmation.**
 
 The public gate also withholds retained source inventory, operator names,
 import diagnostics and saved-service metadata checks, including positive cache
@@ -149,11 +150,14 @@ aggregation, a limited API, or not exposing a ZIP eliminates sharing duties.
 **Production browsing/import is disabled by default** until the owner either
 completes the applicable PAN publication/notification or obtains documented
 confirmation that these specific actions are unnecessary for this transformation.
-Only then set `IDFM_PUBLIC_COMPLIANCE_CONFIRMED=true` through environment
-configuration. This flag records a completed owner action; it does not complete
-that action or grant new rights. Both `REPLIT_DEPLOYMENT=1` and
-`NODE_ENV=production` enforce the gate. Development integration/checks remain
-available under the already approved use.
+The owner has confirmed that all applicable PAN derivative publication and
+IDFM/PAN notification actions are complete, and explicitly authorized
+`IDFM_PUBLIC_COMPLIANCE_CONFIRMED=true`. This records the owner's confirmation;
+Transtop did not publish the derivative or contact IDFM/PAN, and no external
+evidence was independently verified. The flag does not complete an action or
+grant new rights. Both `REPLIT_DEPLOYMENT=1` and `NODE_ENV=production` enforce
+the gate. Development integration/checks remain available under the already
+approved use.
 
 No external publication, contact or new contract was performed by this task.
 

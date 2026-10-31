@@ -31,6 +31,20 @@ Public PRIM permission is separate from scheduled-data publication permission.
 Do not treat a schedule-only confirmation or working account key as resolving
 the PRIM page's conflicting license notices.
 
+The owner later confirmed that applicable PAN derivative publication and
+IDFM/PAN notification actions are complete, and separately confirmed PRIM's
+license discrepancy and public-use obligations are resolved for this use. Both
+public-use flags were explicitly authorized. No external publication or message
+was performed or independently verified by the agent; retain both PRIM notices
+without claiming one supersedes the other.
+
+**Why:** The owner explicitly confirmed completion/resolution and authorized both
+public-use flags, while requiring separate schedule and PRIM confirmation.
+
+**How to apply:** Treat the compliance state as an owner attestation, not
+independent legal verification. Keep source and license notices linked and never
+infer either permission from the PRIM API key.
+
 Public-use gating covers retained metadata and positive caches, not just
 timetables or refresh jobs.
 
