@@ -79,6 +79,20 @@ export async function statuses(rr:TransitRoute[]){
   if(!Array.isArray(raw))throw new Error("Invalid TfL status");
   return notices(raw);
 }
+/** Nearby needs line-wide notices, not a prediction request for every stop.
+ * Deduplicate the selected lines and keep each request within the status limit.
+ * Attaching by route is association only, not proof that a stop is affected.
+ */
+export async function withLineNotices(ss:TransitStop[]):Promise<TransitStop[]>{
+  if(!ss.length)return ss;
+  const rr=unique(ss.flatMap(s=>s.routes));
+  let alerts:TransitStop["alerts"]=[],failure="";
+  try{
+    for(let i=0;i<rr.length;i+=30)alerts.push(...await statuses(rr.slice(i,i+30)));
+  }catch(err){failure=` Line notices unavailable: ${safeMessage(err)}`;}
+  return ss.map(s=>({...s,alerts:alerts.filter(a=>s.routes.some(r=>a.routeIds.includes(r.id))),
+    ...(failure?{tfl:{...s.tfl!,message:(s.tfl?.message||COVERAGE)+failure}}:{})}));
+}
 export async function enrich(s:TransitStop):Promise<TransitStop>{
   let message="",arrivals:TransitStop["arrivals"]=[],alerts:TransitStop["alerts"]=[];
   try{

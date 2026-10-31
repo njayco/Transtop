@@ -144,7 +144,9 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
     .filter(s=>s.distance<=(s.type==="intercity"||s.id.startsWith("nj-transit:")?3000:10000))
     .sort((a,b)=>a.distance-b.distance).slice(0,16);
   const enriched=await Promise.all(rows.map((s,i)=>isTransitland(s.id)&&i<4?globalEnrich(s):enrich(s,mode)));
-  return {stops:enriched,mode,updatedAt:new Date().toISOString(),centerLat:lat,centerLon:lon,globalCoverage:foreign?.globalCoverage,tfl:london?.tfl,
+  const londonNotices=mode==="live"?await tfl.withLineNotices(enriched.filter(s=>isTfl(s.id))):[];
+  const londonById=new Map(londonNotices.map(s=>[s.id,s]));
+  return {stops:enriched.map(s=>londonById.get(s.id)||s),mode,updatedAt:new Date().toISOString(),centerLat:lat,centerLon:lon,globalCoverage:foreign?.globalCoverage,tfl:london?.tfl,
     message:mode==="demo"?"Demo data · illustrative arrivals, not for travel planning":rows.length?"Official feeds redistributed by Transtop. Predictions may be unavailable or stale.":"No matching imported stops. Integration not configured for this location or search. Try a station name or supported neighborhood."};
 }
 export async function stopDetail(id:string,mode:Mode) {

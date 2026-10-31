@@ -20,3 +20,9 @@ Post-merge setup must regenerate both API clients and server Zod schemas before 
 **Why:** A merged map feature arrived with a newer contract and frontend callers but stale generated bindings, leaving missing hooks and incompatible network-response types. Installing dependencies and pushing the database schema did not refresh those bindings.
 
 **How to apply:** Retain the API-spec codegen step in shared merge setup. Resolve contract mismatches at their source rather than manually patching generated files.
+
+Check for missing generated API files before completing a task, even when their deletion was already present in the initial working tree.
+
+**Why:** Completion can include pre-existing working-tree deletions. Isolated tests do not exercise the browser imports, so they cannot establish that generated bindings are intact.
+
+**How to apply:** If the client barrel imports absent generated modules, run the existing codegen workflow, confirm regenerated files preserve the baseline, and run the full typecheck before completing.

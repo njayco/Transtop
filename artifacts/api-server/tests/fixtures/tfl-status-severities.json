@@ -1,0 +1,32 @@
+{
+  "source": "https://api.tfl.gov.uk/Line/Meta/Severity",
+  "verifiedOn": "2026-10-31",
+  "note": "Official labels for supported TfL modes; synthetic payloads, not live disruption reports. Good Service is omitted. Unspecified/ambiguous codes stay informational; Service Closed is not treated as an unplanned suspension.",
+  "statuses": [
+    { "code": 0, "description": "Special Service", "expected": "info" },
+    { "code": 1, "description": "Closed", "expected": "disruption" },
+    { "code": 2, "description": "Suspended", "expected": "disruption" },
+    { "code": 3, "description": "Part Suspended", "expected": "disruption" },
+    { "code": 4, "description": "Planned Closure", "expected": "disruption" },
+    { "code": 5, "description": "Part Closure", "expected": "disruption" },
+    { "code": 6, "description": "Severe Delays", "expected": "delay" },
+    { "code": 7, "description": "Reduced Service", "expected": "disruption" },
+    { "code": 8, "description": "Bus Service", "expected": "disruption" },
+    { "code": 9, "description": "Minor Delays", "expected": "delay" },
+    { "code": 10, "description": "Good Service", "expected": "omitted" },
+    { "code": 11, "description": "Part Closed", "expected": "disruption" },
+    { "code": 12, "description": "Exit Only", "expected": "info" },
+    { "code": 13, "description": "No Step Free Access", "expected": "info" },
+    { "code": 14, "description": "Change of frequency", "expected": "info" },
+    { "code": 15, "description": "Diverted", "expected": "disruption" },
+    { "code": 16, "description": "Not Running", "expected": "disruption" },
+    { "code": 17, "description": "Issues Reported", "expected": "info" },
+    { "code": 18, "description": "No Issues", "expected": "info" },
+    { "code": 19, "description": "Information", "expected": "info" },
+    { "code": 20, "description": "Service Closed", "expected": "info" },
+    { "code": 999, "description": "Severe Delays", "expected": "info" },
+    { "code": -1, "description": "Suspended", "expected": "info" },
+    { "code": "6", "description": "Severe Delays", "expected": "info" },
+    { "code": null, "description": "Suspended", "expected": "info" }
+  ]
+}

@@ -86,13 +86,39 @@ export function prediction(p:any,stop:TransitStop,now=Date.now()):Arrival|undefi
     source:"live",status:"TfL · official prediction",scheduledAt:new Date(expected).toISOString(),
     updatedAt:new Date(observed).toISOString(),expiresAt:new Date(expires).toISOString(),timezone:"Europe/London",platform};
 }
+/** Official Line/Meta/Severity codes, not description/reason keyword matching.
+ * Verified against https://api.tfl.gov.uk/Line/Meta/Severity on 2026-10-31.
+ * Only explicit delays and service disruptions qualify for Nearby. Special
+ * service, access/frequency notices, issues reported, overnight Service Closed
+ * (20), and unknown codes remain informational. No affected stops are inferred.
+ */
+function statusSeverity(code:unknown):"delay"|"disruption"|"info"{
+  switch(code){
+    case 6: // Severe Delays
+    case 9: // Minor Delays
+      return "delay";
+    case 1: // Closed
+    case 2: // Suspended
+    case 3: // Part Suspended
+    case 4: // Planned Closure
+    case 5: // Part Closure
+    case 7: // Reduced Service
+    case 8: // Bus Service (replacement service)
+    case 11: // Part Closed
+    case 15: // Diverted
+    case 16: // Not Running
+      return "disruption";
+    default:
+      return "info";
+  }
+}
 export function notices(raw:any[],now=Date.now()){
   return raw.slice(0,30).flatMap(r=>(Array.isArray(r.lineStatuses)?r.lineStatuses:[]).slice(0,30)
     .filter((s:any)=>s.statusSeverity!==10&&typeof s.statusSeverityDescription==="string"&&
       (!s.validityPeriods?.length||s.validityPeriods.some((v:any)=>v.isNow!==false&&
         Number.isFinite(instant(v.fromDate))&&instant(v.fromDate)<=now&&Number.isFinite(instant(v.toDate))&&instant(v.toDate)>=now)))
     .map((s:any)=>({id:`tfl:status:${r.id}:${s.id??s.statusSeverity}`,title:`${r.name}: ${s.statusSeverityDescription}`.slice(0,300),
-      description:String(s.reason||"Check TfL for service details.").slice(0,4000),severity:"info",
+      description:String(s.reason||"Check TfL for service details.").slice(0,4000),severity:statusSeverity(s.statusSeverity),
       routeIds:[`tfl:line:${r.id}`],source:CREDIT+" · line status (separate from arrival freshness)"})));
 }
 export function suppliedShapes(raw:any):number[][][]{
