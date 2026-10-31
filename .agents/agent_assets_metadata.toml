@@ -14,3 +14,17 @@ mtime_ms = 1793400736512
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:4e24d3f9-8f6a-40c6-a710-9544c2914789/8832e8eb-14bf-4562-8763-70b929148385/f7197c17-8dea-472a-bb65-7871691c6b0d"
 storage_version_token = "1793400824173858"
 content_type = "text/html"
+
+[[outputs]]
+id = "CwoP6WIQ3_fFkSFT_QKSl"
+uri = "file://.local/outputs/transtop-weekly-sources.chart.html"
+type = "text"
+title = "Transtop traffic sources — last 7 days"
+description = "Pageviews by referring domain, October 24–31, 2026 (UTC). Direct / unknown means no referrer was supplied."
+logical_id = "ce66fc54-339f-495f-a93c-cc23c11a4873"
+content_hash = "sha256:29135285e972f8fd7df695b66a1e0e7d54ca84c5c60a0cd50ce792b6135d5edc"
+size = 2579
+mtime_ms = 1793422272952
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:4e24d3f9-8f6a-40c6-a710-9544c2914789/ce66fc54-339f-495f-a93c-cc23c11a4873/972ae980-0afc-4947-9d38-32131cccec87"
+storage_version_token = "1793422273505899"
+content_type = "text/html;profile=replit-chart"
