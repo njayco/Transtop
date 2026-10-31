@@ -7,7 +7,10 @@ import { ago } from '@/lib/format';
 import { FollowedTrains } from '@/components/train-follow';
 
 export default function Favorites() {
-  const { favStops, favRoutes, set } = usePrefs();
+  const { favStops: savedStops, favRoutes: savedRoutes, set } = usePrefs();
+  // Preserve local saved data, but do not advertise retired archive records.
+  const favStops = savedStops.filter(s => !s.id.startsWith('ibg:'));
+  const favRoutes = savedRoutes.filter(r => !r.id.startsWith('ibg:'));
   const online = useOnline();
   const empty = favStops.length === 0 && favRoutes.length === 0;
   return (
@@ -44,7 +47,7 @@ export default function Favorites() {
                       <div className="mt-1.5 flex flex-wrap gap-1">{s.routes.slice(0, 8).map((r) => <RouteBadge key={r.id} name={r.name} color={r.color} size="sm" />)}</div>
                     </div>
                   </Link>
-                  <button aria-label={`Remove ${s.name}`} data-testid={`button-remove-stop-${s.id}`} onClick={() => set({ favStops: favStops.filter((f) => f.id !== s.id) })} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:bg-white/10 hover:text-foreground"><X className="h-5 w-5" /></button>
+                  <button aria-label={`Remove ${s.name}`} data-testid={`button-remove-stop-${s.id}`} onClick={() => set({ favStops: savedStops.filter((f) => f.id !== s.id) })} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:bg-white/10 hover:text-foreground"><X className="h-5 w-5" /></button>
                 </li>
               ))}
             </ul>
@@ -61,7 +64,7 @@ export default function Favorites() {
                     <RouteBadge name={r.name} color={r.color} size="lg" />
                     <div className="min-w-0"><p className="font-bold">{r.name} {MODE_NAME[r.type]}</p><p className="truncate text-xs text-muted-foreground">{r.agency}</p></div>
                   </Link>
-                  <button aria-label={`Remove route ${r.name}`} data-testid={`button-remove-route-${r.id}`} onClick={() => set({ favRoutes: favRoutes.filter((f) => f.id !== r.id) })} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:bg-white/10 hover:text-foreground"><X className="h-5 w-5" /></button>
+                  <button aria-label={`Remove route ${r.name}`} data-testid={`button-remove-route-${r.id}`} onClick={() => set({ favRoutes: savedRoutes.filter((f) => f.id !== r.id) })} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:bg-white/10 hover:text-foreground"><X className="h-5 w-5" /></button>
                 </li>
               ))}
             </ul>

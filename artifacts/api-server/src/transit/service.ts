@@ -18,8 +18,7 @@ import { intercityCatalog, intercityArrivals, intercityRoute, intercityProviders
 import { documentArrivals,documentRoute,isDocumentId } from "./intercity/uploaded-service";
 import { amtrakArrivals } from "./amtrak-service";
 import { amtrakHealth } from "./amtrak-live";
-import { isIbgId } from "./intercity/ibg-model";
-import { ibgRouteDetail, primaryIbgCatalog } from "./intercity/ibg-browse";
+import { isRetiredResearchId } from "./intercity/retired";
 import { isTransitland } from "./transitland/model";
 import { discover, globalStop, globalRoute, unique } from "./transitland/discovery";
 import { globalEnrich } from "./transitland/departures";
@@ -34,7 +33,7 @@ import { preferDirect, matchedRoutes } from "./tfl/crosswalk";
 let stopCache:{at:number;demo:TransitStop[];live:TransitStop[]}|undefined;
 export async function allStops(mode:Mode) {
   if(!stopCache||Date.now()-stopCache.at>60000){
-    const data=await db.select().from(stops).where(inArray(stops.mode,["live","demo"]));
+    const data=(await db.select().from(stops).where(inArray(stops.mode,["live","demo"]))).filter(s=>!isRetiredResearchId(s.id));
     stopCache={at:Date.now(),demo:data.filter(s=>s.mode==="demo").map(s=>s.data as TransitStop),
       live:data.filter(s=>s.mode==="live").map(s=>s.data as TransitStop)};
   }
@@ -140,11 +139,11 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
     .filter(s=>s.distance<=(s.type==="intercity"||s.id.startsWith("nj-transit:")?3000:10000))
     .sort((a,b)=>a.distance-b.distance).slice(0,16);
   const enriched=await Promise.all(rows.map((s,i)=>isTransitland(s.id)&&i<4?globalEnrich(s):enrich(s,mode)));
-  const coverageWarning=mode==="live"&&(!params.type||params.type==="all"||params.type==="intercity")?(await primaryIbgCatalog()).coverageWarning:"";
   return {stops:enriched,mode,updatedAt:new Date().toISOString(),centerLat:lat,centerLon:lon,globalCoverage:foreign?.globalCoverage,tfl:london?.tfl,
-    message:(mode==="demo"?"Demo data · illustrative arrivals, not for travel planning":rows.length?rows.some(s=>isIbgId(s.id))?"Includes labeled IBG research references, not verified current service. Confirm research stop locations and schedules with the carrier.":"Official feeds redistributed by Transtop. Predictions may be unavailable or stale.":"No matching imported stops. Integration not configured for this location or search. Try a station name or supported neighborhood.")+(coverageWarning?` ${coverageWarning}`:"")};
+    message:mode==="demo"?"Demo data · illustrative arrivals, not for travel planning":rows.length?"Official feeds redistributed by Transtop. Predictions may be unavailable or stale.":"No matching imported stops. Integration not configured for this location or search. Try a station name or supported neighborhood."};
 }
 export async function stopDetail(id:string,mode:Mode) {
+  if(isRetiredResearchId(id))return;
   if(mode==="live"&&isTfl(id)){const s=await tfl.stop(id);return s?tfl.enrich(s):undefined;}
   if(mode==="live"&&isTransitland(id)){
     const s=await globalStop(id);if(!s)return;
@@ -169,11 +168,11 @@ export async function stopDetail(id:string,mode:Mode) {
   return s?enrich(s,mode,true):undefined;
 }
 export async function routeDetail(id:string,mode:Mode,direction?:string,lookupGlobal:typeof globalRoute=globalRoute):Promise<RouteDetail|undefined> {
+  if(isRetiredResearchId(id))return;
   if(mode==="live"&&isTfl(id))return tfl.route(id,direction);
   // Saved worldwide route links always keep their source, even after exact
   // stop matches elsewhere or when TfL is disabled/unavailable.
   if(mode==="live"&&isTransitland(id))return lookupGlobal(id,direction);
-  if(mode==="live"&&isIbgId(id))return ibgRouteDetail(id,direction);
   if(mode==="live"&&isDocumentId(id))return documentRoute(id,direction);
   if(mode==="live"&&id.startsWith("martz:"))return intercityRoute(id);
   const [r]=await db.select().from(routes).where(and(eq(routes.id,id),eq(routes.mode,mode)));

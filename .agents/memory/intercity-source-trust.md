@@ -21,11 +21,11 @@ Do not confuse the University of Illinois Intercity Bus GTFS (IBG) project with 
 
 **How to apply:** Use IBG to discover carriers and upstream sources, then revalidate current departures, precise boarding points and holiday exceptions separately. Establish dataset/carrier reuse terms rather than assuming the article's license automatically covers all source data.
 
-When adding IBG to the app, keep it a labeled research-reference source isolated from current predictions. Newer verified Martz and Trans-Bridge records take precedence in primary browsing.
+IBG is an offline research archive only, not a rider-facing integration. Do not re-enable its stops, routes, historical timetables, provider enrichment or automatic imports merely by labeling them as research.
 
-**Why:** The actual archive contains calendars spanning 2010–2035 despite much older collection dates, and its processing can alter timezones, one-day service and geometry. Import time cannot establish source freshness.
+**Why:** The owner requested removal of the integration, not just removal of research labels. The archive contains calendars spanning 2010–2035 despite older collection dates and can alter timezones, one-day service and geometry.
 
-**How to apply:** Preserve historical dates and source attribution; do not shift encoded schedules into today or create moving vehicles. Revalidation is required before any subset becomes a current timetable source.
+**How to apply:** Retain snapshots, audit documents and offline validation without serving them to riders. Preserve independently verified carrier schedules and independently sourced Transitland services, even for carriers represented in IBG.
 
 Research-reference labeling does not make a stop suitable for nearby rider results.
 

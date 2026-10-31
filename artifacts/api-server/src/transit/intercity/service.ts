@@ -8,9 +8,7 @@ import { MARTZ_URL, providerInventory } from "./providers";
 import { parseMartz, holidayDate, printedInstant, type MartzDataset } from "./martz";
 import { documentCatalog,documentIntercityDepartures,nearbyDocumentProviders,documentServiceStatus,documentArrivals,documentRoute,documentTimetable,isDocumentId } from "./uploaded-service";
 import { WALL_CLOSURE,VERIFIED_AT } from "./uploaded-data";
-import { mergeIbgProviders } from "./ibg-store";
-import { primaryIbgCatalog } from "./ibg-browse";
-import { isIbgId,nearbyIbg } from "./ibg-model";
+import { isRetiredResearchId } from "./retired";
 
 const DATA_ID = "intercity:martz", ERROR_ID = "intercity:martz:error";
 const MAX_AGE = 72 * 3600000;
@@ -83,7 +81,7 @@ export function refreshIntercity() {
 }
 export async function intercityProviders() {
   const data=await dataset();
-  return mergeIbgProviders(providerInventory.map(p=>p.id==="transbridge"?{...p,status:"imported · schedules + verified holidays",updatedAt:VERIFIED_AT,
+  return providerInventory.map(p=>p.id==="transbridge"?{...p,status:"imported · schedules + verified holidays",updatedAt:VERIFIED_AT,
     access:"15 user-supplied carrier PDFs checked against current official schedules, holiday notices and stop-location links.",
     description:"Allentown/Clinton/NYC, Doylestown/Flemington/NYC, Newark Airport, Wind Creek and Wall Street. Regular weekday/weekend calendars and exact November 26–27, 2026 holiday replacements; duplicate airport/casino extracts do not create extra buses. "+WALL_CLOSURE}:
     p.id==="nj-transit"?{...p,status:"imported · local routes 890/891 only",updatedAt:VERIFIED_AT,
@@ -95,7 +93,7 @@ export async function intercityProviders() {
     updatedAt:data?.fetchedAt,lastError,
     access:"Public factual timetable rows; robots allow public paths; ticket terms reviewed. No booking data scraped.",
     description:p.description+` ${data?.trips.length||0} validated recurring trips; ${data?.omittedTrips||0} special/ambiguous rows omitted. Holidays require carrier confirmation. Address-level map points, not exact boarding GPS.`,
-  }));
+  });
 }
 function routeFor(t:MartzDataset["trips"][number]):TransitRoute {
   return {id:t.id,name:`Martz ${t.number}`,longName:`${boardingPoints[t.points[0].code].name} → ${boardingPoints[t.points.at(-1)!.code].name}`,
@@ -103,8 +101,7 @@ function routeFor(t:MartzDataset["trips"][number]):TransitRoute {
 }
 export async function intercityCatalog() {
   const data=await dataset();
-  const originalDocuments=documentCatalog(),reference=await primaryIbgCatalog();
-  const documents={routes:[...originalDocuments.routes,...reference.routes],stops:[...originalDocuments.stops,...reference.stops],coverageWarning:reference.coverageWarning};
+  const documents=documentCatalog();
   if(!usable(data))return documents;
   const routes=data!.trips.map(routeFor);
   const stops:TransitStop[]=Object.entries(boardingPoints).flatMap(([code,p])=>{
@@ -115,7 +112,7 @@ export async function intercityCatalog() {
       neighborhood:p.address,
     }];
   });
-  return {routes:[...routes,...documents.routes],stops:[...stops,...documents.stops],coverageWarning:documents.coverageWarning};
+  return {routes:[...routes,...documents.routes],stops:[...stops,...documents.stops]};
 }
 async function martzDepartures(p:{lat:number;lon:number;provider?:string;date:string;from?:string}) {
   const data=await dataset(),allProviders=await intercityProviders();
@@ -165,8 +162,7 @@ async function martzDepartures(p:{lat:number;lon:number;provider?:string;date:st
 export async function intercityDepartures(p:{lat:number;lon:number;provider?:string;date:string;from?:string}) {
   const original=await martzDepartures(p),all=await intercityProviders();
   const extraIds=nearbyDocumentProviders(p.lat,p.lon);
-  const reference=await primaryIbgCatalog(),referenceIds=nearbyIbg(reference.stops,p.lat,p.lon);
-  const providers=all.filter(v=>extraIds.includes(v.id)||referenceIds.has(v.id)||original.providers.some(s=>s.id===v.id));
+  const providers=all.filter(v=>extraIds.includes(v.id)||original.providers.some(s=>s.id===v.id));
   const documents=documentIntercityDepartures(p);
   const departures=[...(p.provider&&p.provider!=="martz"?[]:original.departures),...documents]
     .sort((a,b)=>Date.parse(a.time)-Date.parse(b.time)).slice(0,100);
@@ -175,12 +171,10 @@ export async function intercityDepartures(p:{lat:number;lon:number;provider?:str
   const message=p.provider==="transbridge"||extraIds.length>0&&original.providers.length===0?
     (notice||"Trans-Bridge published schedules: Allentown/Clinton, Doylestown/Flemington, Newark Airport, Wind Creek and Wall Street. Weekday/weekend calendars and verified November 26–27 replacements. Drop-off-only and untimed/reservation-only stops are not boarding predictions. Confirm gates and terminal pickup locations."):
     original.message+(transbridgeHere?` Trans-Bridge: ${notice||"Published regular and verified November 26–27 holiday schedules are imported."}`:"");
-  const archiveNotice=referenceIds.size&&(!p.provider||referenceIds.has(p.provider))?
-    " IBG research stops/routes and historical timetables are also available here. Their older calendars are never used as verified upcoming departures. Open a research stop or route to browse its historical timetable.":"";
-  return {...original,providers,departures,message:message+archiveNotice+(reference.coverageWarning?` ${reference.coverageWarning}`:""),updatedAt:documents.length||p.provider==="transbridge"?VERIFIED_AT:original.updatedAt};
+  return {...original,providers,departures,message,updatedAt:documents.length||p.provider==="transbridge"?VERIFIED_AT:original.updatedAt};
 }
 export async function intercityArrivals(stop:TransitStop,now=Date.now()):Promise<Arrival[]> {
-  if(isIbgId(stop.id))return [];
+  if(isRetiredResearchId(stop.id))return [];
   if(isDocumentId(stop.id))return documentArrivals(stop,now);
   const d=DateTime.fromMillis(now,{zone:ZONE});
   const result=await intercityDepartures({lat:stop.lat,lon:stop.lon,date:d.toISODate()!,from:d.toFormat("HH:mm")});
@@ -191,6 +185,7 @@ export async function intercityArrivals(stop:TransitStop,now=Date.now()):Promise
   }));
 }
 export async function intercityRoute(id:string) {
+  if(isRetiredResearchId(id))return;
   if(isDocumentId(id))return documentRoute(id);
   const data=await dataset(),catalog=await intercityCatalog();
   const trip=data?.trips.find(t=>t.id===id),route=catalog.routes.find(r=>r.id===id);
@@ -199,6 +194,8 @@ export async function intercityRoute(id:string) {
     directions:[boardingPoints[trip.points.at(-1)!.code].name]};
 }
 export async function intercityTimetable(p:{stopId?:string;routeId?:string;direction?:string;date:string;from?:string;offset?:number;limit?:number}) {
+  if(isRetiredResearchId(p.stopId)||isRetiredResearchId(p.routeId))
+    return {departures:[],total:0,offset:p.offset||0,limit:p.limit||40,date:p.date,message:"This service is not imported. Check coverage in Settings."};
   if(isDocumentId(p.stopId)||isDocumentId(p.routeId))return documentTimetable(p);
   const code=p.stopId?.slice("martz:".length),data=await dataset();
   const trip=data?.trips.find(t=>t.id===p.routeId);

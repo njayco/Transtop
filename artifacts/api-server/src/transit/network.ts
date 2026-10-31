@@ -10,6 +10,7 @@ import { coverage } from "./transitland/client";
 import * as tfl from "./tfl/service";
 import { isTfl } from "./tfl/model";
 import { preferDirect, resultRouteAliases } from "./tfl/crosswalk";
+import { isRetiredResearchId } from "./intercity/retired";
 const broadway=[[-73.9956,40.7304],[-73.9906,40.7357],[-73.989,40.7429],[-73.987,40.7496],[-73.9868,40.7547],[-73.9807,40.7647],[-73.9819,40.7681],[-73.9819,40.7756]];
 const seventh=[[-74.0021,40.7334],[-74.0002,40.7378],[-73.9959,40.7441],[-73.9911,40.7504],[-73.9875,40.7553],[-73.9841,40.7617],[-73.9819,40.7681]];
 const sixth=[[-73.9961,40.7323],[-73.9945,40.7382],[-73.9928,40.7429],[-73.9878,40.7497],[-73.9846,40.7542],[-73.9813,40.7587],[-73.9775,40.7639]];
@@ -53,13 +54,14 @@ async function catalogGeometry() {
     ]);
     const lines: Line[] = [], missing = new Map<string, TransitRoute>();
     for (const r of rows) {
+      if(isRetiredResearchId(r.route.id))continue;
       const shape = r.shape?.coordinates as number[][] | undefined;
       if (!shape || shape.length < 2 || !shape.every(p => p.length >= 2 && p.every(Number.isFinite) && Math.abs(p[0]) <= 180 && Math.abs(p[1]) <= 90)) {
         missing.set(r.route.id, r.route); continue;
       }
       lines.push({ route: r.route, shape, shapeId: `${r.route.id}:${r.shape_id}`, bounds: boundsOf(shape) });
     }
-    cached = { generation, lines, stops: ss.map(s => s.data), missing: [...missing.values()] };
+    cached = { generation, lines, stops: ss.map(s => s.data).filter(s=>!isRetiredResearchId(s.id)), missing: [...missing.values()] };
     return cached;
   })().finally(() => { inflight = undefined; });
   return inflight;
@@ -106,32 +108,31 @@ export async function network(p: NetworkQuery) {
     if (lines.length >= 600 || points + shape.length > 180000) continue;
     lines.push({ route: l.route, shape, shapeId: l.shapeId, vehicles: [] }); points += shape.length;
   }
-  const extra=mode==="live"?await intercityCatalog():{routes:[],stops:[],coverageWarning:""};
+  const extra=mode==="live"?await intercityCatalog():{routes:[],stops:[]};
   const london=mode==="live"&&zoom>=13?await tfl.discover(p,b):undefined;
   const globalParts=mode==="live"&&zoom>=11?await Promise.all(splitBounds(b).map(part=>globalNetwork(part,p,
     unique([...catalog.lines.map(l=>l.route),...catalog.missing,...extra.routes])))):[];
   const globalStops=unique(globalParts.flatMap(g=>g.stops));
-  const localReferenceRoutes=new Set(extra.stops.filter(s=>contains(b,s.lon,s.lat)).flatMap(s=>s.routes.map(r=>r.id)));
-   const ss = zoom >= 13 || p.routeId ? preferDirect([...catalog.stops,...extra.stops,...globalStops,...(london?.stops||[])]).filter(s => !s.parent && Number.isFinite(s.lat) && Number.isFinite(s.lon) &&
-    (p.routeId || contains(b, s.lon, s.lat)) && s.routes.some(matches)).map(s => ({
-      id: s.id, name: s.name, lat: s.lat, lon: s.lon, type: s.type, routes: s.routes.filter(matches),
-    })) : [];
   const aliases=resultRouteAliases(globalStops,london?.stops||[]);
   const canonical=(r:TransitRoute)=>london?.routes.find(d=>d.id===aliases.get(r.id));
   const globalLines=unique(globalParts.flatMap(g=>g.lines).map(l=>{
     const official=canonical(l.route);
     return {...l,id:l.shapeId,...(official?{route:{...official,transitland:l.route.transitland}}:{})};
   }));
+   const ss = zoom >= 13 || p.routeId ? preferDirect([...catalog.stops,...extra.stops,...globalStops,...(london?.stops||[])]).filter(s => !s.parent && Number.isFinite(s.lat) && Number.isFinite(s.lon) &&
+    (p.routeId || contains(b, s.lon, s.lat)) && s.routes.some(matches)).map(s => ({
+      id: s.id, name: s.name, lat: s.lat, lon: s.lon, type: s.type, routes: s.routes.filter(matches),
+    })) : [];
   return {
     lines:[...lines,...globalLines], stops: ss.slice(0, 500), totalLines: visible.length+globalLines.length, totalStops: ss.length,tfl:london?.tfl,
     truncated: lines.length < visible.length || ss.length > 500 || globalParts.some(g=>g.globalCoverage.hasMore||g.missing.length),
     globalCoverage:globalParts.length>1?{...globalParts[0].globalCoverage,cursor:undefined,
       hasMore:globalParts.some(g=>g.globalCoverage.hasMore),message:"Date-line view combines both hemispheres. Narrow to one side to page a partial source result."}:globalParts[0]?.globalCoverage,
-    missingGeometry: unique([...catalog.missing,...(london?.routes||[]),...extra.routes.filter(r=>!r.id.startsWith("ibg:")||localReferenceRoutes.has(r.id)),...globalParts.flatMap(g=>g.missing).map(r=>canonical(r)||r)])
+    missingGeometry: unique([...catalog.missing,...(london?.routes||[]),...extra.routes,...globalParts.flatMap(g=>g.missing).map(r=>canonical(r)||r)])
       .filter(r=>matches(r)&&!globalLines.some(l=>l.route.id===r.id)), busDetailZoom: 12, stopsZoom: 13,
     generation: catalog.generation,
     message: mode === "demo" ? "Demo sample paths, not official service coverage." :
-      "Official GTFS route paths, not live movement. Bus detail at zoom 12+; stops at zoom 13+. Missing geometry lists routes with at least one unavailable pattern. Only imported operators are covered; private services and unimported operators are not included."+(extra.coverageWarning?` ${extra.coverageWarning}`:""),
+      "Official GTFS route paths, not live movement. Bus detail at zoom 12+; stops at zoom 13+. Missing geometry lists routes with at least one unavailable pattern. Only imported operators are covered; private services and unimported operators are not included.",
   };
 }
 export { mapVehicles };

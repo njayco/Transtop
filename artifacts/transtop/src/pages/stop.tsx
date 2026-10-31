@@ -61,7 +61,7 @@ export default function StopPage() {
       <div className="grid gap-6 p-4 md:grid-cols-[1fr_340px] md:p-8">
         <div className="space-y-6">
           {q.isLoading && <SkeletonCards n={3} />}
-          {q.isError && <ErrorState title="Could not load this stop" detail={stopId.startsWith('tfl:')?tflErrorDetail(q.error):undefined} onRetry={() => q.refetch()} />}
+          {q.isError && <ErrorState title={q.error?.status === 404 ? "Stop unavailable" : "Could not load this stop"} detail={q.error?.status === 404 ? "This stop is not available in the current coverage. Browse nearby services or check coverage in Settings." : stopId.startsWith('tfl:') ? tflErrorDetail(q.error) : undefined} onRetry={q.error?.status === 404 ? undefined : () => q.refetch()} />}
           {stop && stop.alerts.length > 0 && <div className="space-y-2">{stop.alerts.map((a) => <AlertRow key={a.id} alert={a} />)}</div>}
           {stop && groups.length === 0 && (
             <div className="rounded-2xl border border-dashed border-border p-8 text-center">
@@ -93,7 +93,7 @@ export default function StopPage() {
           ))}
           {stop&&<TransitlandDetails info={stop.transitland}/>}
           <TflDetails info={stop?.tfl} />
-          {stop?.tfl?<p className="text-xs text-muted-foreground">TfL predictions are not a dated timetable. A missing prediction does not mean service has stopped.</p>:stop?.id.startsWith('ibg:')?<TimetablePanel stopId={stop.id} referenceDate={stop.routes[0]?.referenceDate} title="IBG research timetable"/>:stop?.type==='intercity'&&!stop.transitland?<IntercityModule center={{lat:stop.lat,lon:stop.lon}} provider={providerFor(undefined, stop.id)} stopId={stop.id}/>:stop&&<TimetablePanel stopId={stop.id} timezone={stop.transitland?.timezone} title="Timetable for any date" />}
+          {stop?.tfl?<p className="text-xs text-muted-foreground">TfL predictions are not a dated timetable. A missing prediction does not mean service has stopped.</p>:stop?.type==='intercity'&&!stop.transitland?<IntercityModule center={{lat:stop.lat,lon:stop.lon}} provider={providerFor(undefined, stop.id)} stopId={stop.id}/>:stop&&<TimetablePanel stopId={stop.id} timezone={stop.transitland?.timezone} title="Timetable for any date" />}
           {stop && <p className="text-xs text-muted-foreground">Stop data updated {ago(stop.updatedAt)}. Times refresh every 30 seconds while open.</p>}
         </div>
         <aside className="space-y-4">

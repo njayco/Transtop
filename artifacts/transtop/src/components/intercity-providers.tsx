@@ -10,7 +10,7 @@ export function IntercityProviderList() {
   const list = [...(q.data ?? [])].sort((a, b) => a.name.localeCompare(b.name));
   return (
     <div className="space-y-2" data-testid="section-intercity-providers">
-      <p className="text-sm text-muted-foreground">{INTERCITY_LABEL}: {list.length || 'all'} providers. {list.some(p=>p.description.includes('IBG research reference'))&&'Includes the 72-agency IBG research dataset, with brand aliases combined. '}Times imported indicates provider timetables; Research reference indicates older stops, routes and historical timetables—not verified current service.</p>
+      <p className="text-sm text-muted-foreground">{INTERCITY_LABEL}: {list.length || 'all'} providers. Times imported indicates available provider timetables. Coverage is incomplete; providers without imported times remain linked for carrier confirmation.</p>
       {q.isLoading && [0, 1, 2].map((i) => <div key={i} className="skel h-20" />)}
       {q.isError && <ErrorState title="Intercity provider list unavailable" onRetry={() => q.refetch()} />}
       <ul className="space-y-2">

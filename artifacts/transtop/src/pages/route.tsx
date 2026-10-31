@@ -52,7 +52,7 @@ export default function RoutePage() {
         <div className="md:hidden"><LiveIndicator compact /></div>
       </div>
       {q.isLoading && <SkeletonCards n={2} />}
-      {q.isError && <ErrorState title="Could not load this route" detail={routeId.startsWith('tfl:')?tflErrorDetail(q.error):undefined} onRetry={() => q.refetch()} />}
+      {q.isError && <ErrorState title={q.error?.status === 404 ? "Route unavailable" : "Could not load this route"} detail={q.error?.status === 404 ? "This route is not available in the current coverage. Browse nearby services or check coverage in Settings." : routeId.startsWith('tfl:') ? tflErrorDetail(q.error) : undefined} onRetry={q.error?.status === 404 ? undefined : () => q.refetch()} />}
       {d && (
         <>
           <header className="rise mt-2 flex items-center gap-4">
@@ -140,7 +140,7 @@ export default function RoutePage() {
                 <p className="mt-2 text-xs text-muted-foreground">Individual riders are never shown. Updated {ago(vehicles[0]?.updatedAt)}.</p>
               </div>
               <TflDetails info={d.route.tfl} />
-              {!d.route.tfl&&(d.route.id.startsWith('ibg:')?<TimetablePanel key={d.route.id} routeId={d.route.id} referenceDate={d.route.referenceDate} stopOptions={d.timetableStops?.map(s=>({id:s.id,name:s.name}))} direction={activeDir} color={color} title="IBG research timetable"/>:d.route.type==='intercity'&&!d.route.transitland?<IntercityModule key={d.route.id} center={center} provider={providerFor(d.route.agencyId, d.route.id)} routeId={d.route.id}/>:<TimetablePanel key={d.route.id} routeId={d.route.id} timezone={d.route.transitland?.timezone} stopOptions={d.route.transitland?d.stops.map(s=>({id:s.id,name:s.name})):d.timetableStops?.map((s) => ({ id: s.id, name: s.name }))} direction={activeDir} color={color} title={activeDir ? `Timetable · ${activeDir}` : 'Timetable'} />)}
+              {!d.route.tfl&&(d.route.type==='intercity'&&!d.route.transitland?<IntercityModule key={d.route.id} center={center} provider={providerFor(d.route.agencyId, d.route.id)} routeId={d.route.id}/>:<TimetablePanel key={d.route.id} routeId={d.route.id} timezone={d.route.transitland?.timezone} stopOptions={d.route.transitland?d.stops.map(s=>({id:s.id,name:s.name})):d.timetableStops?.map((s) => ({ id: s.id, name: s.name }))} direction={activeDir} color={color} title={activeDir ? `Timetable · ${activeDir}` : 'Timetable'} />)}
             </aside>
           </div>
         </>
