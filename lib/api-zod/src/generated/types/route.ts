@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { IdfmInfo } from './idfmInfo';
+import type { MobilityInfo } from './mobilityInfo';
 import type { OdptInfo } from './odptInfo';
 import type { RouteServiceClass } from './routeServiceClass';
 import type { RouteType } from './routeType';
@@ -12,6 +13,7 @@ import type { TflInfo } from './tflInfo';
 import type { TransitlandInfo } from './transitlandInfo';
 
 export interface Route {
+  mobility?: MobilityInfo;
   idfm?: IdfmInfo;
   odpt?: OdptInfo;
   tfl?: TflInfo;

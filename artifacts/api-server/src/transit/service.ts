@@ -38,6 +38,8 @@ import { primEnabled } from "./idfm/prim-model";
 import * as wmata from "./wmata/realtime";
 import { isWmata,boarding,applies as wmataApplies } from "./wmata/model";
 import { setupStatus as wmataSetup,dailyLimit as wmataLimit } from "./wmata/client";
+import { discoverRegion, recordFor } from "./mobility/registry";
+import { enabled as mobilityEnabled } from "./mobility/client";
 
 let stopCache:{at:number;demo:TransitStop[];live:TransitStop[]}|undefined;
 export async function allStops(mode:Mode) {
@@ -46,7 +48,7 @@ export async function allStops(mode:Mode) {
     stopCache={at:Date.now(),demo:data.filter(s=>s.mode==="demo").map(s=>s.data as TransitStop),
       live:data.filter(s=>s.mode==="live").map(s=>s.data as TransitStop)};
   }
-  return mode==="live"?[...stopCache.live.filter(s=>!s.odpt||odptEnabled()),...(await intercityCatalog()).stops]:stopCache[mode];
+  return mode==="live"?[...stopCache.live.filter(s=>(!s.odpt||odptEnabled())&&(!s.mobility||mobilityEnabled())),...(await intercityCatalog()).stops]:stopCache[mode];
 }
 export async function trackedVehicles(mode:Mode="live",bounds?:{west:number;east:number;south:number;north:number},routeId?:string){
   if(mode==="demo")return [];
@@ -61,10 +63,10 @@ export function officialArrivals(stop:TransitStop,now=Date.now()) {
       const t=e.tripUpdate;if(!t?.trip)continue;
       if(agency==="mta-bus"&&(!t.timestamp||now-Number(t.timestamp)*1000>60000||Number(t.timestamp)*1000>now+30000))continue;
       const trip=t.trip, tripId=`${agency}:${trip.tripId}`;
-      if(trip.scheduleRelationship===3||trip.scheduleRelationship===7){excluded.add(tripId);continue;}
+      if(trip.scheduleRelationship===3||trip.scheduleRelationship===7){excluded.add(stop.mobility?`${tripId}|date:${trip.startDate}`:tripId);continue;}
       for(const st of t.stopTimeUpdate||[]){
-        const matches=st.stopId===raw||!stop.odpt&&(st.stopId===raw+"N"||st.stopId===raw+"S");
-        if(st.scheduleRelationship===1){excluded.add(`${tripId}|${st.stopId}`);continue;}
+        const matches=st.stopId===raw||!stop.mobility&&!stop.odpt&&(st.stopId===raw+"N"||st.stopId===raw+"S");
+        if(st.scheduleRelationship===1){excluded.add(stop.mobility?`${tripId}|${st.stopId}|date:${trip.startDate}`:`${tripId}|${st.stopId}`);continue;}
         if(st.scheduleRelationship===2){if(stop.odpt)excluded.add(`${tripId}|${st.stopId}`);continue;}
         if(!matches)continue;
         const when=Number(st.arrival?.time||st.departure?.time);
@@ -72,11 +74,11 @@ export function officialArrivals(stop:TransitStop,now=Date.now()) {
         const route=stop.routes.find(r=>r.id===`${agency}:${trip.routeId}`);
         if(!route)continue;
         const north=st.stopId.endsWith("N");
-        const direction=stop.odpt?(t.transtopHeadsign||`Direction ${trip.directionId??"not supplied"}`):agency==="mta-subway"?(north?"Uptown":"Downtown"):agency==="mta-bus"?(trip.directionId===1?"Downtown":"Uptown"):(trip.directionId===1?"Inbound":"Outbound");
-        const destination=stop.odpt?st.transtopHeadsign||t.transtopHeadsign||direction:agency==="mta-subway"?(north?"Uptown & The Bronx / Queens":"Downtown & Brooklyn"):trip.transtopHeadsign|| (agency==="mta-bus"?`${route.name} · direction ${trip.directionId??"not reported"}`:direction);
+        const direction=stop.mobility||stop.odpt?(t.transtopHeadsign||`Direction ${trip.directionId??"not supplied"}`):agency==="mta-subway"?(north?"Uptown":"Downtown"):agency==="mta-bus"?(trip.directionId===1?"Downtown":"Uptown"):(trip.directionId===1?"Inbound":"Outbound");
+        const destination=stop.mobility||stop.odpt?st.transtopHeadsign||t.transtopHeadsign||direction:agency==="mta-subway"?(north?"Uptown & The Bronx / Queens":"Downtown & Brooklyn"):trip.transtopHeadsign|| (agency==="mta-bus"?`${route.name} · direction ${trip.directionId??"not reported"}`:direction);
         arrivals.push({id:`live:${tripId}:${st.stopId}`,routeId:route.id,routeName:route.name,color:route.color,direction,destination,
-          minutes:Math.max(0,Math.ceil((when*1000-now)/60000)),source:"live",updatedAt:new Date((stop.odpt?Number(t.timestamp):f.timestamp)*1000).toISOString(),
-          status:"Live agency prediction",scheduledAt:new Date(when*1000).toISOString(),tripId,...(stop.odpt?{timezone:stop.odpt.timezone,expiresAt:new Date(Math.min(Number(t.timestamp),f.timestamp)*1000+60000).toISOString()}:{})});
+          minutes:Math.max(0,Math.ceil((when*1000-now)/60000)),source:"live",updatedAt:new Date((stop.mobility||stop.odpt?Number(t.timestamp):f.timestamp)*1000).toISOString(),
+          status:"Live agency prediction",scheduledAt:new Date(when*1000).toISOString(),tripId,...(stop.mobility||stop.odpt?{timezone:stop.mobility?.timezone||stop.odpt!.timezone,expiresAt:new Date(Math.min(Number(t.timestamp),f.timestamp)*1000+60000).toISOString()}:{})});
       }
     }
   }
@@ -92,7 +94,7 @@ export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<Tran
   if(isTransitland(stop.id))return deep?globalEnrich(stop):stop;
   if(stop.id.startsWith("amtrak:"))return {...stop,arrivals:await amtrakArrivals(stop)};
   if(isDocumentId(stop.id))return {...stop,arrivals:documentArrivals(stop)};
-  if(stop.type==="intercity")return {...stop,arrivals:await intercityArrivals(stop)};
+  if(stop.type==="intercity"&&!stop.mobility)return {...stop,arrivals:await intercityArrivals(stop)};
   if(isWmata(stop.id)){
     const all=await allStops("live"),children=all.filter(s=>s.parent===stop.rawId&&isWmata(s.id));
     if(deep)await wmata.refresh(stop.routes.map(r=>r.type).filter((t):t is "bus"|"subway"=>t==="bus"||t==="subway"));
@@ -110,7 +112,9 @@ export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<Tran
       enriched.wmata!.access=await stationAccess(stop);
     return enriched;
   }
-  const {arrivals:official,excluded}=officialArrivals(stop);
+  const mobilityChildren=stop.mobility&&!stop.parent?(await allStops("live")).filter(s=>s.mobility?.feedId===stop.mobility!.feedId&&s.parent===stop.rawId):[];
+  const observations=[stop,...mobilityChildren].map(s=>officialArrivals(s));
+  const official=observations.flatMap(o=>o.arrivals),excluded=new Set(observations.flatMap(o=>[...o.excluded]));
   const community=deep?await communityArrivals(stop):[];
   const schedule=official.length>=3&&!deep?[]:await scheduledArrivals(stop,excluded);
   // Official predictions always win per trip; a community estimate can only
@@ -171,10 +175,11 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
   }
   const paris=mode==="live"?await parisStops({...params,q:foundPlace?undefined:q,lat,lon},
     {south:lat-.10,north:lat+.10,west:lon-.15,east:lon+.15},80):{stops:[],total:0};
-  let rows=[...all,...paris.stops].filter(s=>(!s.parent||isIdfm(s.id)||isWmata(s.id))&&boarding(s)&&s.routes.length&&(!params.type||params.type==="all"||s.routes.some(r=>r.type===params.type))&&
+  let rows=[...all,...paris.stops].filter(s=>(!s.parent||s.mobility||isIdfm(s.id)||isWmata(s.id))&&boarding(s)&&s.routes.length&&(!params.type||params.type==="all"||s.routes.some(r=>r.type===params.type))&&
     (!params.agency||s.id.split(":")[0]===params.agency||s.routes.some(r=>r.agencyId===params.agency))&&(!params.serviceClass||params.serviceClass==="all"||s.routes.some(r=>r.serviceClass===params.serviceClass)));
   const exact=q?rows.find(s=>s.name.toLowerCase().includes(q)):undefined;
   if(exact&&!foundPlace){lat=exact.lat;lon=exact.lon;}
+  if(mode==="live"&&!params.agency)discoverRegion(lat,lon);
   const london=mode==="live"&&!onlyParis?await tfl.discover({...params,...(q&&!foundPlace&&!exact?{q}:{q:undefined,lat,lon})}):undefined;
   if(london?.stops.length&&q&&!foundPlace&&!exact){lat=london.stops[0].lat;lon=london.stops[0].lon;}
   const foreign=mode==="live"&&!onlyParis?await discover({
@@ -223,6 +228,7 @@ export async function routeDetail(id:string,mode:Mode,direction?:string,lookupGl
   if(isRetiredResearchId(id))return;
   if(mode==="live"&&isIdfm(id))return parisRoute(id,direction);
   if(odptSource(id.split(":")[0])&&!odptEnabled())return;
+  if(id.startsWith("mobility-")&&!mobilityEnabled())return;
   if(mode==="live"&&isTfl(id))return tfl.route(id,direction);
   // Saved worldwide route links always keep their source, even after exact
   // stop matches elsewhere or when TfL is disabled/unavailable.
@@ -235,7 +241,7 @@ export async function routeDetail(id:string,mode:Mode,direction?:string,lookupGl
   if(agency==="wmata"&&(route.type==="bus"||route.type==="subway"))await wmata.refresh([route.type]);
   if(agency==="wmata")route.scheduleNotes=[...(route.scheduleNotes||[]),
     `Predictions: ${wmata.state(route.type==="bus"?"bus-predictions":"rail-predictions")}. Alerts: ${wmata.state(route.type==="bus"?"bus-alerts":"rail-alerts")}. Missing or expired predictions are withheld; predictions never generate vehicle GPS.`];
-  let ss=(await allStops(mode)).filter(s=>!s.parent&&s.routes.some(r=>r.id===id)),shape:number[][]=[];
+  let ss=(await allStops(mode)).filter(s=>(!s.parent||s.mobility)&&s.routes.some(r=>r.id===id)),shape:number[][]=[];
   let directions=route.type==="rail"?["Outbound","Inbound"]:["Uptown","Downtown"];
   if(mode==="demo"){
     ss=ss.sort((a,b)=>a.lat-b.lat);
@@ -283,7 +289,7 @@ export async function sources() {
       description:a.setup+" Imported IDFM records and inventory are withheld until owner public-use confirmation.",
       routeCount:0,stopCount:0,url:a.documentation,updatedAt:null,
     };
-    const sourceToday=odptSource(a.id)?DateTime.now().setZone("Asia/Tokyo").toFormat("yyyyMMdd"):a.id==="idfm"?DateTime.now().setZone(IDFM_ZONE).toFormat("yyyyMMdd"):today;
+    const sourceToday=a.mobility?DateTime.now().setZone(a.mobility.timezone).toFormat("yyyyMMdd"):odptSource(a.id)?DateTime.now().setZone("Asia/Tokyo").toFormat("yyyyMMdd"):a.id==="idfm"?DateTime.now().setZone(IDFM_ZONE).toFormat("yyyyMMdd"):today;
     const imp=imports.find(i=>i.id===`${a.id}:static`),health=feedStatus(a.id),data=imp?.data;
     const lastError=imports.find(i=>i.id===`${a.id}:import-error`);
      const amtrak=a.id==="amtrak"?amtrakHealth():undefined;
@@ -292,10 +298,10 @@ export async function sources() {
       a.id==="idfm"&&!idfmEnabled()?"disabled / public compliance pending":odptSource(a.id)&&!odptEnabled()?"disabled":!imp?(a.staticUrl?"not imported":a.status):(a.id==="idfm"?expiredEdition(data):data?.serviceEnd&&data.serviceEnd<sourceToday)?"expired schedules":
       data?.components?.some((c:any)=>c.serviceEnd<today)?"partial schedules":
        data?.serviceStart&&data.serviceStart>today?"future schedules":amtrak?.fresh?"schedules + live train reports":
-        health.fresh?(odptSource(a.id)?"schedules + fresh realtime feed":"schedules + live predictions"):
+        health.fresh?(a.mobility||odptSource(a.id)?"schedules + fresh realtime feed":"schedules + live predictions"):
         a.id==="idfm"&&primEnabled()?"schedules + PRIM on demand":"scheduled only";
     const failed=lastError&&(!data||lastError.data.at>data.importedAt)?lastError.data.message:undefined;
-    return {id:a.id,agency:a.name,type:a.type,status,description:a.setup+
+    return {id:a.id,agency:a.name,type:a.mobility?(data?.routeTypes?.[0]||a.type):a.type,modes:data?.routeTypes,status:a.mobility&&!mobilityEnabled()?"disabled":status,description:a.setup+
       (a.id==="wmata"?` Per-capability status: ${wmataHealth}. Local allowance ${wmataLimit()} requests/day in this environment; total capped at 5,000 with 10% development / 90% production reservation. Empty means a valid empty source response, not an outage or no scheduled service. See stop details for source freshness.`:"")+
       (a.id==="idfm"&&data?` Source publication ${data.lastModified}; last checked ${data.checkedAt}. Imported native route types/counts: ${JSON.stringify(Object.fromEntries(counts.filter(c=>c.agency==="idfm"&&c.kind.startsWith("native:")).map(c=>[c.kind.slice(7),c.count])))}. Supplied commercial agency networks (not a carrier-completeness guarantee): ${JSON.stringify(data.operators)}. Route details identify supplied operators from source attributions. Native legend: 0 tramway, 1 Métro, 2 RER/Transilien/TER train, 3 bus; type 3 does not reliably distinguish coaches. Exclusions by native type or demand-response: ${JSON.stringify(data.exclusions)}. Regional pages and shapes are capped; narrow the viewport or choose IDFM in Search. Published timetables remain scheduled; PRIM stop predictions are checked separately. No vehicle GPS. Rail accessibility can require assistance/reservation; unknown platform/accessibility remains unknown.`:"")+
       (data?.odpt?` Published ${data.odpt.publishedAt}; edition ${data.odpt.version}; resource valid ${data.odpt.validFrom}–${data.odpt.validThrough}. ${data.odpt.realtime}`:"")+

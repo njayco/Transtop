@@ -12,6 +12,16 @@ import { GetCatalogQueryParams,GetCatalogResponse,GetTimetableQueryParams,GetTim
 import { catalog,timetable } from "../transit/catalog";
 import { journeyLimit,planJourney,JourneyError } from "../transit/journeys";
 const router:IRouter=Router();
+import { GetMobilityFeedsQueryParams, GetMobilityFeedsResponse } from "@workspace/api-zod";
+import { catalog as mobilityCatalog } from "../transit/mobility/registry";
+router.get("/transit/mobility/feeds",async(req,res):Promise<void>=>{
+  const p=GetMobilityFeedsQueryParams.safeParse(req.query);
+  if(!p.success){res.status(400).json({error:"Select a two-letter country code, provider and valid catalog page"});return;}
+  try{
+    res.set("Cache-Control","no-store");
+    res.json(GetMobilityFeedsResponse.parse(await mobilityCatalog(p.data)));
+  }catch{res.status(503).json({error:"Mobility Database catalog unavailable or daily allowance reached. Existing transit data remains available."});}
+});
 import { GetIntercityProvidersResponse, GetIntercityDeparturesQueryParams, GetIntercityDeparturesResponse } from "@workspace/api-zod";
 import { intercityProviders, intercityDepartures } from "../transit/intercity/service";
 import { amtrakTrainDetail } from "../transit/amtrak-service";

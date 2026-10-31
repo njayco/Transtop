@@ -19,6 +19,8 @@ import { importIdfm } from "./idfm/import";
 import { download as wmataDownload, WMATA_CREDIT, WMATA_DOCS } from "./wmata/client";
 import { routeType as wmataType,locationInfo } from "./wmata/model";
 import { validateArchive as validateWmataArchive } from "./wmata/archive";
+import { routeMode } from "./mobility/model";
+import { download as mobilityDownload } from "./mobility/download";
 const tables=[agencies,routes,trips,stopTimes,calendars,calendarExceptions,shapes,stops];
 
 export async function importGtfs(agency:string) {
@@ -61,9 +63,9 @@ async function importLocked(agency:string) {
       realtime:odpt.realtime.length?"Sendai GTFS-Realtime: only fresh exact trip/route/stop matches; empty alerts are not service notices.":"Published schedules only; no verified realtime companion"};
   }
   for(const feed of a.staticFeeds||[{id:agency,url:a.staticUrl}]){
-  const selection=new GtfsSelection(a.staticAgencyIds,a.staticRouteTypes);
+  let selection=new GtfsSelection(a.staticAgencyIds,a.staticRouteTypes);
   const scope=(id:string)=>a.staticFeeds?`${feed.id}~${id}`:id;
-   const response=agency==="wmata"?new Response(new Uint8Array(await wmataDownload("static"))):
+   const response=a.mobility?new Response(new Uint8Array(await mobilityDownload(feed.url,20*1024*1024,60_000))):agency==="wmata"?new Response(new Uint8Array(await wmataDownload("static"))):
      odpt?new Response(new Uint8Array(await odptFetch(feed.url,odpt,"static"))):await fetch(feed.url,{signal:AbortSignal.timeout(120000),redirect:"error"});
   if(!response.ok)throw new Error(`GTFS download returned ${response.status}`);
   const chunks:Uint8Array[]=[]; let size=0;
@@ -75,17 +77,21 @@ async function importLocked(agency:string) {
   }
   const bytes=Buffer.concat(chunks);
   const zip=await Open.buffer(bytes);
+  if(a.mobility&&(zip.files.length>60||zip.files.reduce((n,f)=>n+f.uncompressedSize,0)>100*1024*1024))throw new Error("Mobility GTFS expanded archive exceeds capacity");
    if(agency==="wmata")validateWmataArchive(zip);
   if(odpt)validateArchive(zip);
   const translated=odpt?await translations(zip):()=>[] as string[];
   const file=(n:string)=>zip.files.find(f=>f.path===`${n}.txt`);
+  if(a.mobility&&file("frequencies")){
+    for await(const _row of file("frequencies")!.stream().compose(parse({columns:true,bom:true,skip_empty_lines:true})))throw new Error("Mobility frequency-based feeds require a dedicated timetable review");
+  }
   if(!file("stops")||!file("routes")||!file("trips")||!file("stop_times"))throw new Error("Required GTFS files missing");
    const tripRoute=new Map<string,string>(), shapeMap=new Map<string,number[][]>(),agencyNames=new Map<string,string>(),agencyZones=new Map<string,string>(),routeZones=new Map<string,string>();
    let maxDepartureSeconds=0;
   let serviceStart="",serviceEnd="";
   const feedInfo:Record<string,string>[]=[];
   const infoEntry=file("feed_info");
-   if(infoEntry)for await(const row of infoEntry.stream().compose(parse({columns:true,bom:true,skip_empty_lines:true,max_record_size:256*1024}))){
+   if(infoEntry)for await(const row of infoEntry.stream().compose(parse({columns:true,bom:true,trim:!!a.mobility,skip_empty_lines:true,max_record_size:256*1024}))){
      if(odpt&&feedInfo.length>=1000)throw new Error("ODPT feed metadata limit");
      feedInfo.push(row);
    }
@@ -96,13 +102,16 @@ async function importLocked(agency:string) {
        throw new Error("ODPT archive and catalog edition mismatch");
    }
   const agencyEntry=file("agency");
-   if(agencyEntry)for await(const row of agencyEntry.stream().compose(parse({columns:true,bom:true,skip_empty_lines:true,max_record_size:256*1024}))){
+  if(a.mobility&&!agencyEntry)throw new Error("Mobility GTFS agency metadata missing");
+   if(agencyEntry)for await(const row of agencyEntry.stream().compose(parse({columns:true,bom:true,trim:!!a.mobility,skip_empty_lines:true,max_record_size:256*1024}))){
     agencyNames.set(row.agency_id||"",row.agency_name||a.name);
      agencyZones.set(row.agency_id||"",row.agency_timezone);
+     if(a.mobility&&(!DateTime.now().setZone(row.agency_timezone).isValid||row.agency_timezone!==a.mobility.timezone))throw new Error("Mobility GTFS timezone must match the verified catalog; mixed-zone feeds require separate review");
      if(odpt&&row.agency_timezone!=="Asia/Tokyo")throw new Error("ODPT agency timezone missing or changed");
       if(agency==="wmata"&&row.agency_timezone!=="America/New_York")throw new Error("WMATA timezone missing or changed");
      if(odpt&&agencyZones.size>100)throw new Error("ODPT agency limit");
   }
+   if(a.mobility)selection=new GtfsSelection([...agencyNames.keys()],a.staticRouteTypes);
     const specs:[string,any,(r:Record<string,string>)=>string][]=[
       ["agency",agencies,r=>r.agency_id||agency],["routes",routes,r=>r.route_id],["trips",trips,r=>r.trip_id],
       ["calendar",calendars,r=>r.service_id],["calendar_dates",calendarExceptions,r=>r.service_id+":"+r.date],
@@ -110,7 +119,7 @@ async function importLocked(agency:string) {
     ];
     for(const [name,table,idOf] of specs) {
       const entry=file(name); if(!entry)continue;
-       const parser=entry.stream().compose(parse({columns:true,bom:true,skip_empty_lines:true,relax_column_count:true,max_record_size:256*1024}));
+       const parser=entry.stream().compose(parse({columns:true,bom:true,trim:!!a.mobility,skip_empty_lines:true,relax_column_count:true,max_record_size:256*1024}));
       let batch:any[]=[];
       let batchBytes=0;
       const flush=async()=>{if(batch.length){
@@ -119,9 +128,13 @@ async function importLocked(agency:string) {
         count+=batch.length;batch=[];batchBytes=0;
       }};
       for await(const row of parser) {
+         if(a.mobility&&count+batch.length>1000000)throw new Error("Mobility GTFS row capacity exceeded");
          if(odpt&&count+batch.length>1500000)throw new Error("ODPT record limit");
           if(agency==="wmata"&&count+batch.length>6000000)throw new Error("WMATA record limit");
          const r={...row} as Record<string,string>;
+         if(a.mobility&&(name==="agency"||name==="routes")){
+           r.agency_id=r.agency_id||[...agencyNames.keys()][0]||"";
+         }
          // Keep route/stop IDs stable across boroughs; scope trip, service and
          // shape IDs, which can collide between independently published feeds.
          for(const key of ["trip_id","service_id","shape_id"])if(r[key])r[key]=scope(r[key]);
@@ -142,11 +155,14 @@ async function importLocked(agency:string) {
               if(agencyZones.size!==1)throw new Error("ODPT route agency timezone unverified");
               r.agency_id=agencyZones.keys().next().value!;
             }
-            routeZones.set(r.route_id,agencyZones.get(r.agency_id||"")||"America/New_York");
+            if(a.mobility&&!agencyZones.has(r.agency_id||"")&&agencyZones.size!==1)throw new Error("Mobility route agency timezone is unverified");
+            routeZones.set(r.route_id,agencyZones.get(r.agency_id||"")||(a.mobility?agencyZones.values().next().value!:"America/New_York"));
+           if(a.mobility&&r.route_color&&!/^[a-f0-9]{6}$/i.test(r.route_color))r.route_color="468AC4";
            const name=a.routeName||r.route_short_name||r.route_long_name;
-            const type=agency==="wmata"?wmataType(r.route_type)!:a.type;
+            const type=a.mobility?routeMode(r.route_type)!:agency==="wmata"?wmataType(r.route_type)!:a.type;
             const express=type==="bus"&&isExpressRoute(agency,name,`${r.route_long_name} ${r.route_desc}`);
             const rr:TransitRoute={id:`${agency}:${r.route_id}`,name:agency==="wmata"&&type==="subway"?`${r.route_long_name} Line`:name,longName:a.routeName||r.route_long_name||name,color:"#"+(r.route_color||"468AC4"),type,agency:agencyNames.get(r.agency_id||"")||a.name,agencyId:agency,serviceClass:express?"express":"local"};
+            if(a.mobility){rr.mobility=a.mobility;rr.sourceUrl=a.mobility.url;rr.scheduleNotes=[a.mobility.attribution,`${a.mobility.license} · source downloaded ${a.mobility.downloadedAt}. Published schedules, not live predictions.`];}
             if(agency==="wmata"){rr.sourceUrl=WMATA_DOCS;rr.scheduleNotes=[WMATA_CREDIT,"Official WMATA combined GTFS · America/New_York. Published schedules, not live predictions."]; }
           allRoutes.set(r.route_id,rr);
            if(odptInfo){
@@ -182,7 +198,7 @@ async function importLocked(agency:string) {
       await flush();
       logger.info({agency,file:name,records:count},"GTFS import progress");
     }
-    const stopsParser=file("stops")!.stream().compose(parse({columns:true,bom:true,skip_empty_lines:true,max_record_size:256*1024}));
+    const stopsParser=file("stops")!.stream().compose(parse({columns:true,bom:true,trim:!!a.mobility,skip_empty_lines:true,max_record_size:256*1024}));
     for await(const r of stopsParser){
       if(odpt&&allStops.size>=100000)throw new Error("ODPT stop limit");
        if(agency==="wmata"&&(!r.stop_id||allStops.has(r.stop_id)))throw new Error("WMATA stop identity missing or duplicated");
@@ -203,7 +219,7 @@ async function importLocked(agency:string) {
   components.push({id:feed.id,url:feed.url,serviceStart,serviceEnd,...{maxDepartureSeconds,feedInfo}});
     const shapeEntry=file("shapes");
     if(shapeEntry) {
-      const shapeParser=shapeEntry.stream().compose(parse({columns:true,bom:true,skip_empty_lines:true,max_record_size:256*1024}));
+      const shapeParser=shapeEntry.stream().compose(parse({columns:true,bom:true,trim:!!a.mobility,skip_empty_lines:true,max_record_size:256*1024}));
       let shapeRows=0;
       for await(const r of shapeParser) {
          if(agency==="wmata"&&(++shapeRows>1000000||!r.shape_pt_lat||!r.shape_pt_lon||
@@ -244,9 +260,16 @@ async function importLocked(agency:string) {
       const today=DateTime.now().setZone("Asia/Tokyo").toFormat("yyyyMMdd");
       if(components.some(c=>today<c.serviceStart||today>c.serviceEnd))throw new Error("ODPT archive has no current service window");
     }
+    if(a.mobility){
+      if(!allRoutes.size||!allStops.size)throw new Error("Mobility GTFS has no supported fixed-route service");
+      const today=DateTime.now().setZone(a.mobility.timezone).toFormat("yyyyMMdd");
+      if(components.some(c=>!c.serviceStart||!c.serviceEnd||c.serviceStart>today||c.serviceEnd<today))throw new Error("Mobility GTFS calendar does not cover the current service day");
+      for(const r of allStops.values())if(!r.stop_name||!r.stop_lat||!r.stop_lon||!Number.isFinite(Number(r.stop_lat))||!Number.isFinite(Number(r.stop_lon))||Math.abs(Number(r.stop_lat))>90||Math.abs(Number(r.stop_lon))>180)throw new Error("Mobility GTFS stop coordinates invalid");
+    }
     const stopRows=[...allStops].map(([id,r])=>({
       id:`${agency}:${id}`,agency,mode:stage,data:{...r,id:`${agency}:${id}`,rawId:id,name:r.stop_name,lat:Number(r.stop_lat),lon:Number(r.stop_lon),
-         agency:a.name,type:agency==="wmata"?allRoutes.get([...(routeStops.get(id)||[])][0])?.type||(r.location_type||r.parent_station?"subway":"bus"):a.type,parent:r.parent_station||"",accessible:r.wheelchair_boarding==="1",
+         agency:a.name,type:a.mobility?allRoutes.get([...(routeStops.get(id)||[])][0])?.type||a.type:agency==="wmata"?allRoutes.get([...(routeStops.get(id)||[])][0])?.type||(r.location_type||r.parent_station?"subway":"bus"):a.type,parent:r.parent_station||"",accessible:r.wheelchair_boarding==="1",
+         ...(a.mobility?{mobility:a.mobility,stop_timezone:a.mobility.timezone}:{}),
          ...(agency==="wmata"?{wmata:locationInfo(r),stop_timezone:"America/New_York"}:{}),
          ...(odptInfo?{odpt:odptInfo,stop_timezone:"Asia/Tokyo",searchNames:stopNames.get(id)||[],
            name:[r.stop_name,...(stopNames.get(id)||[]).filter(n=>/^[\x20-\x7e]+$/.test(n)&&n!==r.stop_name)].join(" / ")}:{}),
@@ -276,7 +299,7 @@ async function importLocked(agency:string) {
       for(const name of ["transit_trips","transit_stops","transit_routes","transit_calendars",
         "transit_calendar_exceptions","transit_shapes"])await tx.execute(sql.raw(`ANALYZE ${name}`));
       const data={status:"ready",stopTimesMode:stage,importedAt:new Date().toISOString(),sourceUrl:a.staticUrl,records:count,stopCount:stopRows.length,routeCount:allRoutes.size,components,
-        ...(odptInfo?{odpt:odptInfo,edition}:{}),
+        ...(odptInfo?{odpt:odptInfo,edition}:{}),...(a.mobility?{mobility:a.mobility,routeTypes:[...new Set([...allRoutes.values()].map(r=>r.type))]}:{}),
         serviceStart:components.map(c=>c.serviceStart).sort()[0],serviceEnd:components.map(c=>c.serviceEnd).sort().at(-1)};
       await tx.insert(feedSnapshots).values({id:`${agency}:static`,mode:"live",agency,data}).onConflictDoUpdate({target:[feedSnapshots.mode,feedSnapshots.id],set:{data,updatedAt:new Date()}});
       await tx.delete(feedSnapshots).where(and(eq(feedSnapshots.mode,"live"),eq(feedSnapshots.id,`${agency}:import-error`)));

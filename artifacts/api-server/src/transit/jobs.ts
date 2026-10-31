@@ -11,7 +11,9 @@ import { pollAmtrak } from "./amtrak-live";
 import { odptEnabled, odptSource, odptRefreshDue } from "./odpt/registry";
 import { idfmEnabled, refreshDue } from "./idfm/model";
 import { setupStatus as wmataSetup } from "./wmata/client";
+import { restoreRegistry as restoreMobility, refreshRegistered as refreshMobility } from "./mobility/registry";
 export async function startTransitJobs() {
+  await restoreMobility().catch(()=>logger.warn("Mobility Database registry unavailable; direct sources remain enabled"));
   await seedDemo();
   for(const a of adapters) {
     const data={name:a.name,documentation:a.documentation,staticUrl:a.staticUrl,realtimeUrls:a.realtimeUrls,status:a.status,setup:a.setup};
@@ -45,7 +47,7 @@ export async function startTransitJobs() {
   if(process.env.TRANSIT_AUTO_IMPORT==="true"){
     const runImport=async()=>{
       try{
-        for(const a of adapters.filter(a=>a.id!=="idfm"&&a.staticUrl&&(a.id!=="wmata"||wmataSetup()==="configured")&&(!odptSource(a.id)||odptEnabled()))){
+        for(const a of adapters.filter(a=>!a.mobility&&a.id!=="idfm"&&a.staticUrl&&(a.id!=="wmata"||wmataSetup()==="configured")&&(!odptSource(a.id)||odptEnabled()))){
           const {rows}=await pool.query("SELECT data FROM transit_feed_snapshots WHERE mode='live' AND id=$1",[`${a.id}:static`]);
           if(odptSource(a.id)?!odptRefreshDue(rows[0]?.data):rows[0]&&Date.now()-Date.parse(rows[0].data.importedAt)<22*3600000)continue;
           try{await importGtfs(a.id);}catch{logger.warn({agency:a.id},"Scheduled import failed; previous dataset retained");}
@@ -86,4 +88,6 @@ export async function startTransitJobs() {
   // serializes CLI, maintenance, other providers and replica attempts.
   const runParis=()=>void refreshParis().catch(()=>logger.warn("IDFM refresh failed; last complete generation retained"));
   runParis();setInterval(runParis,15*60_000).unref();
+  const runMobility=()=>void refreshMobility().catch(()=>logger.warn("Mobility Database refresh unavailable; existing services retained"));
+  runMobility();setInterval(runMobility,6*3600_000).unref();
 }

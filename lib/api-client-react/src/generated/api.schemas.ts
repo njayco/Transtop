@@ -126,6 +126,20 @@ export const RouteServiceClass = {
   express: 'express',
 } as const;
 
+export interface MobilityInfo {
+  transitlandId?: string;
+  feedId: string;
+  datasetId: string;
+  url: string;
+  license: string;
+  licenseUrl: string;
+  attribution: string;
+  timezone: string;
+  downloadedAt: string;
+  validFrom: string;
+  validThrough: string;
+}
+
 export interface IdfmInfo {
   url: string;
   license: string;
@@ -183,6 +197,7 @@ export interface TransitlandInfo {
 }
 
 export interface Route {
+  mobility?: MobilityInfo;
   idfm?: IdfmInfo;
   odpt?: OdptInfo;
   tfl?: TflInfo;
@@ -339,6 +354,7 @@ export interface WmataInfo {
 }
 
 export interface Stop {
+  mobility?: MobilityInfo;
   wmata?: WmataInfo;
   idfm?: IdfmInfo;
   odpt?: OdptInfo;
@@ -453,6 +469,7 @@ export interface RouteDetail {
 }
 
 export interface FeedSource {
+  modes?: string[];
   id: string;
   agency: string;
   status: string;
@@ -550,6 +567,45 @@ export interface TimetableResults {
   limit: number;
   date: string;
   message: string;
+}
+
+export type MobilityFeedKind = typeof MobilityFeedKind[keyof typeof MobilityFeedKind];
+
+
+export const MobilityFeedKind = {
+  gtfs: 'gtfs',
+  gtfs_rt: 'gtfs_rt',
+} as const;
+
+export interface MobilityFeed {
+  id: string;
+  kind: MobilityFeedKind;
+  provider: string;
+  name: string;
+  url: string;
+  status: string;
+  countries: string[];
+  regions: string[];
+  official: boolean;
+  eligible: boolean;
+  reason: string;
+  imported: boolean;
+  license?: string;
+  licenseUrl?: string;
+  datasetId?: string;
+  downloadedAt?: string;
+  validFrom?: string;
+  validThrough?: string;
+  timezone?: string;
+  sizeMb?: number;
+  entityTypes?: string[];
+}
+
+export interface MobilityFeeds {
+  feeds: MobilityFeed[];
+  offset: number;
+  hasMore: boolean;
+  status: string;
 }
 
 export type JourneyInputTimeType = typeof JourneyInputTimeType[keyof typeof JourneyInputTimeType];
@@ -688,6 +744,31 @@ export interface ReportInput {
   kind: ReportInputKind;
   stopId: string;
 }
+
+export type GetMobilityFeedsParams = {
+/**
+ * @pattern ^[A-Z]{2}$
+ */
+country?: string;
+/**
+ * @maxLength 100
+ */
+provider?: string;
+kind?: GetMobilityFeedsKind;
+/**
+ * @minimum 0
+ * @maximum 10000
+ */
+offset?: number;
+};
+
+export type GetMobilityFeedsKind = typeof GetMobilityFeedsKind[keyof typeof GetMobilityFeedsKind];
+
+
+export const GetMobilityFeedsKind = {
+  gtfs: 'gtfs',
+  gtfs_rt: 'gtfs_rt',
+} as const;
 
 /**
  * @nullable

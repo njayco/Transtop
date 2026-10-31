@@ -12,6 +12,7 @@ import { isTfl } from "./tfl/model";
 import { preferDirect, resultRouteAliases } from "./tfl/crosswalk";
 import { isRetiredResearchId } from "./intercity/retired";
 import { odptEnabled } from "./odpt/registry";
+import { enabled as mobilityEnabled } from "./mobility/client";
 import { mapPage as parisMap } from "./idfm/queries";
 import { isWmata,boarding } from "./wmata/model";
 const broadway=[[-73.9956,40.7304],[-73.9906,40.7357],[-73.989,40.7429],[-73.987,40.7496],[-73.9868,40.7547],[-73.9807,40.7647],[-73.9819,40.7681],[-73.9819,40.7756]];
@@ -101,7 +102,7 @@ export async function network(p: NetworkQuery) {
     generation: "demo", missing: [], stops: (await pool.query("SELECT data FROM transit_stops WHERE mode='demo' ORDER BY id")).rows.map(r => r.data),
     lines: demoRoutes.map(route => { const shape = demoShape(route); return { route, shape, shapeId: `demo:${route.id}`, bounds: boundsOf(shape) }; }),
   } : await catalogGeometry();
-  const matches = (r: TransitRoute) => (!r.odpt||odptEnabled())&&(!p.type || p.type === "all" || r.type === p.type) &&
+  const matches = (r: TransitRoute) => (!r.mobility||mobilityEnabled())&&(!r.odpt||odptEnabled())&&(!p.type || p.type === "all" || r.type === p.type) &&
     (!p.agency || r.id.split(":")[0] === p.agency || r.agencyId === p.agency) && (!p.routeId || r.id === p.routeId) &&
     (!p.serviceClass || p.serviceClass === "all" || r.serviceClass === p.serviceClass);
   const visible = catalog.lines.filter(l => matches(l.route) && (p.routeId || l.route.type !== "bus" || zoom >= 12) &&
@@ -129,7 +130,7 @@ export async function network(p: NetworkQuery) {
     const official=canonical(l.route);
     return {...l,id:l.shapeId,...(official?{route:{...official,transitland:l.route.transitland}}:{})};
   }));
-   const ss = zoom >= 13 || p.routeId ? preferDirect([...catalog.stops,...extra.stops,...paris.stops,...globalStops,...(london?.stops||[])]).filter(s => (!s.parent||s.id.startsWith("idfm:")||isWmata(s.id)) && boarding(s)&&Number.isFinite(s.lat) && Number.isFinite(s.lon) &&
+   const ss = zoom >= 13 || p.routeId ? preferDirect([...catalog.stops,...extra.stops,...paris.stops,...globalStops,...(london?.stops||[])]).filter(s => (!s.parent||s.mobility||s.id.startsWith("idfm:")||isWmata(s.id)) && boarding(s)&&Number.isFinite(s.lat) && Number.isFinite(s.lon) &&
     (p.routeId || contains(b, s.lon, s.lat)) && s.routes.some(matches)).map(s => ({
       id: s.id, name: s.name, lat: s.lat, lon: s.lon, type: s.type, routes: s.routes.filter(matches),
     })) : [];

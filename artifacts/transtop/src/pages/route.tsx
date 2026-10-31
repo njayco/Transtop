@@ -15,6 +15,7 @@ import { ago } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { TflDetails, tflErrorDetail } from '@/components/tfl-details';
 import { OdptDetails } from '@/components/odpt-details';
+import { MobilityDetails } from '@/components/mobility-database';
 import { IdfmDetails } from '@/components/idfm-details';
 
 export default function RoutePage() {
@@ -88,6 +89,7 @@ export default function RoutePage() {
           <div className="mt-6 grid gap-6 md:grid-cols-[1fr_1.1fr]">
             <div className="space-y-4">
               <TransitlandDetails info={d.route.transitland}/>
+              <MobilityDetails info={d.route.mobility}/>
               <OdptDetails info={d.route.odpt}/>
               <IdfmDetails info={d.route.idfm}/>
               {dirs.length > 0 && <p className="text-xs text-muted-foreground" data-testid="text-patterns">{dirs.length} {d.route.tfl?'TfL direction choices':'published service patterns'}. Stops shown for {activeDir}.</p>}
@@ -154,7 +156,7 @@ export default function RoutePage() {
                 <p className="mt-2 text-xs text-muted-foreground">Individual riders are never shown. Updated {ago(vehicles[0]?.updatedAt)}.</p>
               </div>
               <TflDetails info={d.route.tfl} />
-              {!d.route.tfl&&(d.route.type==='intercity'&&!d.route.transitland?<IntercityModule key={d.route.id} center={center} provider={providerFor(d.route.agencyId, d.route.id)} routeId={d.route.id}/>:<TimetablePanel key={d.route.id} routeId={d.route.id} timezone={d.route.transitland?.timezone} stopOptions={d.route.transitland?d.stops.map(s=>({id:s.id,name:s.name})):d.timetableStops?.map((s) => ({ id: s.id, name: s.name }))} direction={activeDir} color={color} title={activeDir ? `Timetable · ${activeDir}` : 'Timetable'} />)}
+              {!d.route.tfl&&(d.route.type==='intercity'&&!d.route.mobility&&!d.route.transitland?<IntercityModule key={d.route.id} center={center} provider={providerFor(d.route.agencyId, d.route.id)} routeId={d.route.id}/>:<TimetablePanel key={d.route.id} routeId={d.route.id} timezone={d.route.mobility?.timezone||d.route.transitland?.timezone} stopOptions={d.route.transitland?d.stops.map(s=>({id:s.id,name:s.name})):d.timetableStops?.map((s) => ({ id: s.id, name: s.name }))} direction={activeDir} color={color} title={activeDir ? `Timetable · ${activeDir}` : 'Timetable'} />)}
             </aside>
           </div>
         </>

@@ -5,6 +5,23 @@ info:
 servers:
   - url: /api
 paths:
+  /transit/mobility/feeds:
+    get:
+      operationId: getMobilityFeeds
+      summary: Discover worldwide Mobility Database feeds and their import eligibility
+      parameters:
+        - {name: country, in: query, schema: {type: string, pattern: "^[A-Z]{2}$"}}
+        - {name: provider, in: query, schema: {type: string, maxLength: 100}}
+        - {name: kind, in: query, schema: {type: string, enum: [gtfs, gtfs_rt], default: gtfs}}
+        - {name: offset, in: query, schema: {type: integer, minimum: 0, maximum: 10000, default: 0}}
+      responses:
+        "200":
+          description: Bounded feed catalog, not a claim that every listed feed is available to riders
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MobilityFeeds"}
+        "503":
+          description: Catalog unavailable; previously imported transit data remains available
   /entry/country:
     get:
       operationId: getEntryCountry
@@ -397,6 +414,7 @@ components:
       type: object
       required: [id, name, color, type, agency]
       properties:
+        mobility: {$ref: "#/components/schemas/MobilityInfo"}
         idfm: {$ref: "#/components/schemas/IdfmInfo"}
         odpt: {$ref: "#/components/schemas/OdptInfo"}
         tfl: {$ref: "#/components/schemas/TflInfo"}
@@ -470,6 +488,7 @@ components:
       type: object
       required: [id, name, agency, type, lat, lon, distance, walkingMinutes, routes, arrivals, alerts, accessible, updatedAt]
       properties:
+        mobility: {$ref: "#/components/schemas/MobilityInfo"}
         wmata: {$ref: "#/components/schemas/WmataInfo"}
         idfm: {$ref: "#/components/schemas/IdfmInfo"}
         odpt: {$ref: "#/components/schemas/OdptInfo"}
@@ -574,6 +593,7 @@ components:
       type: object
       required: [id, agency, status, description, url, updatedAt]
       properties:
+        modes: {type: array, items: {type: string}}
         id: {type: string}
         agency: {type: string}
         status: {type: string}
@@ -771,6 +791,54 @@ components:
         lastSuccess: {type: string}
         platform: {type: string}
         parentId: {type: string}
+    MobilityInfo:
+      type: object
+      required: [feedId, datasetId, url, license, licenseUrl, attribution, timezone, downloadedAt, validFrom, validThrough]
+      properties:
+        transitlandId: {type: string}
+        feedId: {type: string}
+        datasetId: {type: string}
+        url: {type: string}
+        license: {type: string}
+        licenseUrl: {type: string}
+        attribution: {type: string}
+        timezone: {type: string}
+        downloadedAt: {type: string}
+        validFrom: {type: string}
+        validThrough: {type: string}
+    MobilityFeed:
+      type: object
+      required: [id, kind, provider, name, url, status, countries, regions, official, eligible, reason, imported]
+      properties:
+        id: {type: string}
+        kind: {type: string, enum: [gtfs, gtfs_rt]}
+        provider: {type: string}
+        name: {type: string}
+        url: {type: string}
+        status: {type: string}
+        countries: {type: array, items: {type: string}}
+        regions: {type: array, items: {type: string}}
+        official: {type: boolean}
+        eligible: {type: boolean}
+        reason: {type: string}
+        imported: {type: boolean}
+        license: {type: string}
+        licenseUrl: {type: string}
+        datasetId: {type: string}
+        downloadedAt: {type: string}
+        validFrom: {type: string}
+        validThrough: {type: string}
+        timezone: {type: string}
+        sizeMb: {type: number}
+        entityTypes: {type: array, items: {type: string}}
+    MobilityFeeds:
+      type: object
+      required: [feeds, offset, hasMore, status]
+      properties:
+        feeds: {type: array, items: {$ref: "#/components/schemas/MobilityFeed"}}
+        offset: {type: integer}
+        hasMore: {type: boolean}
+        status: {type: string}
     TransitlandInfo:
       type: object
       required: [feedId, fetchedAt, license, attribution, url]

@@ -4,6 +4,17 @@ A mobile-first transit app based on the creator's original Transtop concept. Ver
 
 ## Current features and recent updates
 
+### Mobility Database worldwide feeds
+
+Mobility Database now supplements direct sources and Transitland with worldwide
+GTFS/GTFS-Realtime feed discovery. Settings includes a country/provider catalog;
+eligible small feeds near the selected location import into the existing Nearby,
+Search, maps, filters, favorites and timetables. Publisher licenses, service dates,
+timezones, source credits and resource limits are checked before use. Realtime
+requires authorized companions, exact static identities and fresh observations;
+no vehicle motion is invented. This is bounded expansion, not a claim that all
+global feeds are imported. See [Mobility Database setup and limits](docs/mobility-database.md).
+
 ### Washington Metrobus / Metrorail
 
 Direct official WMATA combined schedules add Washington-area bus stops,

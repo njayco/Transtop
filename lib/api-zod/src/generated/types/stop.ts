@@ -7,6 +7,7 @@
 import type { Alert } from './alert';
 import type { Arrival } from './arrival';
 import type { IdfmInfo } from './idfmInfo';
+import type { MobilityInfo } from './mobilityInfo';
 import type { OdptInfo } from './odptInfo';
 import type { Route } from './route';
 import type { StopType } from './stopType';
@@ -15,6 +16,7 @@ import type { TransitlandInfo } from './transitlandInfo';
 import type { WmataInfo } from './wmataInfo';
 
 export interface Stop {
+  mobility?: MobilityInfo;
   wmata?: WmataInfo;
   idfm?: IdfmInfo;
   odpt?: OdptInfo;

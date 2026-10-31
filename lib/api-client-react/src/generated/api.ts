@@ -34,6 +34,7 @@ import type {
   GetEntryCountry200,
   GetIntercityDeparturesParams,
   GetMapVehiclesParams,
+  GetMobilityFeedsParams,
   GetNetworkParams,
   GetRouteParams,
   GetStopParams,
@@ -45,6 +46,7 @@ import type {
   JourneyInput,
   JourneyResults,
   MapVehicle,
+  MobilityFeeds,
   NetworkResults,
   ReportInput,
   Ride,
@@ -83,6 +85,114 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getGetMobilityFeedsUrl = (params?: GetMobilityFeedsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/transit/mobility/feeds?${stringifiedParams}` : `/api/transit/mobility/feeds`
+}
+
+/**
+ * @summary Discover worldwide Mobility Database feeds and their import eligibility
+ */
+export const getMobilityFeeds = async (params?: GetMobilityFeedsParams, options?: Parameters<typeof customFetch>[1]): Promise<MobilityFeeds> => {
+
+  return customFetch<MobilityFeeds>(getGetMobilityFeedsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMobilityFeedsQueryKey = (params?: GetMobilityFeedsParams,) => {
+    return [
+    `/api/transit/mobility/feeds`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetMobilityFeedsQueryOptions = <TData = Awaited<ReturnType<typeof getMobilityFeeds>>, TError = ErrorType<void>>(params?: GetMobilityFeedsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMobilityFeeds>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMobilityFeedsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMobilityFeeds>>> = ({ signal }) => getMobilityFeeds(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMobilityFeeds>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMobilityFeedsQueryResult = NonNullable<Awaited<ReturnType<typeof getMobilityFeeds>>>
+export type GetMobilityFeedsQueryError = ErrorType<void>
+
+
+export function useGetMobilityFeeds<TData = Awaited<ReturnType<typeof getMobilityFeeds>>, TError = ErrorType<void>>(
+ params: undefined |  GetMobilityFeedsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMobilityFeeds>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMobilityFeeds>>,
+          TError,
+          Awaited<ReturnType<typeof getMobilityFeeds>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMobilityFeeds<TData = Awaited<ReturnType<typeof getMobilityFeeds>>, TError = ErrorType<void>>(
+ params?: GetMobilityFeedsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMobilityFeeds>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMobilityFeeds>>,
+          TError,
+          Awaited<ReturnType<typeof getMobilityFeeds>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMobilityFeeds<TData = Awaited<ReturnType<typeof getMobilityFeeds>>, TError = ErrorType<void>>(
+ params?: GetMobilityFeedsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMobilityFeeds>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Discover worldwide Mobility Database feeds and their import eligibility
+ */
+
+export function useGetMobilityFeeds<TData = Awaited<ReturnType<typeof getMobilityFeeds>>, TError = ErrorType<void>>(
+ params?: GetMobilityFeedsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMobilityFeeds>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMobilityFeedsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetEntryCountryUrl = () => {
 

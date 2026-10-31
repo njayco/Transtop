@@ -6,6 +6,7 @@
  */
 
 export interface FeedSource {
+  modes?: string[];
   id: string;
   agency: string;
   status: string;

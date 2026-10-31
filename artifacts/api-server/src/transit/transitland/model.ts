@@ -91,6 +91,7 @@ export function normalizeAlerts(values:any,id:string,routeIds:string[]){
 export function directDuplicate(r: TransitRoute, direct: TransitRoute[]) {
   if(r.transitland){
     const [feed,raw]=parseIdentity(r.id);
+    if(direct.some(d=>d.mobility?.transitlandId===feed&&d.type===r.type&&d.id.slice(d.id.indexOf(":")+1)===raw))return true;
     if(odptRouteDuplicate(feed,raw,r.type,direct))return true;
   }
   const aliases: Record<string,string[]> = {

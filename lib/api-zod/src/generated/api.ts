@@ -8,6 +8,56 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Discover worldwide Mobility Database feeds and their import eligibility
+ */
+export const getMobilityFeedsQueryCountryRegExp = new RegExp('^[A-Z]{2}$');
+export const getMobilityFeedsQueryProviderMax = 100;
+
+export const getMobilityFeedsQueryKindDefault = `gtfs`;
+export const getMobilityFeedsQueryOffsetDefault = 0;
+export const getMobilityFeedsQueryOffsetMin = 0;
+export const getMobilityFeedsQueryOffsetMax = 10000;
+
+
+
+export const GetMobilityFeedsQueryParams = zod.object({
+  "country": zod.coerce.string().regex(getMobilityFeedsQueryCountryRegExp).optional(),
+  "provider": zod.coerce.string().max(getMobilityFeedsQueryProviderMax).optional(),
+  "kind": zod.enum(['gtfs', 'gtfs_rt']).default(getMobilityFeedsQueryKindDefault),
+  "offset": zod.coerce.number().int().min(getMobilityFeedsQueryOffsetMin).max(getMobilityFeedsQueryOffsetMax).default(getMobilityFeedsQueryOffsetDefault)
+})
+
+export const GetMobilityFeedsResponse = zod.object({
+  "feeds": zod.array(zod.object({
+  "id": zod.string(),
+  "kind": zod.enum(['gtfs', 'gtfs_rt']),
+  "provider": zod.string(),
+  "name": zod.string(),
+  "url": zod.string(),
+  "status": zod.string(),
+  "countries": zod.array(zod.string()),
+  "regions": zod.array(zod.string()),
+  "official": zod.boolean(),
+  "eligible": zod.boolean(),
+  "reason": zod.string(),
+  "imported": zod.boolean(),
+  "license": zod.string().optional(),
+  "licenseUrl": zod.string().optional(),
+  "datasetId": zod.string().optional(),
+  "downloadedAt": zod.string().optional(),
+  "validFrom": zod.string().optional(),
+  "validThrough": zod.string().optional(),
+  "timezone": zod.string().optional(),
+  "sizeMb": zod.number().optional(),
+  "entityTypes": zod.array(zod.string()).optional()
+})),
+  "offset": zod.number().int(),
+  "hasMore": zod.boolean(),
+  "status": zod.string()
+})
+
+
+/**
  * No inputs accepted. Only country is returned, never an IP. Unknown or failed lookups return null. Responses are private and no-store.
  * @summary Approximate entry styling using a local country database
  */
@@ -202,6 +252,19 @@ export const GetStopsResponse = zod.object({
   "limit": zod.number().int().optional()
 }).optional(),
   "stops": zod.array(zod.object({
+  "mobility": zod.object({
+  "transitlandId": zod.string().optional(),
+  "feedId": zod.string(),
+  "datasetId": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "licenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "timezone": zod.string(),
+  "downloadedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string()
+}).optional(),
   "wmata": zod.object({
   "kind": zod.string(),
   "platform": zod.string().optional(),
@@ -308,6 +371,19 @@ export const GetStopsResponse = zod.object({
   "distance": zod.number(),
   "walkingMinutes": zod.number().int(),
   "routes": zod.array(zod.object({
+  "mobility": zod.object({
+  "transitlandId": zod.string().optional(),
+  "feedId": zod.string(),
+  "datasetId": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "licenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "timezone": zod.string(),
+  "downloadedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string()
+}).optional(),
   "idfm": zod.object({
   "url": zod.string(),
   "license": zod.string(),
@@ -439,6 +515,19 @@ export const GetStopQueryParams = zod.object({
 })
 
 export const GetStopResponse = zod.object({
+  "mobility": zod.object({
+  "transitlandId": zod.string().optional(),
+  "feedId": zod.string(),
+  "datasetId": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "licenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "timezone": zod.string(),
+  "downloadedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string()
+}).optional(),
   "wmata": zod.object({
   "kind": zod.string(),
   "platform": zod.string().optional(),
@@ -545,6 +634,19 @@ export const GetStopResponse = zod.object({
   "distance": zod.number(),
   "walkingMinutes": zod.number().int(),
   "routes": zod.array(zod.object({
+  "mobility": zod.object({
+  "transitlandId": zod.string().optional(),
+  "feedId": zod.string(),
+  "datasetId": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "licenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "timezone": zod.string(),
+  "downloadedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string()
+}).optional(),
   "idfm": zod.object({
   "url": zod.string(),
   "license": zod.string(),
@@ -672,6 +774,19 @@ export const GetRouteQueryParams = zod.object({
 
 export const GetRouteResponse = zod.object({
   "route": zod.object({
+  "mobility": zod.object({
+  "transitlandId": zod.string().optional(),
+  "feedId": zod.string(),
+  "datasetId": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "licenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "timezone": zod.string(),
+  "downloadedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string()
+}).optional(),
   "idfm": zod.object({
   "url": zod.string(),
   "license": zod.string(),
@@ -737,6 +852,19 @@ export const GetRouteResponse = zod.object({
   "referenceDate": zod.string().optional().describe('Suggested historical service date for research-reference routes only')
 }),
   "stops": zod.array(zod.object({
+  "mobility": zod.object({
+  "transitlandId": zod.string().optional(),
+  "feedId": zod.string(),
+  "datasetId": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "licenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "timezone": zod.string(),
+  "downloadedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string()
+}).optional(),
   "wmata": zod.object({
   "kind": zod.string(),
   "platform": zod.string().optional(),
@@ -843,6 +971,19 @@ export const GetRouteResponse = zod.object({
   "distance": zod.number(),
   "walkingMinutes": zod.number().int(),
   "routes": zod.array(zod.object({
+  "mobility": zod.object({
+  "transitlandId": zod.string().optional(),
+  "feedId": zod.string(),
+  "datasetId": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "licenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "timezone": zod.string(),
+  "downloadedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string()
+}).optional(),
   "idfm": zod.object({
   "url": zod.string(),
   "license": zod.string(),
@@ -1008,6 +1149,7 @@ export const GetRouteResponse = zod.object({
 
 
 export const GetSourcesResponseItem = zod.object({
+  "modes": zod.array(zod.string()).optional(),
   "id": zod.string(),
   "agency": zod.string(),
   "status": zod.string(),
@@ -1071,6 +1213,19 @@ export const GetCatalogResponse = zod.object({
   "limit": zod.number().int().optional()
 }).optional(),
   "routes": zod.array(zod.object({
+  "mobility": zod.object({
+  "transitlandId": zod.string().optional(),
+  "feedId": zod.string(),
+  "datasetId": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "licenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "timezone": zod.string(),
+  "downloadedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string()
+}).optional(),
   "idfm": zod.object({
   "url": zod.string(),
   "license": zod.string(),
@@ -1136,6 +1291,19 @@ export const GetCatalogResponse = zod.object({
   "referenceDate": zod.string().optional().describe('Suggested historical service date for research-reference routes only')
 })),
   "stops": zod.array(zod.object({
+  "mobility": zod.object({
+  "transitlandId": zod.string().optional(),
+  "feedId": zod.string(),
+  "datasetId": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "licenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "timezone": zod.string(),
+  "downloadedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string()
+}).optional(),
   "wmata": zod.object({
   "kind": zod.string(),
   "platform": zod.string().optional(),
@@ -1242,6 +1410,19 @@ export const GetCatalogResponse = zod.object({
   "distance": zod.number(),
   "walkingMinutes": zod.number().int(),
   "routes": zod.array(zod.object({
+  "mobility": zod.object({
+  "transitlandId": zod.string().optional(),
+  "feedId": zod.string(),
+  "datasetId": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "licenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "timezone": zod.string(),
+  "downloadedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string()
+}).optional(),
   "idfm": zod.object({
   "url": zod.string(),
   "license": zod.string(),
@@ -1529,6 +1710,19 @@ export const GetNetworkResponse = zod.object({
   "lines": zod.array(zod.object({
   "shapeId": zod.string(),
   "route": zod.object({
+  "mobility": zod.object({
+  "transitlandId": zod.string().optional(),
+  "feedId": zod.string(),
+  "datasetId": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "licenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "timezone": zod.string(),
+  "downloadedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string()
+}).optional(),
   "idfm": zod.object({
   "url": zod.string(),
   "license": zod.string(),
@@ -1618,6 +1812,19 @@ export const GetNetworkResponse = zod.object({
   "lon": zod.number(),
   "type": zod.string(),
   "routes": zod.array(zod.object({
+  "mobility": zod.object({
+  "transitlandId": zod.string().optional(),
+  "feedId": zod.string(),
+  "datasetId": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "licenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "timezone": zod.string(),
+  "downloadedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string()
+}).optional(),
   "idfm": zod.object({
   "url": zod.string(),
   "license": zod.string(),
@@ -1686,6 +1893,19 @@ export const GetNetworkResponse = zod.object({
   "totalLines": zod.number().int(),
   "totalStops": zod.number().int(),
   "missingGeometry": zod.array(zod.object({
+  "mobility": zod.object({
+  "transitlandId": zod.string().optional(),
+  "feedId": zod.string(),
+  "datasetId": zod.string(),
+  "url": zod.string(),
+  "license": zod.string(),
+  "licenseUrl": zod.string(),
+  "attribution": zod.string(),
+  "timezone": zod.string(),
+  "downloadedAt": zod.string(),
+  "validFrom": zod.string(),
+  "validThrough": zod.string()
+}).optional(),
   "idfm": zod.object({
   "url": zod.string(),
   "license": zod.string(),
