@@ -86,6 +86,12 @@ export function useSwipeGesture(onDone: () => void, inset = 16) {
     if (drag.current && drag.current.id === e.pointerId) cancel();
   };
   const onLostPointerCapture = onPointerCancel;
+  // Discrete activations preserve the same deliberate movement without dragging.
+  const advance = () => {
+    if (latched.current || drag.current) return;
+    const next = Math.min(100, Math.round(progress.current * 100) + STEP);
+    if (next >= 100) finish(); else setP(next / 100);
+  };
   const onKeyDown = (e: RKeyboardEvent<HTMLDivElement>) => {
     if (latched.current) return;
     const pct = Math.round(progress.current * 100);
@@ -100,7 +106,7 @@ export function useSwipeGesture(onDone: () => void, inset = 16) {
 
   const pct = Math.round(p * 100);
   return {
-    track, card, p, pct, dragging, leaving, travel,
+    track, card, p, pct, dragging, leaving, travel, advance,
     handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture, onKeyDown },
   };
 }

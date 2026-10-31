@@ -41,6 +41,34 @@ async function slide(page: Page, fraction: number) {
 }
 
 for (const c of cases) {
+  for (const touch of [false, true]) {
+    test(`${c.variant}: successive ${touch ? 'taps' : 'clicks'} slide the card without dragging`, async ({ browser }) => {
+      const context = await browser.newContext({ hasTouch: touch, reducedMotion: 'reduce', viewport: { width: 390, height: 844 } });
+      const page = await context.newPage();
+      try {
+        await fixture(page, c.country);
+        await page.goto('/settings');
+        const slider = page.getByRole('slider');
+        const step = page.getByTestId('button-slide-step');
+        await expect(step).toBeVisible();
+        const start = (await slider.boundingBox())!;
+        for (let i = 1; i <= 9; i++) {
+          if (touch) await step.tap(); else await step.click();
+          await expect(slider).toHaveAttribute('aria-valuenow', String(i * 10));
+          await expect(page.getByTestId('text-swipe-progress')).toContainText(String(i * 10));
+          await expect(page.getByTestId('screen-entry')).toBeVisible();
+        }
+        expect((await slider.boundingBox())!.x).toBeLessThan(start.x);
+        if (touch) await step.tap(); else await step.click();
+        await expect(page.getByTestId('screen-entry')).toHaveCount(0);
+        await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
+        expect(await page.evaluate(() => sessionStorage.getItem('transtop.entry.v2'))).toBe('1');
+      } finally {
+        await context.close();
+      }
+    });
+  }
+
   test(`${c.variant}: country selection, keyboard, deep link, session and replay`, async ({ page }) => {
     const calls = await fixture(page, c.country);
     await page.goto('/settings?entry-test=1#keep-destination');

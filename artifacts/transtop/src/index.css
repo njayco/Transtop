@@ -439,6 +439,8 @@
   --ok: 149 58% 46%;
   --warn: 38 95% 55%;
   --bad: 2 80% 60%;
+  /* White-on-red fills need a darker shade; retain --bad for text on dark UI. */
+  --bad-fill: 2 80% 46%;
   --live: 149 58% 46%;
   --community: 199 85% 60%;
   --scheduled: 240 5% 70%;

@@ -215,7 +215,7 @@ function ActiveRide() {
           {' '}Ends automatically in {minsLeft} min.
         </p>
         {share.error && <p className="mt-2 text-sm text-[hsl(var(--warn))]">{share.error}</p>}
-        <button onClick={stop} data-testid="button-stop-sharing" className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[hsl(var(--bad))] text-lg font-extrabold text-white active:scale-[.99]">
+        <button onClick={stop} data-testid="button-stop-sharing" className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[hsl(var(--bad-fill))] text-lg font-extrabold text-white active:scale-[.99]">
           <Square className="h-5 w-5 fill-current" />Stop sharing
         </button>
       </div>

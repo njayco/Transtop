@@ -153,7 +153,7 @@ export default function Settings() {
             <p data-testid="text-entry-region-privacy"><b>Entry screen region</b>: to pick a London, Paris, Tokyo or New York poster, Transtop's server looks up an approximate country from your connection's IP address using a local database. The raw IP is not stored, logged or sent to any geolocation vendor, and no GPS or browser location is requested. VPNs and some networks may show a different region. IP geolocation by <a href="https://db-ip.com" target="_blank" rel="noreferrer" className="underline">DB-IP</a> (DB-IP Lite, CC BY 4.0).</p>
             <p><b>Ride sharing</b> is a separate, per-ride choice. Raw samples are deleted within 24 hours and only aggregated, reduced-precision positions are published.</p>
             {ride ? (
-              <button onClick={async () => { await stopRide('user'); toast({ title: 'Sharing stopped' }); }} className="flex h-12 items-center gap-2 rounded-full bg-[hsl(var(--bad))] px-5 font-bold text-white" data-testid="button-settings-stop-sharing"><Radio className="h-4 w-4" />Stop sharing now</button>
+              <button onClick={async () => { await stopRide('user'); toast({ title: 'Sharing stopped' }); }} className="flex h-12 items-center gap-2 rounded-full bg-[hsl(var(--bad-fill))] px-5 font-bold text-white" data-testid="button-settings-stop-sharing"><Radio className="h-4 w-4" />Stop sharing now</button>
             ) : <p className="text-muted-foreground">No ride is sharing right now. <Link href="/ride" className="underline">Open Ride</Link></p>}
           </div>
         </Section>
@@ -184,7 +184,7 @@ export default function Settings() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction data-testid="button-confirm-clear" className="bg-[hsl(var(--bad))] text-white hover:bg-[hsl(var(--bad))]"
+                <AlertDialogAction data-testid="button-confirm-clear" className="bg-[hsl(var(--bad-fill))] text-white hover:bg-[hsl(var(--bad-fill))]"
                   onClick={async () => { await stopRide('user'); prefs.clearAll(); toast({ title: 'Local data cleared' }); }}>Clear</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

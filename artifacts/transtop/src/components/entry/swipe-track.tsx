@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import { prefersReducedMotion, useSwipeGesture } from '@/hooks/use-swipe-gesture';
+import { SlideStep } from './slide-step';
 
 export function Chevrons({ arrow = false }: { arrow?: boolean }) {
   if (arrow) return <svg viewBox="0 0 48 20" className="h-[0.9em] w-[2.2em]" aria-hidden><path d="M48 10 H4 M12 2 L4 10 L12 18" stroke="currentColor" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -60,6 +61,7 @@ export function SwipeTrack({ onDone, label, cardName, accent, help, card, bar = 
       <p className="mx-auto mt-3 max-w-6xl px-[5vw] text-xs font-semibold uppercase tracking-[0.16em] text-[#f4f1ea]/65 md:px-10" aria-live="polite" data-testid="text-swipe-progress">
         {copy.progress}
       </p>
+      <SlideStep onAdvance={g.advance} leaving={g.leaving} locale={locale} />
     </div>
   );
 }

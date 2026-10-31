@@ -3,6 +3,7 @@ import { TrainFront, Bus, Plane, Ship, TrainFrontTunnel } from 'lucide-react';
 import { prefersReducedMotion, useSwipeGesture } from '@/hooks/use-swipe-gesture';
 import { fetchEntryVariant, readStoredVariant, storeVariant, type EntryVariant } from '@/lib/entry-country';
 import { RegionalEntry, EntryPrivacy } from '@/components/entry/regional-entry';
+import { SlideStep } from '@/components/entry/slide-step';
 
 const KEY = 'transtop.entry.v2';
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -162,6 +163,7 @@ function UsEntry({ onDone, onLeave }: { onDone: () => void; onLeave: () => void 
         <p className="mx-auto mt-3 max-w-6xl px-[5vw] text-xs font-semibold uppercase tracking-[0.16em] text-[#f4f1ea]/60 md:px-10" aria-live="polite" data-testid="text-swipe-progress">
           {leaving ? 'Card accepted' : pct > 0 ? `${pct}% — keep going` : 'Swipe the card left to enter · keyboard: Left Arrow'}
         </p>
+        <SlideStep onAdvance={g.advance} leaving={leaving} />
       </div>
 
       <footer className="relative z-10 mx-auto mt-auto flex w-full max-w-6xl flex-wrap items-end justify-between gap-3 px-[4vw] pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-8 md:px-10">

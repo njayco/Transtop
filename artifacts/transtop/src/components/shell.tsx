@@ -35,7 +35,7 @@ function StatusBar() {
   return (
     <>
       {!online && (
-        <div className="flex items-center justify-center gap-2 bg-[hsl(var(--bad))] px-4 py-1.5 text-center text-xs font-bold text-white" role="status" data-testid="status-offline">
+        <div className="flex items-center justify-center gap-2 bg-[hsl(var(--bad-fill))] px-4 py-1.5 text-center text-xs font-bold text-white" role="status" data-testid="status-offline">
           <WifiOff className="h-3.5 w-3.5" />Offline — arrivals shown earlier are not current
         </div>
       )}
