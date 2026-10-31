@@ -1,10 +1,10 @@
 ---
 name: Post-merge setup budget
-description: Why setup needs more than the default twenty-second timeout.
+description: Why database reconciliation needs a five-minute setup budget.
 ---
 
-Allow at least two minutes for the shared dependency-install and database-schema setup unless measurements show that it has become reliably faster.
+Allow a five-minute budget for shared dependency-install and database-schema setup unless measurements show that it has become reliably faster.
 
-**Why:** With the regional transit catalog loaded, setup completed successfully in about 94 seconds. A 20-second limit killed the schema step before it could finish; increasing the budget fixed setup without forcing destructive schema changes.
+**Why:** With the expanded transit catalog loaded, setup exceeded two minutes and was killed during schema reconciliation. An unchanged retry with a five-minute budget succeeded in about 134 seconds, without forcing destructive schema changes.
 
 **How to apply:** Preserve the longer post-merge timeout when changing setup or merging configuration. Diagnose prompts or real failures separately; do not drop/reset data merely to fit a short setup budget.
