@@ -4,6 +4,7 @@ import { sourceUrl as wmataUrl, WMATA_CREDIT } from "./wmata/client";
 
 export interface AgencyAdapter {
   mobility?:import("./types").MobilityInfo;
+  mobilityRegional?:boolean;
   id:string; name:string; type:"subway"|"bus"|"rail"; staticUrl?:string; realtimeUrls:string[];
   documentation:string; status:string; setup:string;
   staticFeeds?:{id:string;url:string}[];

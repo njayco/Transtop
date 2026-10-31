@@ -39,13 +39,19 @@ reservation. This is a local safety limit, not a claim about the account's quota
 or permission for paid upgrades. Other applications using the same account are
 outside this app's accounting.
 
-Capacity is intentionally bounded: up to 8 registered feeds, at most 2 new
+Automatic capacity is intentionally bounded: up to 8 registered feeds, at most 2 new
 automatic registrations/day per database, one discovery import at a time per
 process, 20 MB zipped / 100 MB expanded / 1 million staged records per feed.
 The existing cross-process GTFS import/cleanup lock and atomic generation promotion
 are reused. A failed staging import does not overwrite another service's data.
 These limits do **not** mean all worldwide schedules are already imported.
-Larger feeds and feeds with unknown rights need review before enabling.
+Larger feeds require an explicit operator CLI import; unknown rights remain
+withheld. Regional imports allow **96 MiB zipped / 768 MiB expanded / 8 million
+agency, route, trip, calendar and call records**, plus at most 7 million streamed
+shape points. They retain the same eight-source total and existing catalog
+allowance. They are never selected by automatic discovery. See
+[regional capacity measurements](mobility-regional-capacity.md) for measured
+budgets, isolation, lifecycle and limits.
 
 Only active, official feeds with explicit compatible SPDX identifiers **and**
 matching canonical CC BY 4.0, CC0 or PDDL URLs are eligible. Separate-auth sources,
@@ -90,8 +96,29 @@ Run from `artifacts/api-server`:
 ```sh
 pnpm exec tsx src/transit/mobility/cli.ts catalog AU
 pnpm exec tsx src/transit/mobility/cli.ts import mdb-935
-pnpm exec tsx --test tests/mobility.ts
+pnpm run test:mobility
 ```
+
+Operator-only regional import:
+
+```sh
+# Uses the existing catalog allowance, not a separate entitlement.
+pnpm exec tsx src/transit/mobility/cli.ts import-regional <feed-id>
+# Alternatively, collect licensed candidates with one bounded search request.
+pnpm exec tsx src/transit/mobility/cli.ts licensed-catalog
+# Measure a candidate without publishing it (same download/DNS/ZIP safeguards).
+pnpm exec tsx tests/mobility-capacity-probe.ts <feed-id>
+# Use fresh cached evidence and enable schedules only. No RT inferred.
+pnpm exec tsx src/transit/mobility/cli.ts import-regional-cached <feed-id>
+```
+
+The search endpoint can omit size metadata. Missing sizes remain ineligible for
+automatic import; the explicit cached-regional command replaces only that size
+information with bounded actual archive measurements. It rechecks licenses,
+official status, public access, dates, direct-source precedence and timezones.
+Evidence must be less than six hours old. This command does not reserve another
+catalog request or enable realtime companions. Measurements and imports share
+the cross-process import lock.
 
 Manual imports use the same eligibility gates and active-feed capacity, but do
 not consume the automatic-registration/day allowance. No public write/import
@@ -109,6 +136,14 @@ and dated departures in Australia/Sydney. A 2030 date returned no departures
 rather than recycled old times. Canberra realtime is not claimed: the verified
 initial feed is scheduled-only. These measurements describe the development
 import, not guaranteed worldwide or published-app coverage.
+
+The second verified feed is Berlin–Brandenburg VBB (`mdb-3233`), explicitly
+imported with the regional budget: 1,257 supported bus/rail/subway routes and
+27,540 retained stops. Alexanderplatz Nearby/Search, U2 supplied map paths, dated
+Europe/Berlin departures, out-of-window empty dates, source credits and an
+existing Canberra saved-stop identity passed through the normal API.
+This feed is scheduled-only. See the capacity report for storage, memory,
+query-plan, read-latency and startup measurements.
 
 Official references:
 - https://mobilitydata.github.io/mobility-feed-api/SwaggerUI/index.html

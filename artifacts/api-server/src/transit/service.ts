@@ -1,5 +1,5 @@
 import { db, pool, stops, routes, feedSnapshots } from "@workspace/db";
-import { and, eq, inArray, ne } from "drizzle-orm";
+import { and, eq, inArray, ne,sql } from "drizzle-orm";
 import { adapters } from "./adapters";
 import { stationAccess } from "./wmata/access";
 import { demoArrivals, demoAlerts } from "./demo";
@@ -40,11 +40,13 @@ import { isWmata,boarding,applies as wmataApplies } from "./wmata/model";
 import { setupStatus as wmataSetup,dailyLimit as wmataLimit } from "./wmata/client";
 import { discoverRegion, recordFor } from "./mobility/registry";
 import { enabled as mobilityEnabled } from "./mobility/client";
+import { regionalAgenciesSql,findStops as regionalStops,directStop as mobilityStop,children as mobilityChildrenFor } from "./mobility/queries";
 
 let stopCache:{at:number;demo:TransitStop[];live:TransitStop[]}|undefined;
 export async function allStops(mode:Mode) {
   if(!stopCache||Date.now()-stopCache.at>60000){
-    const data=(await db.select().from(stops).where(and(inArray(stops.mode,["live","demo"]),ne(stops.agency,"idfm")))).filter(s=>!isRetiredResearchId(s.id));
+    const data=(await db.select().from(stops).where(and(inArray(stops.mode,["live","demo"]),ne(stops.agency,"idfm"),
+      sql.raw(`agency NOT IN (${regionalAgenciesSql})`)))).filter(s=>!isRetiredResearchId(s.id));
     stopCache={at:Date.now(),demo:data.filter(s=>s.mode==="demo").map(s=>s.data as TransitStop),
       live:data.filter(s=>s.mode==="live").map(s=>s.data as TransitStop)};
   }
@@ -112,7 +114,7 @@ export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<Tran
       enriched.wmata!.access=await stationAccess(stop);
     return enriched;
   }
-  const mobilityChildren=stop.mobility&&!stop.parent?(await allStops("live")).filter(s=>s.mobility?.feedId===stop.mobility!.feedId&&s.parent===stop.rawId):[];
+  const mobilityChildren=await mobilityChildrenFor(stop);
   const observations=[stop,...mobilityChildren].map(s=>officialArrivals(s));
   const official=observations.flatMap(o=>o.arrivals),excluded=new Set(observations.flatMap(o=>[...o.excluded]));
   const community=deep?await communityArrivals(stop):[];
@@ -168,6 +170,8 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
   const all=onlyParis?[]:await allStops(mode);
   const parisExact=mode==="live"&&q&&(!foundPlace||!known?.terms.includes(q))?(await parisStops({...params,q},undefined,1)).stops[0]:undefined;
   if(parisExact&&(!foundPlace||parisExact.name.toLowerCase()===q)){lat=parisExact.lat;lon=parisExact.lon;foundPlace=true;}
+  const regionalExact=mode==="live"&&q&&!foundPlace?(await regionalStops({...params,q},undefined,1)).stops[0]:undefined;
+  if(regionalExact){lat=regionalExact.lat;lon=regionalExact.lon;foundPlace=true;}
   const localExact=q?all.find(s=>s.name.toLowerCase()===q||s.routes.some(r=>r.name.toLowerCase()===q)):undefined;
   if(q&&!foundPlace&&!localExact){
     const point=tfl.londonPlace(q)||await globalPlace(q);
@@ -175,7 +179,9 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
   }
   const paris=mode==="live"?await parisStops({...params,q:foundPlace?undefined:q,lat,lon},
     {south:lat-.10,north:lat+.10,west:lon-.15,east:lon+.15},80):{stops:[],total:0};
-  let rows=[...all,...paris.stops].filter(s=>(!s.parent||s.mobility||isIdfm(s.id)||isWmata(s.id))&&boarding(s)&&s.routes.length&&(!params.type||params.type==="all"||s.routes.some(r=>r.type===params.type))&&
+  const regional=mode==="live"?await regionalStops({...params,q:foundPlace?undefined:q,lat,lon},
+    {south:lat-.10,north:lat+.10,west:lon-.15,east:lon+.15},80):{stops:[],total:0};
+  let rows=[...all,...paris.stops,...regional.stops].filter(s=>(!s.parent||s.mobility||isIdfm(s.id)||isWmata(s.id))&&boarding(s)&&s.routes.length&&(!params.type||params.type==="all"||s.routes.some(r=>r.type===params.type))&&
     (!params.agency||s.id.split(":")[0]===params.agency||s.routes.some(r=>r.agencyId===params.agency))&&(!params.serviceClass||params.serviceClass==="all"||s.routes.some(r=>r.serviceClass===params.serviceClass)));
   const exact=q?rows.find(s=>s.name.toLowerCase().includes(q)):undefined;
   if(exact&&!foundPlace){lat=exact.lat;lon=exact.lon;}
@@ -184,7 +190,7 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
   if(london?.stops.length&&q&&!foundPlace&&!exact){lat=london.stops[0].lat;lon=london.stops[0].lon;}
   const foreign=mode==="live"&&!onlyParis?await discover({
     ...params,...(q&&!foundPlace&&!exact?{q}:{q:undefined,lat,lon}),
-  },unique([...all.flatMap(s=>s.routes),...(london?.routes||[])]),undefined,all):undefined;
+  },unique([...all.flatMap(s=>s.routes),...regional.stops.flatMap(s=>s.routes),...(london?.routes||[])]),undefined,[...all,...regional.stops]):undefined;
   if(foreign?.stops.length&&!london?.stops.length&&q&&!foundPlace&&!exact){lat=foreign.stops[0].lat;lon=foreign.stops[0].lon;}
   if(q&&!foundPlace)rows=rows.filter(s=>`${s.name} ${s.searchNames?.join(" ")||""}`.toLowerCase().includes(q)||s.neighborhood?.toLowerCase().includes(q)||s.routes.some(r=>r.name.toLowerCase()===q||r.id.toLowerCase()===q));
   rows=preferDirect(unique([...rows,...(foreign?.stops||[]),...(london?.stops||[])])).map(s=>{const d=distance(lat,lon,s.lat,s.lon);return {...s,distance:Math.round(d),walkingMinutes:Math.max(1,Math.round(d/75))};})
@@ -221,7 +227,7 @@ export async function stopDetail(id:string,mode:Mode) {
     }
     return globalEnrich(s);
   }
-  const s=mode==="live"&&isIdfm(id)?await directStop(id):(await allStops(mode)).find(s=>s.id===id);
+  const s=mode==="live"&&isIdfm(id)?await directStop(id):mode==="live"&&id.startsWith("mobility-")?await mobilityStop(id):(await allStops(mode)).find(s=>s.id===id);
   return s?enrich(s,mode,true):undefined;
 }
 export async function routeDetail(id:string,mode:Mode,direction?:string,lookupGlobal:typeof globalRoute=globalRoute):Promise<RouteDetail|undefined> {
@@ -241,7 +247,8 @@ export async function routeDetail(id:string,mode:Mode,direction?:string,lookupGl
   if(agency==="wmata"&&(route.type==="bus"||route.type==="subway"))await wmata.refresh([route.type]);
   if(agency==="wmata")route.scheduleNotes=[...(route.scheduleNotes||[]),
     `Predictions: ${wmata.state(route.type==="bus"?"bus-predictions":"rail-predictions")}. Alerts: ${wmata.state(route.type==="bus"?"bus-alerts":"rail-alerts")}. Missing or expired predictions are withheld; predictions never generate vehicle GPS.`];
-  let ss=(await allStops(mode)).filter(s=>(!s.parent||s.mobility)&&s.routes.some(r=>r.id===id)),shape:number[][]=[];
+  let ss=route.mobility?(await regionalStops({agency,routeId:id},undefined,500,0,false)).stops:
+    (await allStops(mode)).filter(s=>(!s.parent||s.mobility)&&s.routes.some(r=>r.id===id)),shape:number[][]=[];
   let directions=route.type==="rail"?["Outbound","Inbound"]:["Uptown","Downtown"];
   if(mode==="demo"){
     ss=ss.sort((a,b)=>a.lat-b.lat);
@@ -259,7 +266,8 @@ export async function routeDetail(id:string,mode:Mode,direction?:string,lookupGl
     if(rows[0]){
       const {rows:ordered}=await pool.query(`SELECT s.data FROM transit_stop_times st JOIN transit_stops s ON s.id=st.stop_id AND s.mode='live'
         WHERE st.mode=${stopTimesMode("$2::text")} AND st.trip_id=$1 ORDER BY st.sequence`,[rows[0].id,agency]);
-      const seen=new Set<string>(), all=await allStops(mode);
+      const seen=new Set<string>(), all=route.mobility?(await pool.query(`SELECT data FROM transit_stops WHERE mode='live' AND agency=$1
+        AND id=ANY($2::text[])`,[agency,[...new Set(ordered.map(o=>`${agency}:${o.data.parent}`))]])).rows.map(r=>r.data as TransitStop):await allStops(mode);
       ss=ordered.map(o=>{const s=o.data as TransitStop;return s.parent?all.find(p=>p.id===`${agency}:${s.parent}`)||s:s;}).filter(s=>{if(seen.has(s.id))return false;seen.add(s.id);return true;});
       const {rows:sh}=await pool.query("SELECT data FROM transit_shapes WHERE mode='live' AND id=$1",[`${agency}:${rows[0].data.shape_id}`]);
       shape=sh[0]?.data.coordinates||[];

@@ -4,6 +4,7 @@ import { and, desc, eq, gt, sql } from "drizzle-orm";
 import { db, pool, rideSessions, locationSamples, riderReports, trips } from "@workspace/db";
 import { StartRideBody, SubmitSampleBody, SubmitReportBody } from "@workspace/api-zod";
 import { allStops } from "./service";
+import { directStop as mobilityStop } from "./mobility/queries";
 import { project, tripShape, SAMPLE_FRESH_MS } from "./estimator";
 import { distance } from "./types";
 const hash=(v:string)=>createHash("sha256").update(v).digest("hex");
@@ -28,7 +29,8 @@ export async function start(req:Request,res:Response):Promise<void> {
   if(!parsed.success){res.status(400).json({error:"Valid ride details and consent required"});return;}
   const v=parsed.data;
   if(!v.consent){res.status(400).json({error:"Explicit contribution consent is required"});return;}
-  const stop=(await allStops(v.mode)).find(s=>s.id===v.stopId&&s.routes.some(r=>r.id===v.routeId));
+  const candidate=v.mode==="live"&&v.stopId.startsWith("mobility-")?await mobilityStop(v.stopId):(await allStops(v.mode)).find(s=>s.id===v.stopId);
+  const stop=candidate?.routes.some(r=>r.id===v.routeId)?candidate:undefined;
   if(!stop||v.routeId.split(":")[0]!==v.agency){res.status(400).json({error:"Boarding stop, agency and route do not match"});return;}
   let tripId:string|undefined;
   if(v.tripId) {
@@ -101,7 +103,8 @@ export async function sample(req:Request,res:Response):Promise<void> {
 export async function report(req:Request,res:Response):Promise<void> {
   const p=SubmitReportBody.safeParse(req.body),ride=res.locals.ride;
   if(!p.success){res.status(400).json({error:"Invalid report"});return;}
-  const s=(await allStops(ride.mode)).find(s=>s.id===p.data.stopId&&s.routes.some(r=>r.id===ride.routeId));
+  const candidate=ride.mode==="live"&&p.data.stopId.startsWith("mobility-")?await mobilityStop(p.data.stopId):(await allStops(ride.mode)).find(s=>s.id===p.data.stopId);
+  const s=candidate?.routes.some(r=>r.id===ride.routeId)?candidate:undefined;
   if(!s){res.status(400).json({error:"Report stop is not on the selected route"});return;}
   const duplicates=await db.select().from(riderReports).where(and(eq(riderReports.rideId,ride.id),eq(riderReports.kind,p.data.kind),gt(riderReports.createdAt,new Date(Date.now()-60000)))).limit(1);
   if(duplicates.length){res.status(429).json({error:"This report was already submitted recently"});return;}

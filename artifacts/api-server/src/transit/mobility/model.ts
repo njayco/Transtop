@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 import type { AgencyAdapter } from "../adapters";
 import type { TransitType } from "../types";
+import { regionalCapacity,smallCapacity } from "./capacity";
 
 export const CATALOG = "https://mobilitydatabase.org/feeds/";
 export const validFeedId = (id: string) => /^(?:mdb|tld|ntd|tdg|jbda)-[a-z0-9-]{1,90}$/.test(id);
@@ -40,6 +41,7 @@ export function routeMode(value: string): TransitType | undefined {
   return undefined;
 }
 export interface FeedRecord {
+  regional?: boolean;
   id: string; kind: "gtfs" | "gtfs_rt"; provider: string; name: string; url: string; status: string;
   countries: string[]; regions: string[]; official: boolean; license?: string; licenseUrl?: string;
   eligible: boolean; reason: string; imported: boolean; datasetId?: string; downloadedAt?: string;
@@ -51,7 +53,7 @@ export function duplicateSource(raw: any, direct: AgencyAdapter[]) {
   const url = publicUrl(raw?.source_info?.producer_url);
   return !!url && direct.some(a => !isMobility(a.id) && [a.staticUrl, ...(a.staticFeeds || []).map(f => f.url), ...a.realtimeUrls].some(v => publicUrl(v) === url));
 }
-export function normalizeFeed(raw: any, direct: AgencyAdapter[], imported: boolean, now = Date.now()): FeedRecord | undefined {
+export function normalizeFeed(raw: any, direct: AgencyAdapter[], imported: boolean, now = Date.now(), regional=false): FeedRecord | undefined {
   if (!validFeedId(raw?.id) || !["gtfs", "gtfs_rt"].includes(raw.data_type)) return;
   const d = raw.latest_dataset, license = licenseOf(raw), isRt = raw.data_type === "gtfs_rt";
   const zone = d?.agency_timezone;
@@ -66,12 +68,12 @@ export function normalizeFeed(raw: any, direct: AgencyAdapter[], imported: boole
   else if (!d || !archiveUrl(d.hosted_url)) reason = "Withheld: no supported hosted GTFS archive";
   else if (!knownZone) reason = "Withheld: agency timezone is not verified";
   else if (!Number.isFinite(Date.parse(d.service_date_range_start)) || !Number.isFinite(Date.parse(d.service_date_range_end)) || Date.parse(d.service_date_range_end) < now || Date.parse(d.service_date_range_start) > now) reason = "Withheld: schedule service window is not current";
-  else if (!Number.isFinite(d.zipped_folder_size_mb) || d.zipped_folder_size_mb > 20 ||
-    !Number.isFinite(d.unzipped_folder_size_mb) || d.unzipped_folder_size_mb > 100) reason = "Withheld: feed exceeds the bounded importer capacity";
+  else if (!Number.isFinite(d.zipped_folder_size_mb) || d.zipped_folder_size_mb<0|| d.zipped_folder_size_mb > (regional?regionalCapacity:smallCapacity).compressed/1024**2 ||
+    !Number.isFinite(d.unzipped_folder_size_mb) || d.unzipped_folder_size_mb<0|| d.unzipped_folder_size_mb > (regional?regionalCapacity:smallCapacity).expanded/1024**2) reason = "Withheld: feed exceeds the bounded importer capacity";
   const eligible = reason === "Eligible for bounded schedule import";
   const loc = (Array.isArray(raw.locations) ? raw.locations : []).slice(0, 150);
   return {
-    id: raw.id, kind: raw.data_type, provider: String(raw.provider || raw.feed_name || raw.id).slice(0, 300),
+    regional,id: raw.id, kind: raw.data_type, provider: String(raw.provider || raw.feed_name || raw.id).slice(0, 300),
     name: String(raw.feed_name || raw.provider || raw.id).slice(0, 300), url: CATALOG + raw.data_type + "/" + raw.id,
     status: String(raw.status || "unknown"), countries: [...new Set<string>(loc.map((v: any) => String(v.country_code || "")).filter(Boolean))],
     regions: [...new Set<string>(loc.map((v: any) => [v.municipality, v.subdivision_name, v.country].filter(Boolean).join(", ")).filter(Boolean))].slice(0, 20),

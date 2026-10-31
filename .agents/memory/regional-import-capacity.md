@@ -21,6 +21,30 @@ deletes, and retain an
 unchanged source body in a bounded checksummed cache for retries. Account for
 abandoned generations and cleanup time before raising any resource limit.
 
+Regional capacity also needs a rider-read trial at a busy station, not just a
+successful importer or a small timetable fixture.
+
+**Why:** A large licensed archive imported within its memory and storage budgets,
+but a busy-station Nearby request exceeded its timeout: repeated exception-calendar
+filtering and service-day conversions dominated the read path. A whole-network
+geometry cache could also allocate the entire newly added region on an unrelated
+map request.
+
+**How to apply:** Keep large regional paths/stops out of global caches; measure
+selected-location map and Nearby reads after publication. Bound date/service
+selection in SQL and reuse calendar/time-base calculations. Include existing
+source/favorite reads in the same acceptance pass.
+
+Catalog search results may omit size metadata even when the detail endpoint has it.
+
+**Why:** Exhausting a bounded catalog allowance must not become permission to
+raise it or infer unknown archive sizes.
+
+**How to apply:** Keep missing sizes ineligible for automatic discovery. An explicit
+operator measurement may use fresh, normalized catalog rights/timezone evidence
+and the same bounded public archive downloader; it does not authorize realtime
+companions or new provider terms.
+
 Keep schema introspection stable when feeds make existing indexes large.
 Do not change real composite-key order merely to satisfy a nondeterministic
 schema diff, or upgrade the whole ORM to a release candidate solely for that bug.

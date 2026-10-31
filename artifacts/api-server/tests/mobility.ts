@@ -64,3 +64,13 @@ test("source-zone overnight times and bounded catalog parameters",()=>{
   assert.equal(GetMobilityFeedsQueryParams.safeParse({country:"AU",kind:"gtfs_rt",offset:"20"}).success,true);
   for(const params of [{country:"Australia"},{offset:"-1"},{offset:"10001"},{kind:"http://localhost"}])assert.equal(GetMobilityFeedsQueryParams.safeParse(params).success,false);
 });
+test("regional eligibility is explicit and never widens automatic discovery or license gates",()=>{
+  const latest_dataset={...raw.latest_dataset,zipped_folder_size_mb:80,unzipped_folder_size_mb:640};
+  assert.equal(normalizeFeed({...raw,latest_dataset},[],false,now)!.eligible,false);
+  assert.equal(normalizeFeed({...raw,latest_dataset},[],false,now,true)!.eligible,true);
+  for(const patch of [{zipped_folder_size_mb:97},{unzipped_folder_size_mb:769},
+    {zipped_folder_size_mb:-1},{agency_timezone:"Not/AZone"}])
+    assert.equal(normalizeFeed({...raw,latest_dataset:{...latest_dataset,...patch}},[],false,now,true)!.eligible,false);
+  assert.equal(normalizeFeed({...raw,latest_dataset,source_info:{...raw.source_info,authentication_type:1}},[],false,now,true)!.eligible,false);
+  assert.equal(normalizeFeed({...raw,latest_dataset,source_info:{...raw.source_info,license_url:"https://example.org/license"}},[],false,now,true)!.eligible,false);
+});

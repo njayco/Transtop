@@ -22,6 +22,7 @@ import { findStops as parisStops, findRoutes as parisRoutes, parisTimetable } fr
 import { isWmata,boarding } from "./wmata/model";
 import { recordFor } from "./mobility/registry";
 import { enabled as mobilityEnabled } from "./mobility/client";
+import { findStops as regionalStops,directStop as mobilityStop,children as mobilityChildren } from "./mobility/queries";
 type CatalogParams=z.infer<typeof GetCatalogQueryParams>;
 type TimetableParams=z.infer<typeof GetTimetableQueryParams>;
 
@@ -45,6 +46,14 @@ export async function catalog(p:CatalogParams) {
   }
   const match=(r:TransitRoute)=> (!p.agency||r.id.split(":")[0]===p.agency||r.agencyId===p.agency)&&
     (!p.type||p.type==="all"||r.type===p.type)&&(!p.serviceClass||p.serviceClass==="all"||r.serviceClass===p.serviceClass);
+  if(mode==="live"&&p.agency&&recordFor(p.agency)?.regional){
+    const [ss,records]=await Promise.all([regionalStops(p,undefined,limit,offset),
+      db.select().from(routes).where(and(eq(routes.mode,"live"),eq(routes.agency,p.agency)))]);
+    const rr=records.map(r=>r.data as TransitRoute).filter(r=>match(r)&&(!q||`${r.name} ${r.longName||""} ${r.agency}`.toLowerCase().includes(q)))
+      .sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+    return {routes:rr.slice(offset,offset+limit),stops:ss.stops,totalRoutes:rr.length,totalStops:ss.total,offset,limit,
+      message:"Published regional schedules; stops and routes are independently paginated. Source credits accompany each result."};
+  }
   const extra=mode==="live"?(await intercityCatalog()).routes:[];
   const importedRoutes=[...(await db.select().from(routes).where(and(eq(routes.mode,mode),ne(routes.agency,"idfm")))).map(r=>r.data as TransitRoute).filter(r=>(!r.odpt||odptEnabled())&&(!r.mobility||mobilityEnabled())),...extra];
   const parisR=mode==="live"?await parisRoutes(p,Math.min(offset+limit,500)):{routes:[],total:0};
@@ -57,12 +66,16 @@ export async function catalog(p:CatalogParams) {
   const london=mode==="live"&&(q||p.agency?.startsWith("tfl"))?await tfl.discover({...p,q:q||"London"}):undefined;
   const foreign=mode==="live"&&(q||p.agency?.startsWith("tl:"))?await discover({...p,lat:undefined,lon:undefined},importedRoutes,undefined,await allStops(mode)):undefined;
   const paris=mode==="live"?await parisStops(p,undefined,Math.min(offset+limit,500)):{stops:[],total:0};
-  const combinedStops=preferDirect(unique([...ss,...paris.stops,...(foreign?.stops||[]),...(london?.stops||[])]));
+  const regional=mode==="live"?await regionalStops(p,undefined,Math.min(offset+limit,500)):{stops:[],total:0};
+  const combinedStops=preferDirect(unique([...ss,...paris.stops,...regional.stops,...(foreign?.stops||[]),...(london?.stops||[])]));
   const aliases=resultRouteAliases(foreign?.stops||[],london?.stops||[]);
   const combinedRoutes=unique([...rr,...(foreign?.routes||[]).filter(r=>!aliases.has(r.id)),...(london?.routes||[])]);
   return {routes:combinedRoutes.slice(offset,offset+limit),stops:combinedStops.slice(offset,offset+limit),
-    totalRoutes:combinedRoutes.length,totalStops:combinedStops.length,offset,limit,globalCoverage:foreign?.globalCoverage,tfl:london?.tfl,
-    message:paris.total>paris.stops.length||parisR.total>parisR.routes.length?"Paris results are capped in the combined catalog. Select Île-de-France Mobilités for all paginated matching stops/routes.":undefined};
+    totalRoutes:combinedRoutes.length,totalStops:combinedStops.length+Math.max(0,regional.total-regional.stops.length),offset,limit,globalCoverage:foreign?.globalCoverage,tfl:london?.tfl,
+    message:[
+      paris.total>paris.stops.length||parisR.total>parisR.routes.length?"Paris results are capped in the combined catalog. Select Île-de-France Mobilités for all paginated matching stops/routes.":"",
+      regional.total>regional.stops.length?"Regional results are capped in the combined catalog. Select the regional provider for all paginated matching stops/routes.":"",
+    ].filter(Boolean).join(" ")||undefined};
 }
 
 export async function timetable(p:TimetableParams) {
@@ -93,9 +106,9 @@ export async function timetable(p:TimetableParams) {
   const published=health[0]?.data;
   if(published?.serviceEnd&&serviceDate>published.serviceEnd||published?.serviceStart&&serviceDate<published.serviceStart)
     return {...empty,message:`No current timetable for this date: the imported agency feed covers ${published.serviceStart}–${published.serviceEnd}. Check the operator's current schedules and the source link in Settings. Old departure times are never shifted to pretend they are current.`};
-  const all=await allStops("live"), stop=p.stopId?all.find(s=>s.id===p.stopId):undefined;
+  const all=mobility?[]:await allStops("live"), stop=p.stopId?mobility?await mobilityStop(p.stopId):all.find(s=>s.id===p.stopId):undefined;
   if(p.stopId&&!stop)return {...empty,message:"This stop is not imported. Check coverage in Settings."};
-  const ids=stop?[stop.id,...all.filter(s=>s.parent===stop.rawId&&s.id.startsWith(agency+":")).map(s=>s.id)]:null;
+  const ids=stop?[stop.id,...(mobility?await mobilityChildren(stop):all.filter(s=>s.parent===stop.rawId&&s.id.startsWith(agency+":"))).map(s=>s.id)]:null;
   const rawRoute=p.routeId?.slice(agency.length+1)||null;
   // Materialize the small route/stop selection before joining the regional
   // stop-times table. A correlated MIN per stop becomes prohibitively expensive

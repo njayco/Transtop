@@ -10,15 +10,24 @@ export async function scheduledArrivals(stop:TransitStop,excluded:Set<string>,no
   const children=(prefix==="wmata"&&stop.wmata?.kind==="station"||stop.mobility&&!stop.parent)?
     (await pool.query("SELECT id,data FROM transit_stops WHERE mode='live' AND agency=$1 AND data->>'parent_station'=$2",[prefix,raw])).rows:[];
   const ids=prefix==="wmata"||stop.mobility?[stop.id,...children.map(c=>c.id)]:stop.parent||stop.odpt?[stop.id]:[stop.id,`${prefix}:${raw}N`,`${prefix}:${raw}S`];
+  const zone=stop.mobility?.timezone||stop.odpt?.timezone||stop.wmata?.timezone;
+  const dates=serviceDates(now,zone),bases=new Map(dates.map(date=>[date,serviceInstant(date,0,zone)]));
+  const windows=dates.map(date=>({lo:Math.max(0,Math.ceil((now-30000-bases.get(date)!)/1000)),
+    hi:Math.floor((now+2*3600000-bases.get(date)!)/1000)})).filter(w=>w.hi>=0);
   const {rows}=await pool.query(`
     SELECT st.data AS timing, st.arrival_seconds, t.id AS trip_id, t.data AS trip, c.data AS calendar
     FROM transit_stop_times st
     JOIN transit_trips t ON t.mode='live' AND t.id=st.trip_id
     LEFT JOIN transit_calendars c ON c.mode=t.mode AND c.id=($2 || ':' || (t.data->>'service_id'))
-    WHERE st.mode=${stopTimesMode("$2::text")} AND st.stop_id=ANY($1::text[])`,[ids,prefix]);
-  const {rows:ex}=await pool.query("SELECT data FROM transit_calendar_exceptions WHERE mode='live' AND agency=$1",[prefix]);
-  const zone=stop.mobility?.timezone||stop.odpt?.timezone||stop.wmata?.timezone;
-  const dates=serviceDates(now,zone), result:Arrival[]=[];
+    WHERE st.mode=${stopTimesMode("$2::text")} AND st.stop_id=ANY($1::text[])
+    ${stop.mobility?`AND EXISTS(SELECT 1 FROM jsonb_to_recordset($3::jsonb) w(lo int,hi int)
+      WHERE st.departure_seconds BETWEEN w.lo AND w.hi)`:""}`,[ids,prefix,...(stop.mobility?[JSON.stringify(windows)]:[])]);
+  const {rows:ex}=await pool.query(`SELECT data FROM transit_calendar_exceptions WHERE mode='live' AND agency=$1
+    ${stop.mobility?"AND data->>'date'=ANY($2::text[]) AND data->>'service_id'=ANY($3::text[])":""}`,
+    stop.mobility?[prefix,dates,[...new Set(rows.map(r=>r.trip.service_id))]]:[prefix]);
+  const exceptions=new Map<string,Record<string,string>[]>();
+  for(const {data} of ex){const values=exceptions.get(data.service_id)||[];values.push(data);exceptions.set(data.service_id,values);}
+  const activity=new Map<string,boolean>(),result:Arrival[]=[];
   for(const row of rows) {
     if(row.arrival_seconds<0)continue;
     if((stop.mobility||stop.odpt||prefix==="wmata")&&["1","2","3"].includes(row.timing.pickup_type))continue;
@@ -29,8 +38,10 @@ export async function scheduledArrivals(stop:TransitStop,excluded:Set<string>,no
     for(const date of dates) {
       if((prefix==="wmata"||stop.mobility)&&(excluded.has(`${row.trip_id}|date:${date}`)||excluded.has(`${row.trip_id}|${row.timing.stop_id}|date:${date}`)))continue;
       if(stop.odpt&&(date<stop.odpt.validFrom.replaceAll("-","")||date>stop.odpt.validThrough.replaceAll("-","")))continue;
-      if(!activeService(row.calendar,ex.map(e=>e.data).filter(e=>e.service_id===row.trip.service_id),date))continue;
-      const at=serviceInstant(date,Number(row.timing.departure_time?row.timing.departure_time.split(":").reduce((n:number,v:string)=>n*60+Number(v),0):row.arrival_seconds),zone);
+      const key=`${row.trip.service_id}:${date}`;
+      if(!activity.has(key))activity.set(key,activeService(row.calendar,exceptions.get(row.trip.service_id)||[],date));
+      if(!activity.get(key))continue;
+      const at=bases.get(date)!+1000*Number(row.timing.departure_time?row.timing.departure_time.split(":").reduce((n:number,v:string)=>n*60+Number(v),0):row.arrival_seconds);
       if(at<now-30000||at>now+2*3600000)continue;
       // Legacy arrival direction values are consumed by Ride's trip selection.
       // Actual destinations remain in destination and full timetable patterns.

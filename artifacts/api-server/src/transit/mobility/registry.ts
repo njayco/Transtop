@@ -5,6 +5,8 @@ import { enabled, request, MobilityError } from "./client";
 import { normalizeFeed, agencyId, validFeedId, licenseOf, routeMode, type FeedRecord } from "./model";
 import { logger } from "../../lib/logger";
 import type { MobilityInfo } from "../types";
+import { openArchive } from "./archive";
+import { IMPORT_LOCK } from "../generations";
 
 const active = new Map<string, FeedRecord>();
 let scanning = false;
@@ -56,17 +58,17 @@ async function attach(record: FeedRecord, realtime: string[]) {
   const a: AgencyAdapter = { id, name: record.provider, type: "rail", staticUrl: record.hostedUrl,
     realtimeUrls: realtime, documentation: record.url, status: "scheduled only",
     setup: `${record.provider}. Source: Mobility Database; ${record.license} (${record.licenseUrl}). Modified for Transtop. ${record.timezone}. Only verified coordinates and matched fresh predictions qualify as live.`,
-    mobility: infoFor(record) };
+    mobility: infoFor(record),mobilityRegional:record.regional===true };
   a.staticRouteTypes = Array.from({length:1000},(_,n)=>n).filter(n=>routeMode(String(n))!==undefined).map(String);
   const old = adapters.find(a => a.id === id);
   if (old) Object.assign(old, a); else adapters.push(a);
   active.set(id, record);
 }
-export async function prepareFeed(id: string) {
+export async function prepareFeed(id: string,regional=active.get(agencyId(id))?.regional===true) {
   if (!validFeedId(id)) throw new MobilityError("Invalid Mobility Database feed ID.");
   if (!active.has(agencyId(id)) && active.size >= MAX_FEEDS) throw new MobilityError("Mobility Database active-feed capacity reached.");
   const raw = await request(`gtfs_feeds/${id}`);
-  const record = normalizeFeed(raw, adapters, false);
+  const record = normalizeFeed(raw, adapters, false,Date.now(),regional);
   if (!record?.eligible) throw new MobilityError(record?.reason || "This feed cannot be imported safely.");
   if(active.get(agencyId(id))?.timezone&&active.get(agencyId(id))!.timezone!==record.timezone)throw new MobilityError("Agency timezone changed; this feed needs review before refresh.");
   const rtRaw = await request(`gtfs_feeds/${id}/gtfs_rt_feeds`);
@@ -84,6 +86,12 @@ export async function prepareFeed(id: string) {
     } catch { /* Withhold invalid endpoints. */ }
   }
   if(record.id!==id)throw new MobilityError("Catalog feed redirects require review before import.");
+  await register(record,realtime);
+  return record;
+}
+async function register(record:FeedRecord,realtime:string[]) {
+  const id=record.id;
+  if(active.get(agencyId(id))?.timezone&&active.get(agencyId(id))!.timezone!==record.timezone)throw new MobilityError("Agency timezone changed; this feed needs review before refresh.");
   // Store only safe, normalized metadata, never raw producer fields or API responses.
   const client=await pool.connect();
   try{
@@ -98,7 +106,62 @@ export async function prepareFeed(id: string) {
   }catch(error){await client.query("ROLLBACK");throw error;}
   finally{client.release();}
   await attach(record,[...new Set(realtime)].slice(0,3));
-  return record;
+}
+/** Operator-only path. A fresh catalog result can prove rights without another
+ * request. Search omits size metadata, so actual bounded archive measurements
+ * replace it. No realtime endpoint is inferred or polled by this path.
+ */
+export async function prepareCachedRegional(id:string) {
+  if(!enabled()||!validFeedId(id))throw new MobilityError("Mobility Database is disabled or feed ID is invalid.");
+  const {rows}=await pool.query(`SELECT f FROM transit_feed_snapshots,
+    LATERAL jsonb_array_elements(data->'feeds') f
+    WHERE mode='live' AND id LIKE 'mobility:catalog:%' AND (data->>'expires')::bigint>$1
+      AND f->>'id'=$2 ORDER BY updated_at DESC LIMIT 1`,[Date.now(),id]);
+  const candidate=rows[0]?.f as FeedRecord|undefined;
+  if(!candidate||!["Eligible for bounded schedule import","Withheld: feed exceeds the bounded importer capacity"].includes(candidate.reason))
+    throw new MobilityError("A fresh licensed, official, public, current, timezone-verified catalog record is required.");
+  // Reapply all gates; never trust a persisted eligible boolean or strip a
+  // direct-source conflict. Only the capacity measurement is replaced below.
+  const raw={id:candidate.id,data_type:candidate.kind,provider:candidate.provider,feed_name:candidate.name,
+    official:candidate.official,status:candidate.status,locations:candidate.countries.map(country_code=>({country_code})),
+    external_ids:candidate.transitlandId?[{source:"tld",external_id:candidate.transitlandId}]:[],
+    source_info:{authentication_type:0,producer_url:candidate.producerUrl,license_id:candidate.license,
+      license_url:candidate.licenseUrl,license_is_spdx:true},
+    latest_dataset:{id:candidate.datasetId,hosted_url:candidate.hostedUrl,agency_timezone:candidate.timezone,
+      downloaded_at:candidate.downloadedAt,service_date_range_start:candidate.validFrom,service_date_range_end:candidate.validThrough,
+      zipped_folder_size_mb:0,unzipped_folder_size_mb:0}};
+  const provisional=normalizeFeed(raw,adapters,false,Date.now(),true);
+  if(!provisional?.eligible)throw new MobilityError(provisional?.reason||"Cached feed failed revalidation");
+  const lock=await pool.connect();
+  let locked=false;
+  try{
+    locked=(await lock.query("SELECT pg_try_advisory_lock($1) AS locked",[IMPORT_LOCK])).rows[0]?.locked===true;
+    if(!locked)throw new MobilityError("Another GTFS import or measurement is already running");
+    const archive=await openArchive(candidate,true);
+    raw.latest_dataset.zipped_folder_size_mb=archive.zipBytes/1024**2;
+    raw.latest_dataset.unzipped_folder_size_mb=archive.expandedBytes/1024**2;
+    const record=normalizeFeed(raw,adapters,false,Date.now(),true)!;
+    if(!record.eligible)throw new MobilityError(record.reason);
+    record.regions=candidate.regions;
+    await register(record,[]);
+    logger.info({feedId:id},"Regional import registered from fresh cached evidence; scheduled only, no realtime companions enabled");
+    return record;
+  }finally{
+    if(locked)await lock.query("SELECT pg_advisory_unlock($1)",[IMPORT_LOCK]);
+    lock.release();
+  }
+}
+
+export async function licensedCatalog() {
+  const raw=await request("search",{limit:100,data_type:"gtfs",is_official:"true",statuses:"active",
+    license_ids:"CC-BY-4.0,CC0-1.0,PDDL-1.0",license_is_spdx:"true"});
+  if(!Array.isArray(raw.results))throw new MobilityError("Unsupported catalog search response");
+  const feeds:FeedRecord[]=raw.results.flatMap((f:any)=>{const r=normalizeFeed(f,adapters,false);return r?[r]:[];});
+  await pool.query(`INSERT INTO transit_feed_snapshots(id,agency,mode,data)
+    VALUES('mobility:catalog:licensed-search','mobility','live',$1)
+    ON CONFLICT(mode,id) DO UPDATE SET data=excluded.data,updated_at=now()`,
+    [{feeds,expires:Date.now()+6*3600_000,hasMore:raw.total>100}]);
+  return feeds;
 }
 export async function restoreRegistry() {
   if (!enabled()) return;
@@ -139,7 +202,7 @@ export async function refreshRegistered() {
   try {
     for (const record of [...active.values()]) {
       const { rows } = await pool.query("SELECT data FROM transit_feed_snapshots WHERE mode='live' AND id=$1", [`${agencyId(record.id)}:static`]);
-      if (rows[0]?.data?.importedAt && Date.now() - Date.parse(rows[0].data.importedAt) < 24 * 3600_000) continue;
+      if (rows[0]?.data?.importedAt && Date.now() - Date.parse(rows[0].data.checkedAt||rows[0].data.importedAt) < 24 * 3600_000) continue;
       try {
         await prepareFeed(record.id);
         const { importGtfs } = await import("../importer");

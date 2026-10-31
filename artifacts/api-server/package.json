@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:mobility": "tsx --experimental-test-module-mocks --test tests/mobility.ts tests/mobility-client.ts tests/mobility-registry.ts tests/mobility-realtime.ts tests/mobility-schedules.ts",
+    "test:mobility-import": "tsx --experimental-test-module-mocks tests/mobility-import.ts",
+    "bench:mobility": "tsx tests/mobility-storage.ts",
     "dev:web": "TRANSTOP_ROOT=../transtop tsx src/public-web.ts --dev",
     "test:public-web": "tsx --experimental-test-module-mocks --test tests/public-web.ts tests/public-web-catalog.ts tests/public-web-train.ts",
     "test:public-web-production": "tsx --test tests/public-web-production.ts",

@@ -1,6 +1,7 @@
 import { pool } from "@workspace/db";
 import { logger } from "../lib/logger";
 import { editionTable } from "./idfm/storage";
+import { editionTable as mobilityEditionTable } from "./mobility/storage";
 
 export const IMPORT_LOCK = 735102;
 // Resolve inside the reader's statement, never from a cached health response.
@@ -17,7 +18,7 @@ const generationTables = ["transit_stop_times", "transit_agencies", "transit_rou
  * Registry entries survive crashes, so unfinished staging/retirement resumes later.
  */
 export async function cleanupGenerations(budget = 20000, agency?:string) {
-  const deadline=agency==="idfm"?Date.now()+30000:Infinity;
+  const deadline=Date.now()+(agency==="idfm"?30000:2000);
   const { rows } = await pool.query(`SELECT g.id,g.agency,g.data,g.data->>'stage' AS stage
     FROM transit_feed_snapshots g
     WHERE g.mode='live' AND g.data->>'kind'='gtfs-generation'
@@ -25,17 +26,19 @@ export async function cleanupGenerations(budget = 20000, agency?:string) {
         (SELECT COALESCE(s.data->>'stopTimesMode','live') FROM transit_feed_snapshots s
          WHERE s.mode='live' AND s.id=g.agency||':static')
        AND ($1::text IS NULL OR g.agency=$1)
-     ORDER BY CASE WHEN g.data->>'storage'='idfm-edition' THEN 0 ELSE 1 END,g.updated_at`,[agency||null]);
+     ORDER BY CASE WHEN g.data->>'storage' IN ('idfm-edition','mobility-edition') THEN 0 ELSE 1 END,g.updated_at`,[agency||null]);
   for (const generation of rows) {
+    if(Date.now()>=deadline)break;
     let complete = true;
-    const edition=generation.agency==="idfm"&&generation.data.storage==="idfm-edition";
+    const mobilityEdition=generation.agency.startsWith("mobility-")&&generation.data.storage==="mobility-edition";
+    const edition=mobilityEdition||generation.agency==="idfm"&&generation.data.storage==="idfm-edition";
     if(edition){
       const client=await pool.connect();
       try{
         await client.query("BEGIN; SET LOCAL lock_timeout='250ms'; SET LOCAL statement_timeout='2s'");
         // Active editions were excluded above under the shared ownership lock.
         // DROP never cascades and can't remove another provider's records.
-        await client.query(`DROP TABLE IF EXISTS ${editionTable(generation.stage)}`);
+        await client.query(`DROP TABLE IF EXISTS ${mobilityEdition?mobilityEditionTable(generation.stage):editionTable(generation.stage)}`);
         await client.query("COMMIT");
       }catch(error){await client.query("ROLLBACK");throw error;}
       finally{client.release();}

@@ -44,7 +44,7 @@ async function accessToken() {
 /** Server-only credential exchange; catalog metadata is cached, not bearer tokens or raw responses. */
 export async function request(path: string, params: Record<string, string | number | undefined> = {}) {
   if (!enabled()) throw new MobilityError("Mobility Database is disabled or its refresh token is missing.");
-  if (!/^(?:gtfs_feeds|gtfs_rt_feeds)(?:\/[a-z0-9-]+(?:\/gtfs_rt_feeds)?)?$/.test(path)) throw new MobilityError("Invalid catalog resource.");
+  if (!/^(?:search|(?:gtfs_feeds|gtfs_rt_feeds)(?:\/[a-z0-9-]+(?:\/gtfs_rt_feeds)?)?)$/.test(path)) throw new MobilityError("Invalid catalog resource.");
   const url = new URL(path, ORIGIN);
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== "") url.searchParams.set(k, String(v));
   const key = "mobility:cache:" + createHash("sha256").update(url.href).digest("hex");
