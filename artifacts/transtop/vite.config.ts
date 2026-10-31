@@ -4,6 +4,8 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
+import { readFile } from 'node:fs/promises';
+import { publicContentMiddleware } from './server/middleware.mjs';
 
 const rawPort = process.env.PORT;
 
@@ -33,6 +35,22 @@ export default defineConfig({
   // Sharing optimized dependencies lets one invalidate the other's module URLs.
   cacheDir: path.resolve(import.meta.dirname, `node_modules/.vite-${port}`),
   plugins: [
+    {
+      name: 'transtop-public-content',
+      configureServer(server) {
+        server.middlewares.use(publicContentMiddleware({
+          base: basePath.replace(/\/$/, ''),
+          template: async (url) => server.transformIndexHtml(url,
+            await readFile(path.resolve(import.meta.dirname, 'index.html'), 'utf8')),
+        }));
+      },
+      configurePreviewServer(server) {
+        server.middlewares.use(publicContentMiddleware({
+          base: basePath.replace(/\/$/, ''),
+          template: async () => readFile(path.resolve(import.meta.dirname, 'dist/public/index.html'), 'utf8'),
+        }));
+      },
+    },
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),

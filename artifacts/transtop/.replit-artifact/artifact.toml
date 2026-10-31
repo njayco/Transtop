@@ -16,12 +16,9 @@ run = "pnpm --filter @workspace/transtop run dev"
 
 [services.production]
 build = [ "pnpm", "--filter", "@workspace/transtop", "run", "build" ]
-serve = "static"
-publicDir = "artifacts/transtop/dist/public"
 
-[[services.production.rewrites]]
-from = "/*"
-to = "/index.html"
+[services.production.run]
+args = ["node", "artifacts/transtop/server/start.mjs"]
 
 [services.env]
 PORT = "23975"

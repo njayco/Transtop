@@ -20,3 +20,4 @@
 - [Regional import capacity](regional-import-capacity.md) — measure validation plans and abandoned-generation storage, not only ZIP size and parser memory.
 - [WMATA access boundaries](wmata-access.md) — owner confirmed terms accepted; API catalog listings do not establish subscribed products or account quotas.
 - [Live check prerequisites](live-check-prerequisites.md) — zero matched GPS during initial schedule staging is not evidence of denied access or incorrect identities.
+- [Public content and entry](public-content-entry.md) — preserve deliberate entry for the live app; public information must not depend on gestures or bot-specific treatment.

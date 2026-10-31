@@ -24,6 +24,15 @@ function readEntered() {
 /** Mounts children only after the entry card has been swiped in this tab session. */
 export function EntryGate({ children }: { children: ReactNode }) {
   const [entered, setEntered] = useState(readEntered);
+  // Public server-rendered information stays readable without session storage,
+  // JavaScript or a gesture. Only replace it once the rider enters the live app.
+  useEffect(() => {
+    const hasPublicContent = !!document.getElementById('public-content');
+    for (const id of ['public-content', 'public-info-link']) {
+      const element = document.getElementById(id);
+      if (element) element.hidden = entered || !hasPublicContent;
+    }
+  }, [entered]);
   const [variant, setVariant] = useState<EntryVariant | null>(readStoredVariant);
   const asked = useRef(false);
   useEffect(() => {

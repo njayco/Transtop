@@ -20,7 +20,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   </head>
   <body>
+    <style>
+      body { margin: 0; background: #0c0c0d; }
+      #public-content { max-width: 52rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; color: #e8e8e8; font: 1rem/1.65 Archivo, sans-serif; }
+      #public-content a { color: #8bc9ec; text-decoration: underline; }
+      #public-content h1 { font-size: 1.8rem; line-height: 1.25; margin: 1.5rem 0 1rem; font-weight: 700; }
+      #public-content h2 { font-size: 1.25rem; margin: 1.5rem 0 .5rem; font-weight: 700; }
+      #public-content p { margin: .75rem 0; }
+      #public-content ul, #public-content ol { padding-left: 1.5rem; list-style: revert; }
+      #public-content input, #public-content button { border: 1px solid #777; border-radius: .3rem; padding: .4rem; background: #161618; color: #fff; max-width: 100%; }
+      #public-content[hidden], #public-info-link[hidden] { display: none; }
+      #public-info-link { display: block; padding: .6rem 1rem; background: #111; color: #8bc9ec; text-decoration: underline; text-align: center; }
+    </style>
+    <a id="public-info-link" href="#public-content">Read public transit information without entering the app</a>
     <div id="root"></div>
+    <!--public-content-->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite --config vite.config.ts --host 0.0.0.0",
     "build": "vite build --config vite.config.ts",
-    "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
+    "serve": "node server/start.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --experimental-vm-modules --test tests/*.test.mjs",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "test:public-content": "node --test tests/public-content.test.mjs",
+    "test:public-content:browser": "playwright test --config public-content.config.ts"
   },
   "devDependencies": {
     "@hookform/resolvers": "^3.10.0",
