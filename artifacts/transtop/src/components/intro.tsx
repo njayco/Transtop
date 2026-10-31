@@ -4,6 +4,7 @@ import { prefersReducedMotion, useSwipeGesture } from '@/hooks/use-swipe-gesture
 import { fetchEntryVariant, readStoredVariant, storeVariant, type EntryVariant } from '@/lib/entry-country';
 import { RegionalEntry, EntryPrivacy } from '@/components/entry/regional-entry';
 import { SlideStep } from '@/components/entry/slide-step';
+import { trackEvent } from '@/lib/analytics';
 
 const KEY = 'transtop.entry.v2';
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -39,6 +40,7 @@ export function EntryGate({ children }: { children: ReactNode }) {
   }, [entered, variant]);
   const enter = useCallback(() => {
     try { sessionStorage.setItem(KEY, '1'); } catch { /* ignore */ }
+    trackEvent('entry_completed');
     setEntered(true);
   }, []);
   const replay = useCallback(() => {

@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { GlobalCoverageNotice } from '@/components/global-coverage';
 import { TflDetails } from '@/components/tfl-details';
 import { IdfmDetails } from '@/components/idfm-details';
+import { trackEvent } from '@/lib/analytics';
 
 const SUGGEST = ['Times Square', 'Grand Central', 'Penn Station', 'Jamaica', 'M15', 'Port Washington', 'n6'];
 const TYPES = [{ v: '', l: 'All modes' }, { v: 'subway', l: 'Subway' }, { v: 'bus', l: 'Bus' }, { v: 'rail', l: 'Rail / tram' }, { v: 'intercity', l: 'Intercity Bus Network' }];
@@ -30,7 +31,11 @@ export default function SearchPage() {
   const timer = useRef<number | null>(null);
   useEffect(() => {
     if (timer.current) window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => { setQ(text.trim()); setOffset(0); }, 300);
+    timer.current = window.setTimeout(() => {
+      const query = text.trim();
+      setQ(query); setOffset(0);
+      if (query) trackEvent('search_performed', { has_query: true });
+    }, 300);
     return () => { if (timer.current) window.clearTimeout(timer.current); };
   }, [text]);
   useEffect(() => {setOffset(0);setCursor('');}, [agency, type, serviceClass, mode,q]);

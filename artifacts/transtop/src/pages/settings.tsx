@@ -91,6 +91,7 @@ export default function Settings() {
         <h1 className="font-display text-4xl md:text-6xl">Settings</h1>
 
         <Section title="Data mode">
+          <p className="text-sm text-muted-foreground">When analytics is enabled for the published app, Transtop records coarse interactions such as entry, searches, stop and route views, and favorite changes. Custom events do not include search text, precise locations, stop or route identities, or saved favorite details.</p>
           <div className="space-y-3 rounded-2xl border border-card-border bg-card p-4">
             <div className="flex items-center justify-between gap-3"><p className="font-semibold">Transit data</p><LiveIndicator /></div>
             <p className="text-sm text-muted-foreground">Transtop uses real agency, community and scheduled data only. Live does not mean every result is a real-time prediction: check each estimate’s source label. Missing or failed feeds are shown as unavailable, without replacement times.</p>

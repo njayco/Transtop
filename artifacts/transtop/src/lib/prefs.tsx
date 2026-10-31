@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Route, Stop } from '@workspace/api-client-react';
+import { trackEvent } from './analytics';
 
 export type DataMode = 'live';
 export type FavStop = { id: string; name: string; type: Stop['type']; agency: string; routes: Pick<Route, 'id' | 'name' | 'color'>[]; savedAt: string };
@@ -40,12 +41,18 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
   }, [prefs]);
 
   const set = useCallback((patch: Partial<Prefs>) => setPrefs((p) => ({ ...p, ...patch, mode: 'live' })), []);
-  const toggleStop = useCallback((s: Stop) => setPrefs((p) => p.favStops.some((f) => f.id === s.id)
+  const toggleStop = useCallback((s: Stop) => {
+    trackEvent('favorite_changed', { kind: 'stop', action: prefs.favStops.some((f) => f.id === s.id) ? 'removed' : 'added', mode: s.type });
+    setPrefs((p) => p.favStops.some((f) => f.id === s.id)
     ? { ...p, favStops: p.favStops.filter((f) => f.id !== s.id) }
-    : { ...p, favStops: [{ id: s.id, name: s.name, type: s.type, agency: s.agency, routes: s.routes.map((r) => ({ id: r.id, name: r.name, color: r.color })), savedAt: new Date().toISOString() }, ...p.favStops] }), []);
-  const toggleRoute = useCallback((r: Route) => setPrefs((p) => p.favRoutes.some((f) => f.id === r.id)
+    : { ...p, favStops: [{ id: s.id, name: s.name, type: s.type, agency: s.agency, routes: s.routes.map((r) => ({ id: r.id, name: r.name, color: r.color })), savedAt: new Date().toISOString() }, ...p.favStops] });
+  }, [prefs.favStops]);
+  const toggleRoute = useCallback((r: Route) => {
+    trackEvent('favorite_changed', { kind: 'route', action: prefs.favRoutes.some((f) => f.id === r.id) ? 'removed' : 'added', mode: r.type });
+    setPrefs((p) => p.favRoutes.some((f) => f.id === r.id)
     ? { ...p, favRoutes: p.favRoutes.filter((f) => f.id !== r.id) }
-    : { ...p, favRoutes: [{ id: r.id, name: r.name, color: r.color, type: r.type, agency: r.agency, savedAt: new Date().toISOString() }, ...p.favRoutes] }), []);
+    : { ...p, favRoutes: [{ id: r.id, name: r.name, color: r.color, type: r.type, agency: r.agency, savedAt: new Date().toISOString() }, ...p.favRoutes] });
+  }, [prefs.favRoutes]);
   const clearAll = useCallback(() => {
     try {
       Object.keys(localStorage).filter((k) => k.startsWith('transtop.')).forEach((k) => localStorage.removeItem(k));

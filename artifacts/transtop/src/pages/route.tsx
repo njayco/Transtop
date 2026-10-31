@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { trackEvent } from '@/lib/analytics';
 import { Link, useParams, useSearch } from 'wouter';
 import { ArrowLeft, ArrowRight, ArrowUpDown, ExternalLink, X } from 'lucide-react';
 import { getGetNetworkQueryKey, getGetRouteQueryKey, useGetNetwork, useGetRoute, type GetNetworkParams } from '@workspace/api-client-react';
@@ -25,6 +26,13 @@ export default function RoutePage() {
   const params = { mode, ...(direction ? { direction } : {}) };
   const q = useGetRoute(routeId, params, { query: { queryKey: getGetRouteQueryKey(routeId, params), refetchInterval: 30_000, retry: 1 } });
   const d = q.data;
+  const trackedRoute = useRef<string | null>(null);
+  useEffect(() => {
+    if (d && d.route.id === routeId && trackedRoute.current !== routeId) {
+      trackedRoute.current = routeId;
+      trackEvent('route_viewed', { mode: d.route.type });
+    }
+  }, [d, routeId]);
   const dirs = d?.directions ?? [];
   const activeDir = direction ?? dirs[0];
   const color = d?.route.color ?? '#888';

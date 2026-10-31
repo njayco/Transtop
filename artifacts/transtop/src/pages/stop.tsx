@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import { trackEvent } from '@/lib/analytics';
 import { Link, useParams } from 'wouter';
 import { ArrowLeft, Accessibility, Radio } from 'lucide-react';
 import { getGetStopQueryKey, useGetStop, type Arrival } from '@workspace/api-client-react';
@@ -23,6 +24,13 @@ export default function StopPage() {
   const params = { mode };
   const q = useGetStop(stopId, params, { query: { queryKey: getGetStopQueryKey(stopId, params), refetchInterval: 30_000, retry: 1 } });
   const stop = q.data;
+  const trackedStop = useRef<string | null>(null);
+  useEffect(() => {
+    if (stop && stop.id === stopId && trackedStop.current !== stopId) {
+      trackedStop.current = stopId;
+      trackEvent('stop_viewed', { mode: stop.type });
+    }
+  }, [stop, stopId]);
   const freshArrivals=useFreshArrivals(stop?.arrivals??[]);
   const groups = useMemo(() => {
     const m = new Map<string, Arrival[]>();

@@ -307,6 +307,27 @@ Known local places and exact local stations stay local. Other entered places/add
 
 ## Privacy and Ride Mode
 
+### Custom interaction analytics
+
+Replit-hosted analytics custom events use the platform-injected tracker, with no
+additional scripts or credentials. Enable analytics in Publishing settings and
+publish or republish to collect them; development safely does nothing without a tracker.
+
+| Event | Trigger / dimensions |
+| --- | --- |
+| `entry_completed` | Successful card entry (including accessible keyboard entry and intentional replay). |
+| `search_performed` | Nonempty search after the 300 ms debounce; `has_query`, never query text. Each settled typing pause counts, not individual keystrokes or API polling. |
+| `stop_viewed` | Loaded stop detail, once per selected stop in the mounted page; `mode`. |
+| `route_viewed` | Loaded route detail, once per selected route in the mounted page; `mode`. |
+| `favorite_changed` | Stop/route favorite toggle; `kind`, `action` (added/removed), `mode`. This measures in-app changes, not guaranteed persistent storage. |
+
+Custom payloads exclude names, stop/route identifiers, coordinates, search text,
+and rider/session identifiers. Pageviews are handled by the platform, not emitted
+again by the app. Missing trackers and synchronous/asynchronous failures cannot
+interrupt rider actions. Stop/route polling and direction changes do not emit
+additional detail-view events. Platform pageviews may still contain page URLs;
+the custom-event payload policy does not redact those automatic URLs.
+
 Browsing and nearby permission are independent of contribution consent. Ride Mode requires explicit consent, an agency, route, direction and boarding stop. Trips can be selected only where reliable matching is available; an ambiguous or absent trip never produces a community ETA.
 
 - Session IDs and capability tokens are cryptographically random. Only token hashes are stored server-side; tokens stay in browser session storage and are never returned through public APIs.
