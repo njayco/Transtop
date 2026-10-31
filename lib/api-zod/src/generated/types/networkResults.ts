@@ -8,8 +8,10 @@ import type { GlobalCoverage } from './globalCoverage';
 import type { MapStop } from './mapStop';
 import type { NetworkLine } from './networkLine';
 import type { Route } from './route';
+import type { TflInfo } from './tflInfo';
 
 export interface NetworkResults {
+  tfl?: TflInfo;
   globalCoverage?: GlobalCoverage;
   lines: NetworkLine[];
   stops: MapStop[];

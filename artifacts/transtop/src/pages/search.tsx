@@ -9,6 +9,7 @@ import { INTERCITY_LABEL, providerStatus } from '@/components/intercity';
 import { usePrefs } from '@/lib/prefs';
 import { cn } from '@/lib/utils';
 import { GlobalCoverageNotice } from '@/components/global-coverage';
+import { TflDetails } from '@/components/tfl-details';
 
 const SUGGEST = ['Times Square', 'Grand Central', 'Penn Station', 'Jamaica', 'M15', 'Port Washington', 'n6'];
 const TYPES = [{ v: '', l: 'All modes' }, { v: 'subway', l: 'Subway' }, { v: 'bus', l: 'Bus' }, { v: 'rail', l: 'Commuter Rail' }, { v: 'intercity', l: 'Intercity Bus Network' }];
@@ -89,6 +90,7 @@ export default function SearchPage() {
             {d && (
               <div className={cn('space-y-6 transition-opacity', res.isFetching && 'opacity-60')}>
                 <GlobalCoverageNotice data={d.globalCoverage} onNext={c=>{setCursor(c);setOffset(0);}} onReset={cursor?()=>{setCursor('');setOffset(0);}:undefined} />
+                <TflDetails info={d.tfl} />
                 <section>
                   <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground" data-testid="text-total-routes">Routes · {d.totalRoutes.toLocaleString()}</h2>
                   {d.routes.length === 0 ? <p className="text-sm text-muted-foreground">{offset > 0 && d.totalRoutes > 0 ? 'No more routes on this page.' : 'No routes match these filters.'}</p> : (

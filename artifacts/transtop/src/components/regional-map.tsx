@@ -11,6 +11,7 @@ import { usePrefs } from '@/lib/prefs';
 import { cn } from '@/lib/utils';
 import { trackedVehicleVisible } from '@/lib/vehicle-visibility';
 import { GlobalCoverageNotice } from './global-coverage';
+import { TflDetails } from './tfl-details';
 
 export const REGION_BOUNDS = { west: -74.27, south: 40.48, east: -71.75, north: 42.15 };
 const REGION_CENTER = { lat: 41.32, lon: -73.01 };
@@ -163,6 +164,7 @@ export function RegionalMap({ onClose,initialCenter }: { onClose?: () => void;in
           )}
           {data?.message && <p className="text-xs text-muted-foreground">{data.message}</p>}
           <GlobalCoverageNotice data={data?.globalCoverage} credits={shownLines.map(l=>l.route.transitland?.attribution)} onNext={setCursor} onReset={cursor?()=>setCursor(''):undefined} />
+          <TflDetails info={data?.tfl} />
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span><span className="mr-1.5 inline-block h-2.5 w-2.5 rotate-45 bg-foreground align-middle" />Official vehicle position</span>
             <span><span className="mr-1.5 inline-block h-3 w-3 rounded-full border-2 border-foreground align-middle" />Stop or station at its published location</span>

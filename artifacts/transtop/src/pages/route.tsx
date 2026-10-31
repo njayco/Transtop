@@ -11,6 +11,7 @@ import { IntercityModule, providerFor } from '@/components/intercity';
 import { honest, usePrefs } from '@/lib/prefs';
 import { ago } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { TflDetails, tflErrorDetail } from '@/components/tfl-details';
 
 export default function RoutePage() {
   const { id = '' } = useParams<{ id: string }>();
@@ -51,7 +52,7 @@ export default function RoutePage() {
         <div className="md:hidden"><LiveIndicator compact /></div>
       </div>
       {q.isLoading && <SkeletonCards n={2} />}
-      {q.isError && <ErrorState title="Could not load this route" onRetry={() => q.refetch()} />}
+      {q.isError && <ErrorState title="Could not load this route" detail={routeId.startsWith('tfl:')?tflErrorDetail(q.error):undefined} onRetry={() => q.refetch()} />}
       {d && (
         <>
           <header className="rise mt-2 flex items-center gap-4">
@@ -75,16 +76,16 @@ export default function RoutePage() {
           <div className="mt-6 grid gap-6 md:grid-cols-[1fr_1.1fr]">
             <div className="space-y-4">
               <TransitlandDetails info={d.route.transitland}/>
-              {dirs.length > 0 && <p className="text-xs text-muted-foreground" data-testid="text-patterns">{dirs.length} service pattern{dirs.length > 1 ? 's' : ''} from the published schedule. Stops shown for {activeDir}.</p>}
+              {dirs.length > 0 && <p className="text-xs text-muted-foreground" data-testid="text-patterns">{dirs.length} {d.route.tfl?'TfL direction choices':'published service patterns'}. Stops shown for {activeDir}.</p>}
               {((d.route.scheduleNotes?.length ?? 0) > 0 || d.route.sourceUrl) && (
                 <section aria-labelledby="h-published-schedule" className="rounded-2xl border border-card-border bg-card p-4 text-sm" data-testid="section-published-schedule">
-                  <h2 id="h-published-schedule" className="font-bold">Published schedule information</h2>
+                  <h2 id="h-published-schedule" className="font-bold">{d.route.tfl?'TfL source and coverage':'Published schedule information'}</h2>
                   {(d.route.scheduleNotes?.length ?? 0) > 0 && (
                     <ul className="mt-2 list-disc space-y-1.5 pl-5 text-muted-foreground">
                       {d.route.scheduleNotes!.map((n, i) => <li key={i} className="break-words" data-testid={`text-schedule-note-${i}`}>{n}</li>)}
                     </ul>
                   )}
-                  {d.route.sourceUrl && <a href={d.route.sourceUrl} target="_blank" rel="noreferrer" data-testid="link-route-source" className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-xs font-semibold underline underline-offset-2 hover:text-foreground">Official schedule source<ExternalLink className="h-3 w-3" aria-hidden /><span className="sr-only">(opens in new tab)</span></a>}
+                  {d.route.sourceUrl && <a href={d.route.sourceUrl} target="_blank" rel="noreferrer" data-testid="link-route-source" className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-xs font-semibold underline underline-offset-2 hover:text-foreground">{d.route.tfl?'TfL data terms':'Official schedule source'}<ExternalLink className="h-3 w-3" aria-hidden /><span className="sr-only">(opens in new tab)</span></a>}
                 </section>
               )}
               {d.alerts.map((a) => <AlertRow key={a.id} alert={a} />)}
@@ -138,7 +139,8 @@ export default function RoutePage() {
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">Individual riders are never shown. Updated {ago(vehicles[0]?.updatedAt)}.</p>
               </div>
-              {d.route.id.startsWith('ibg:')?<TimetablePanel key={d.route.id} routeId={d.route.id} referenceDate={d.route.referenceDate} stopOptions={d.timetableStops?.map(s=>({id:s.id,name:s.name}))} direction={activeDir} color={color} title="IBG research timetable"/>:d.route.type==='intercity'&&!d.route.transitland?<IntercityModule key={d.route.id} center={center} provider={providerFor(d.route.agencyId, d.route.id)} routeId={d.route.id}/>:<TimetablePanel key={d.route.id} routeId={d.route.id} timezone={d.route.transitland?.timezone} stopOptions={d.route.transitland?d.stops.map(s=>({id:s.id,name:s.name})):d.timetableStops?.map((s) => ({ id: s.id, name: s.name }))} direction={activeDir} color={color} title={activeDir ? `Timetable · ${activeDir}` : 'Timetable'} />}
+              <TflDetails info={d.route.tfl} />
+              {!d.route.tfl&&(d.route.id.startsWith('ibg:')?<TimetablePanel key={d.route.id} routeId={d.route.id} referenceDate={d.route.referenceDate} stopOptions={d.timetableStops?.map(s=>({id:s.id,name:s.name}))} direction={activeDir} color={color} title="IBG research timetable"/>:d.route.type==='intercity'&&!d.route.transitland?<IntercityModule key={d.route.id} center={center} provider={providerFor(d.route.agencyId, d.route.id)} routeId={d.route.id}/>:<TimetablePanel key={d.route.id} routeId={d.route.id} timezone={d.route.transitland?.timezone} stopOptions={d.route.transitland?d.stops.map(s=>({id:s.id,name:s.name})):d.timetableStops?.map((s) => ({ id: s.id, name: s.name }))} direction={activeDir} color={color} title={activeDir ? `Timetable · ${activeDir}` : 'Timetable'} />)}
             </aside>
           </div>
         </>

@@ -75,6 +75,17 @@ export const RouteServiceClass = {
   express: 'express',
 } as const;
 
+export interface TflInfo {
+  status: string;
+  message: string;
+  attribution: string;
+  url: string;
+  timezone: string;
+  lastSuccess?: string;
+  platform?: string;
+  parentId?: string;
+}
+
 export interface TransitlandInfo {
   feedId: string;
   fetchedAt: string;
@@ -90,6 +101,7 @@ export interface TransitlandInfo {
 }
 
 export interface Route {
+  tfl?: TflInfo;
   transitland?: TransitlandInfo;
   id: string;
   name: string;
@@ -117,6 +129,7 @@ export const ArrivalSource = {
 } as const;
 
 export interface Arrival {
+  platform?: string;
   id: string;
   routeId: string;
   routeName: string;
@@ -160,6 +173,7 @@ export const StopType = {
 } as const;
 
 export interface Stop {
+  tfl?: TflInfo;
   transitland?: TransitlandInfo;
   id: string;
   name: string;
@@ -187,6 +201,7 @@ export interface GlobalCoverage {
 }
 
 export interface StopResults {
+  tfl?: TflInfo;
   globalCoverage?: GlobalCoverage;
   stops: Stop[];
   mode: string;
@@ -244,6 +259,7 @@ export interface MapStop {
 }
 
 export interface NetworkResults {
+  tfl?: TflInfo;
   globalCoverage?: GlobalCoverage;
   lines: NetworkLine[];
   stops: MapStop[];
@@ -286,6 +302,7 @@ export interface FeedSource {
 }
 
 export interface CatalogResults {
+  tfl?: TflInfo;
   globalCoverage?: GlobalCoverage;
   routes: Route[];
   stops: Stop[];

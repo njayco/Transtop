@@ -11,13 +11,17 @@ export function useFreshArrivals(items:Arrival[]) {
     const timer=setInterval(()=>setNow(Date.now()),10_000);
     return ()=>clearInterval(timer);
   },[tracking]);
-  return items.map(a=>{
+  return items.flatMap(a=>{
     const at=Math.max(now,Date.now());
+    if(a.routeId.startsWith('tfl:')){
+      if(a.source!=='live'||!a.expiresAt||!Number.isFinite(Date.parse(a.expiresAt))||Date.parse(a.expiresAt)<=at||Date.parse(a.scheduledAt)<=at)return [];
+      return [{...a,minutes:Math.max(0,Math.ceil((Date.parse(a.scheduledAt)-at)/60000))}];
+    }
     if(a.source==='live'&&!a.trainNumber&&a.expiresAt&&Date.parse(a.expiresAt)<=at){
       const published=Date.parse(a.publishedAt||'');
-      return {...a,source:Number.isFinite(published)?'scheduled' as const:'unavailable' as const,scheduledAt:a.publishedAt||a.scheduledAt,
-        minutes:Math.max(0,Math.ceil((published-at)/60000)),status:'Prediction expired · published schedule'};
+      return [{...a,source:Number.isFinite(published)?'scheduled' as const:'unavailable' as const,scheduledAt:a.publishedAt||a.scheduledAt,
+        minutes:Math.max(0,Math.ceil((published-at)/60000)),status:'Prediction expired · published schedule'}];
     }
-    return safeAmtrakArrival(a,at);
+    return [safeAmtrakArrival(a,at)];
   });
 }

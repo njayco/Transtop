@@ -8,9 +8,11 @@ import type { Alert } from './alert';
 import type { Arrival } from './arrival';
 import type { Route } from './route';
 import type { StopType } from './stopType';
+import type { TflInfo } from './tflInfo';
 import type { TransitlandInfo } from './transitlandInfo';
 
 export interface Stop {
+  tfl?: TflInfo;
   transitland?: TransitlandInfo;
   id: string;
   name: string;

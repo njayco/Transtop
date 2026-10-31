@@ -6,8 +6,10 @@
  */
 import type { GlobalCoverage } from './globalCoverage';
 import type { Stop } from './stop';
+import type { TflInfo } from './tflInfo';
 
 export interface StopResults {
+  tfl?: TflInfo;
   globalCoverage?: GlobalCoverage;
   stops: Stop[];
   mode: string;

@@ -6,9 +6,11 @@
  */
 import type { RouteServiceClass } from './routeServiceClass';
 import type { RouteType } from './routeType';
+import type { TflInfo } from './tflInfo';
 import type { TransitlandInfo } from './transitlandInfo';
 
 export interface Route {
+  tfl?: TflInfo;
   transitland?: TransitlandInfo;
   id: string;
   name: string;

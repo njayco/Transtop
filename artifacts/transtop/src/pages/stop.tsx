@@ -11,6 +11,7 @@ import { honest, usePrefs } from '@/lib/prefs';
 import { ago, clock } from '@/lib/format';
 import { useFreshArrivals } from '@/lib/amtrak-arrivals';
 import { TransitlandDetails } from '@/components/global-coverage';
+import { TflDetails, tflErrorDetail } from '@/components/tfl-details';
 
 export default function StopPage() {
   const { id = '' } = useParams<{ id: string }>();
@@ -60,7 +61,7 @@ export default function StopPage() {
       <div className="grid gap-6 p-4 md:grid-cols-[1fr_340px] md:p-8">
         <div className="space-y-6">
           {q.isLoading && <SkeletonCards n={3} />}
-          {q.isError && <ErrorState title="Could not load this stop" onRetry={() => q.refetch()} />}
+          {q.isError && <ErrorState title="Could not load this stop" detail={stopId.startsWith('tfl:')?tflErrorDetail(q.error):undefined} onRetry={() => q.refetch()} />}
           {stop && stop.alerts.length > 0 && <div className="space-y-2">{stop.alerts.map((a) => <AlertRow key={a.id} alert={a} />)}</div>}
           {stop && groups.length === 0 && (
             <div className="rounded-2xl border border-dashed border-border p-8 text-center">
@@ -91,12 +92,13 @@ export default function StopPage() {
             </section>
           ))}
           {stop&&<TransitlandDetails info={stop.transitland}/>}
-          {stop?.id.startsWith('ibg:')?<TimetablePanel stopId={stop.id} referenceDate={stop.routes[0]?.referenceDate} title="IBG research timetable"/>:stop?.type==='intercity'&&!stop.transitland?<IntercityModule center={{lat:stop.lat,lon:stop.lon}} provider={providerFor(undefined, stop.id)} stopId={stop.id}/>:stop&&<TimetablePanel stopId={stop.id} timezone={stop.transitland?.timezone} title="Timetable for any date" />}
+          <TflDetails info={stop?.tfl} />
+          {stop?.tfl?<p className="text-xs text-muted-foreground">TfL predictions are not a dated timetable. A missing prediction does not mean service has stopped.</p>:stop?.id.startsWith('ibg:')?<TimetablePanel stopId={stop.id} referenceDate={stop.routes[0]?.referenceDate} title="IBG research timetable"/>:stop?.type==='intercity'&&!stop.transitland?<IntercityModule center={{lat:stop.lat,lon:stop.lon}} provider={providerFor(undefined, stop.id)} stopId={stop.id}/>:stop&&<TimetablePanel stopId={stop.id} timezone={stop.transitland?.timezone} title="Timetable for any date" />}
           {stop && <p className="text-xs text-muted-foreground">Stop data updated {ago(stop.updatedAt)}. Times refresh every 30 seconds while open.</p>}
         </div>
         <aside className="space-y-4">
           {stop && <TransitMap center={{ lat: stop.lat, lon: stop.lon }} stops={mapStops} activeId={stop.id} zoom={15.5} className="h-64 w-full overflow-hidden rounded-2xl border border-border" label={`Map of ${stop.name}`} />}
-          {stop && stop.routes[0] && (
+          {stop && !stop.tfl && stop.routes[0] && (
             <Link href={`/ride?route=${encodeURIComponent(stop.routes[0].id)}&stop=${encodeURIComponent(stop.id)}`} data-testid="link-ride-from-stop"
               className="flex items-center gap-3 rounded-2xl border border-card-border bg-card p-4 hover:border-white/25">
               <Radio className="h-6 w-6 text-[hsl(var(--community))]" />

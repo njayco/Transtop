@@ -7,6 +7,7 @@
 import type { ArrivalSource } from './arrivalSource';
 
 export interface Arrival {
+  platform?: string;
   id: string;
   routeId: string;
   routeName: string;

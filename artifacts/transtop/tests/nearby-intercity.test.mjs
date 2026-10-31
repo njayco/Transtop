@@ -85,6 +85,7 @@ async function mountNearby(isMobile) {
     wouter: { useLocation: () => ['/', () => {}] },
     '@/components/regional-map': { RegionalMap: stub('RegionalMap') },
     '@/components/global-coverage': { GlobalCoverageNotice: stub('GlobalCoverageNotice') },
+    '@/components/tfl-details': { TflDetails: stub('TflDetails') },
     '@/components/shell': { MobileTop: stub('MobileTop') },
     '@/components/transit': Object.fromEntries(['AlertRow', 'ErrorState', 'SkeletonCards', 'StopCard', 'TransitLines', 'RouteBadge'].map((name) => [name, stub(name)])),
     '@/components/transit-map': { TransitMap: stub('TransitMap'), vehicleKind: () => 'live' },

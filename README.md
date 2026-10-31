@@ -4,6 +4,16 @@ A mobile-first transit app based on the creator's original Transtop concept. Ver
 
 ## Current features and recent updates
 
+### London official live predictions
+
+Direct TfL Unified API data complements Transitland, without using its requests
+or feed-license approvals. London stop search, nearby/map boarding points,
+official bus/Underground/DLR/Elizabeth line/Overground predictions and line
+notices use the existing Transtop pages and filters. Requires the server-only
+`TFL_API_KEY`; disable safely with `TFL_ENABLED=false`. No UK-wide National Rail
+claim, invented schedules or prediction-derived vehicle markers. See
+[TfL setup, verified samples, conservative shared limits, credits and coverage](docs/tfl.md).
+
 Documentation updated **October 30, 2026**. Coverage describes implemented sources, not a guarantee that an upstream feed or every operator is currently available; check Settings for source health and imported coverage.
 
 - **Original swipe-entry homepage:** responsive mobile/desktop recreation of the supplied black Transtop artwork, large white title, colored transit lines, five transport icons and MetroCard. Drag/swipe the card right to left to enter, or use the keyboard equivalent. There is no skip button or automatic entry. This is an entrance interaction, not a fare payment, card reader or balance service. Ferry and airplane icons are artwork, not active transport coverage.

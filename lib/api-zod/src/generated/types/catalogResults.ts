@@ -7,8 +7,10 @@
 import type { GlobalCoverage } from './globalCoverage';
 import type { Route } from './route';
 import type { Stop } from './stop';
+import type { TflInfo } from './tflInfo';
 
 export interface CatalogResults {
+  tfl?: TflInfo;
   globalCoverage?: GlobalCoverage;
   routes: Route[];
   stops: Stop[];

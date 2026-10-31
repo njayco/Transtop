@@ -326,6 +326,7 @@ components:
       type: object
       required: [id, name, color, type, agency]
       properties:
+        tfl: {$ref: "#/components/schemas/TflInfo"}
         transitland: {$ref: "#/components/schemas/TransitlandInfo"}
         id: {type: string}
         name: {type: string}
@@ -342,6 +343,7 @@ components:
       type: object
       required: [id, routeId, routeName, color, direction, destination, minutes, source, updatedAt, status, scheduledAt]
       properties:
+        platform: {type: string}
         id: {type: string}
         routeId: {type: string}
         routeName: {type: string}
@@ -375,6 +377,7 @@ components:
       type: object
       required: [id, name, agency, type, lat, lon, distance, walkingMinutes, routes, arrivals, alerts, accessible, updatedAt]
       properties:
+        tfl: {$ref: "#/components/schemas/TflInfo"}
         transitland: {$ref: "#/components/schemas/TransitlandInfo"}
         id: {type: string}
         name: {type: string}
@@ -394,6 +397,7 @@ components:
       type: object
       required: [stops, mode, updatedAt, message]
       properties:
+        tfl: {$ref: "#/components/schemas/TflInfo"}
         globalCoverage: {$ref: "#/components/schemas/GlobalCoverage"}
         stops: {type: array, items: {$ref: "#/components/schemas/Stop"}}
         mode: {type: string}
@@ -447,6 +451,7 @@ components:
       type: object
       required: [lines, stops, totalLines, totalStops, missingGeometry, truncated, busDetailZoom, stopsZoom, generation, message]
       properties:
+        tfl: {$ref: "#/components/schemas/TflInfo"}
         globalCoverage: {$ref: "#/components/schemas/GlobalCoverage"}
         lines: {type: array, items: {$ref: "#/components/schemas/NetworkLine"}}
         stops: {type: array, items: {$ref: "#/components/schemas/MapStop"}}
@@ -491,6 +496,7 @@ components:
       type: object
       required: [routes, stops, totalRoutes, totalStops, offset, limit]
       properties:
+        tfl: {$ref: "#/components/schemas/TflInfo"}
         globalCoverage: {$ref: "#/components/schemas/GlobalCoverage"}
         routes: {type: array, items: {$ref: "#/components/schemas/Route"}}
         stops: {type: array, items: {$ref: "#/components/schemas/Stop"}}
@@ -561,6 +567,18 @@ components:
         limit: {type: integer}
         date: {type: string}
         message: {type: string}
+    TflInfo:
+      type: object
+      required: [status, message, attribution, url, timezone]
+      properties:
+        status: {type: string}
+        message: {type: string}
+        attribution: {type: string}
+        url: {type: string}
+        timezone: {type: string}
+        lastSuccess: {type: string}
+        platform: {type: string}
+        parentId: {type: string}
     TransitlandInfo:
       type: object
       required: [feedId, fetchedAt, license, attribution, url]

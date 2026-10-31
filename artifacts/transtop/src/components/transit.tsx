@@ -56,6 +56,9 @@ export function SourceLabel({ source, updatedAt, className }: { source: string; 
 }
 
 export function Countdown({ a, big }: { a: Arrival; big?: boolean }) {
+  const fresh=useFreshArrivals([a])[0];
+  if(!fresh)return <span className="text-xs text-muted-foreground">Prediction expired</span>;
+  a=fresh;
   const text = arrivalText(a);
   const due = a.minutes <= 0 && a.source !== 'unavailable';
   return (
@@ -119,7 +122,7 @@ export function StopCard({ stop, active, onHover, index = 0 }: { stop: Stop; act
       </div>
       <div className="mt-3 divide-y divide-white/5 border-t border-white/5">
         {arrivals.length === 0 && (
-          <p className="pt-3 text-sm text-muted-foreground">No official predictions, community estimates or scheduled departures available right now.</p>
+          <p className="pt-3 text-sm text-muted-foreground">{stop.tfl?'Open this stop for official TfL predictions. Nearby cards do not poll arrivals.':'No official predictions, community estimates or scheduled departures available right now.'}</p>
         )}
         {arrivals.map((a) => (
           <div key={a.id} className="flex items-center gap-3 py-2.5">
@@ -134,7 +137,7 @@ export function StopCard({ stop, active, onHover, index = 0 }: { stop: Stop; act
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         {sources.map((s) => <SourceLabel key={s} source={s} />)}
-        <span className="text-[11px] text-muted-foreground">Updated {ago(updated)}</span>
+        <span className="text-[11px] text-muted-foreground">{stop.tfl?'TfL · open for predictions':'Updated '+ago(updated)}</span>
         {stop.alerts.length > 0 && <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[hsl(var(--warn))]"><AlertTriangle className="h-3.5 w-3.5" aria-hidden />{stop.alerts.length} alert{stop.alerts.length > 1 ? 's' : ''}</span>}
       </div>
     </Link>

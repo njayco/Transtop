@@ -1,12 +1,13 @@
 export type Mode = "demo" | "live";
 export type TransitType = "subway" | "bus" | "rail" | "intercity";
+export interface TflInfo {status:string;message:string;attribution:string;url:string;timezone:string;lastSuccess?:string;platform?:string;parentId?:string}
 export interface TransitlandInfo {feedId:string;fetchedAt:string;license:string;attribution:string;url:string;timezone?:string;platform?:string;parentStation?:string;accessibility?:string;modeDetail?:string;notes?:string[]}
-export interface TransitRoute { id:string; name:string; color:string; type:TransitType; agency:string;agencyId?:string;serviceClass?:"local"|"express";longName?:string;scheduleNotes?:string[];sourceUrl?:string;referenceDate?:string;transitland?:TransitlandInfo }
+export interface TransitRoute { id:string; name:string; color:string; type:TransitType; agency:string;agencyId?:string;serviceClass?:"local"|"express";longName?:string;scheduleNotes?:string[];sourceUrl?:string;referenceDate?:string;transitland?:TransitlandInfo;tfl?:TflInfo }
 export interface Arrival {
   id:string; routeId:string; routeName:string; color:string; direction:string; destination:string;
   minutes:number; source:"demo"|"live"|"scheduled"|"community"|"unavailable"; updatedAt:string;
   status:string; scheduledAt:string; tripId?:string; rangeMax?:number; confidence?:string;
-  trainNumber?:string;runId?:string;timezone?:string;publishedAt?:string;expiresAt?:string;
+   trainNumber?:string;runId?:string;timezone?:string;publishedAt?:string;expiresAt?:string;platform?:string;
 }
 export interface TransitAlert {id:string; title:string; description:string; severity:string; routeIds:string[]; source:string}
 export interface TransitStop {
@@ -15,6 +16,7 @@ export interface TransitStop {
   rawId?:string; parent?:string;
   stop_timezone?:string;
   transitland?:TransitlandInfo;
+   tfl?:TflInfo;
 }
 export interface TransitVehicle {id:string; lat:number; lon:number; source:string; updatedAt:string;
   routeId?:string;agencyId?:string;routeName?:string;trainNumber?:string;destination?:string;runId?:string;expiresAt?:string;vehicleType?:TransitType;color?:string}

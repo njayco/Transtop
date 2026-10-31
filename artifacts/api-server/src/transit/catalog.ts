@@ -14,6 +14,9 @@ import { ibgTimetable } from "./intercity/ibg-browse";
 import { isTransitland } from "./transitland/model";
 import { discover, unique } from "./transitland/discovery";
 import { globalTimetable } from "./transitland/departures";
+import * as tfl from "./tfl/service";
+import { preferDirect, resultRouteAliases } from "./tfl/crosswalk";
+import { isTfl } from "./tfl/model";
 type CatalogParams=z.infer<typeof GetCatalogQueryParams>;
 type TimetableParams=z.infer<typeof GetTimetableQueryParams>;
 
@@ -40,16 +43,21 @@ export async function catalog(p:CatalogParams) {
   const ss=(await allStops(mode)).filter(s=>!s.parent&&s.routes.some(match)&&
     (!q||s.name.toLowerCase().includes(q)||s.routes.some(r=>match(r)&&`${r.name} ${r.longName||""}`.toLowerCase().includes(q))))
     .sort((a,b)=>a.name.localeCompare(b.name));
+  const london=mode==="live"&&(q||p.agency?.startsWith("tfl"))?await tfl.discover({...p,q:q||"London"}):undefined;
   const foreign=mode==="live"&&(q||p.agency?.startsWith("tl:"))?await discover({...p,lat:undefined,lon:undefined},importedRoutes):undefined;
-  const combinedRoutes=unique([...rr,...(foreign?.routes||[])]),combinedStops=unique([...ss,...(foreign?.stops||[])]);
+  const combinedStops=preferDirect(unique([...ss,...(foreign?.stops||[]),...(london?.stops||[])]));
+  const aliases=resultRouteAliases(foreign?.stops||[],london?.stops||[]);
+  const combinedRoutes=unique([...rr,...(foreign?.routes||[]).filter(r=>!aliases.has(r.id)),...(london?.routes||[])]);
   return {routes:combinedRoutes.slice(offset,offset+limit),stops:combinedStops.slice(offset,offset+limit),
-    totalRoutes:combinedRoutes.length,totalStops:combinedStops.length,offset,limit,globalCoverage:foreign?.globalCoverage};
+    totalRoutes:combinedRoutes.length,totalStops:combinedStops.length,offset,limit,globalCoverage:foreign?.globalCoverage,tfl:london?.tfl};
 }
 
 export async function timetable(p:TimetableParams) {
   const date=DateTime.fromISO(p.date,{zone:ZONE}),from=p.from||"00:00";
   if(!date.isValid||date.toISODate()!==p.date||!/^([01]\d|2[0-3]):[0-5]\d$/.test(from))throw new Error("Invalid timetable date or time");
   if(!p.stopId&&!p.routeId)throw new Error("Select a stop or route");
+  if(p.mode!=="demo"&&(isTfl(p.stopId)||isTfl(p.routeId)))return {departures:[],total:0,offset:p.offset||0,limit:p.limit||40,date:p.date,
+    timezone:"Europe/London",message:"TfL direct data supplies predictions, not dated timetables. Open the stop for fresh official arrivals. No bulk schedules are imported."};
   if(p.mode!=="demo"&&(isTransitland(p.stopId)||isTransitland(p.routeId)))return globalTimetable(p);
   if(p.mode!=="demo"&&(isIbgId(p.stopId)||isIbgId(p.routeId))){
     if(p.stopId&&p.routeId&&(!isIbgId(p.stopId)||!isIbgId(p.routeId)||p.stopId.split(":")[1]!==p.routeId.split(":")[1]))

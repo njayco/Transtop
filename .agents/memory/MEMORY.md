@@ -11,3 +11,4 @@
 - [Live map tracking](map-tracking.md) — route-branded badges use real observations; station reports are not GPS and schedules must not become invented vehicle motion.
 - [Amtrak alert delivery](amtrak-alert-delivery.md) — device-local follows deliberately avoid remote subscriptions; browser permission does not mean closed-app delivery.
 - [Transitland access](transitland-access.md) — approved request limits are not unlimited metering; collection lookups avoid a documented composite-key mismatch.
+- [TfL access boundaries](tfl-access.md) — HTTP success does not prove account quota; reserve for both environments and keep official predictions independent of Transitland.

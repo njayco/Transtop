@@ -17,7 +17,10 @@ import { intercityProviders, intercityDepartures } from "../transit/intercity/se
 import { amtrakTrainDetail } from "../transit/amtrak-service";
 import { GetTrainResponse } from "@workspace/api-zod";
 import { TransitlandError } from "../transit/transitland/client";
+import { TflError } from "../transit/tfl/client";
 function sourceFailure(error:unknown,res:import("express").Response){
+  if(error instanceof TflError){res.status(503).json({error:error.message});return true;}
+  if(error instanceof Error&&["Invalid TfL identity","Invalid TfL direction"].includes(error.message)){res.status(400).json({error:error.message});return true;}
   if(error instanceof TransitlandError){res.status(503).json({error:error.message});return true;}
   if(error instanceof Error&&error.message==="Invalid Transitland identity"){res.status(400).json({error:error.message});return true;}
   return false;
@@ -90,7 +93,8 @@ router.get("/transit/network",async(req,res):Promise<void>=>{
     res.status(400).json({error:"Supply ordered west, south, east and north map bounds"});return;
   }
   if((b.lat==null)!==(b.lon==null)){res.status(400).json({error:"Supply both map center coordinates"});return;}
-  res.json(GetNetworkResponse.parse(await network(b)));
+  try{res.json(GetNetworkResponse.parse(await network(b)));}
+  catch(error){if(sourceFailure(error,res))return;throw error;}
 });
 router.get("/transit/map-vehicles",async(req,res):Promise<void>=>{
   const p=GetMapVehiclesQueryParams.safeParse(req.query);

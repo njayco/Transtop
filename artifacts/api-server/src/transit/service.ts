@@ -27,6 +27,9 @@ import { globalPlace } from "./transitland/places";
 import { coverage as globalCoverage, usage } from "./transitland/client";
 import { globalVehicles } from "./transitland/vehicles";
 import { globalFeedStates } from "./transitland/tracking";
+import * as tfl from "./tfl/service";
+import { isTfl } from "./tfl/model";
+import { preferDirect, matchedRoutes } from "./tfl/crosswalk";
 
 let stopCache:{at:number;demo:TransitStop[];live:TransitStop[]}|undefined;
 export async function allStops(mode:Mode) {
@@ -72,6 +75,7 @@ export function officialArrivals(stop:TransitStop,now=Date.now()) {
 }
 export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<TransitStop> {
   if(mode==="demo")return demoArrivals(stop);
+  if(isTfl(stop.id))return deep?tfl.enrich(stop):stop;
   if(isTransitland(stop.id))return deep?globalEnrich(stop):stop;
   if(stop.id.startsWith("amtrak:"))return {...stop,arrivals:await amtrakArrivals(stop)};
   if(isDocumentId(stop.id))return {...stop,arrivals:documentArrivals(stop)};
@@ -118,33 +122,57 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
   const all=await allStops(mode);
   const localExact=q?all.find(s=>s.name.toLowerCase()===q||s.routes.some(r=>r.name.toLowerCase()===q)):undefined;
   if(q&&!foundPlace&&!localExact){
-    const point=await globalPlace(q);
+    const point=tfl.londonPlace(q)||await globalPlace(q);
     if(point){lat=point.lat;lon=point.lon;foundPlace=true;}
   }
   let rows=all.filter(s=>!s.parent&&s.routes.length&&(!params.type||params.type==="all"||s.type===params.type)&&
     (!params.agency||s.id.split(":")[0]===params.agency||s.routes.some(r=>r.agencyId===params.agency))&&(!params.serviceClass||params.serviceClass==="all"||s.routes.some(r=>r.serviceClass===params.serviceClass)));
   const exact=q?rows.find(s=>s.name.toLowerCase().includes(q)):undefined;
   if(exact&&!foundPlace){lat=exact.lat;lon=exact.lon;}
+  const london=mode==="live"?await tfl.discover({...params,...(q&&!foundPlace&&!exact?{q}:{q:undefined,lat,lon})}):undefined;
+  if(london?.stops.length&&q&&!foundPlace&&!exact){lat=london.stops[0].lat;lon=london.stops[0].lon;}
   const foreign=mode==="live"?await discover({
     ...params,...(q&&!foundPlace&&!exact?{q}:{q:undefined,lat,lon}),
-  },unique(all.flatMap(s=>s.routes))):undefined;
-  if(foreign?.stops.length&&q&&!foundPlace&&!exact){lat=foreign.stops[0].lat;lon=foreign.stops[0].lon;}
+  },unique([...all.flatMap(s=>s.routes),...(london?.routes||[])])):undefined;
+  if(foreign?.stops.length&&!london?.stops.length&&q&&!foundPlace&&!exact){lat=foreign.stops[0].lat;lon=foreign.stops[0].lon;}
   if(q&&!foundPlace)rows=rows.filter(s=>s.name.toLowerCase().includes(q)||s.neighborhood?.toLowerCase().includes(q)||s.routes.some(r=>r.name.toLowerCase()===q||r.id.toLowerCase()===q));
-  rows=unique([...rows,...(foreign?.stops||[])]).map(s=>{const d=distance(lat,lon,s.lat,s.lon);return {...s,distance:Math.round(d),walkingMinutes:Math.max(1,Math.round(d/75))};})
+  rows=preferDirect(unique([...rows,...(foreign?.stops||[]),...(london?.stops||[])])).map(s=>{const d=distance(lat,lon,s.lat,s.lon);return {...s,distance:Math.round(d),walkingMinutes:Math.max(1,Math.round(d/75))};})
     .filter(s=>s.distance<=(s.type==="intercity"||s.id.startsWith("nj-transit:")?3000:10000))
     .sort((a,b)=>a.distance-b.distance).slice(0,16);
   const enriched=await Promise.all(rows.map((s,i)=>isTransitland(s.id)&&i<4?globalEnrich(s):enrich(s,mode)));
   const coverageWarning=mode==="live"&&(!params.type||params.type==="all"||params.type==="intercity")?(await primaryIbgCatalog()).coverageWarning:"";
-  return {stops:enriched,mode,updatedAt:new Date().toISOString(),centerLat:lat,centerLon:lon,globalCoverage:foreign?.globalCoverage,
+  return {stops:enriched,mode,updatedAt:new Date().toISOString(),centerLat:lat,centerLon:lon,globalCoverage:foreign?.globalCoverage,tfl:london?.tfl,
     message:(mode==="demo"?"Demo data · illustrative arrivals, not for travel planning":rows.length?rows.some(s=>isIbgId(s.id))?"Includes labeled IBG research references, not verified current service. Confirm research stop locations and schedules with the carrier.":"Official feeds redistributed by Transtop. Predictions may be unavailable or stale.":"No matching imported stops. Integration not configured for this location or search. Try a station name or supported neighborhood.")+(coverageWarning?` ${coverageWarning}`:"")};
 }
 export async function stopDetail(id:string,mode:Mode) {
-  if(mode==="live"&&isTransitland(id)){const s=await globalStop(id);return s?globalEnrich(s):undefined;}
+  if(mode==="live"&&isTfl(id)){const s=await tfl.stop(id);return s?tfl.enrich(s):undefined;}
+  if(mode==="live"&&isTransitland(id)){
+    const s=await globalStop(id);if(!s)return;
+    if(s.rawId&&/^(490|910|940)[A-Za-z0-9]{4,37}$/.test(s.rawId)){
+      try{const direct=await tfl.stop(`tfl:stop:${s.rawId}`);
+        if(direct){
+          const matched=matchedRoutes(s,direct);
+          if(matched.length===s.routes.length)return tfl.enrich(direct);
+          // Keep uncovered services under their saved global identity. Do not
+          // repeat matched direct predictions beside the separate official stop.
+          if(matched.length){
+            const ids=new Set(matched);
+            return globalEnrich({...s,routes:s.routes.filter(r=>!ids.has(r.id)),transitland:{...s.transitland!,
+              notes:[...(s.transitland?.notes||[]),`Exactly matched official TfL lines are shown at ${direct.name} (${direct.id}); this saved worldwide link retains the remaining services.`]}});
+          }
+        }
+      }catch{/* Saved worldwide links keep their licensed original source when direct lookup fails. */}
+    }
+    return globalEnrich(s);
+  }
   const s=(await allStops(mode)).find(s=>s.id===id);
   return s?enrich(s,mode,true):undefined;
 }
-export async function routeDetail(id:string,mode:Mode,direction?:string):Promise<RouteDetail|undefined> {
-  if(mode==="live"&&isTransitland(id))return globalRoute(id,direction);
+export async function routeDetail(id:string,mode:Mode,direction?:string,lookupGlobal:typeof globalRoute=globalRoute):Promise<RouteDetail|undefined> {
+  if(mode==="live"&&isTfl(id))return tfl.route(id,direction);
+  // Saved worldwide route links always keep their source, even after exact
+  // stop matches elsewhere or when TfL is disabled/unavailable.
+  if(mode==="live"&&isTransitland(id))return lookupGlobal(id,direction);
   if(mode==="live"&&isIbgId(id))return ibgRouteDetail(id,direction);
   if(mode==="live"&&isDocumentId(id))return documentRoute(id,direction);
   if(mode==="live"&&id.startsWith("martz:"))return intercityRoute(id);
@@ -211,7 +239,7 @@ export async function sources() {
   const globalFeeds=[...globalFeedStates.entries()].map(([id,v])=>({id:`tl-feed:${id}`,agency:v.name,type:"global feed",status:v.status,
     description:"Discovered on demand this server session. License checks and realtime feed permissions are separate from schedule availability; no feed is imported wholesale.",
     url:`https://www.transit.land/data/feeds/${encodeURIComponent(id)}`,updatedAt:v.updatedAt}));
-  return [...result,...intercity,...globalFeeds,{id:"transitland",agency:"Transitland worldwide",type:"global coverage",status:world.status,
+  return [...result,...intercity,...tfl.sourceRows(),...globalFeeds,{id:"transitland",agency:"Transitland worldwide",type:"global coverage",status:world.status,
     description:`${world.message} ${budget.used} of ${budget.limit} app requests reserved this UTC month. Bounded on-demand coverage, not every carrier. Feed licenses are checked; unknown rights and old schedules are withheld. Credits and source dates appear with results.`,
     url:"https://www.transit.land/terms",updatedAt:null},
     {id:"google-routes",agency:"Google journey planning",type:"journey planner",

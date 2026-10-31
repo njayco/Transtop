@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { MapViewport } from '@/components/transit-map';
 import { GlobalCoverageNotice } from '@/components/global-coverage';
+import { TflDetails } from '@/components/tfl-details';
 
 const FILTERS = [
   { v: 'all', l: 'All' }, { v: 'subway', l: 'Subway' }, { v: 'bus', l: 'Bus' }, { v: 'rail', l: 'Trains & Commuter Rail' }, { v: 'intercity', l: 'Intercity Bus Network' },
@@ -94,6 +95,7 @@ export default function Nearby() {
       </p>
       {networkQ.data?.truncated && <p className="text-xs text-muted-foreground">Map limit reached: zoom in or filter an operator. Not every visible path/stop is shown.</p>}
       <GlobalCoverageNotice data={networkQ.data?.globalCoverage} credits={legendRoutes.map(r=>r.transitland?.attribution)} />
+      <TflDetails info={networkQ.data?.tfl} />
       {(networkQ.data?.missingGeometry.length ?? 0) > 0 && <p className="text-xs text-muted-foreground">Some official route geometry is missing. Open Regional map for coverage details.</p>}
     </div>
   );
@@ -121,7 +123,7 @@ export default function Nearby() {
           data-testid="input-nearby-search" className="h-14 w-full rounded-2xl border border-input bg-card pl-12 pr-24 text-base placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
         <button type="submit" data-testid="button-nearby-go" className="absolute right-2 top-1/2 h-10 -translate-y-1/2 rounded-xl bg-white/10 px-4 text-sm font-bold hover:bg-white/15">Go</button>
       </form>
-      <p className="-mt-2 text-xs text-muted-foreground" data-testid="text-search-privacy">Known local stations stay on Transtop. Other place/address searches are sent to Photon/OpenStreetMap; worldwide transit searches use Transitland. You can also enter latitude, longitude. No location permission is required.</p>
+      <p className="-mt-2 text-xs text-muted-foreground" data-testid="text-search-privacy">Known local stations stay on Transtop. Other place/address searches use Photon/OpenStreetMap; station searches also use TfL for London and Transitland worldwide. You can enter latitude, longitude. No location permission is required.</p>
       <div className="flex flex-wrap items-center gap-2">
         <button onClick={() => setGeo('explain')} data-testid="button-use-location"
           className="inline-flex h-11 items-center gap-2 rounded-full bg-foreground px-4 text-sm font-bold text-background transition-transform active:scale-95">
@@ -181,6 +183,7 @@ export default function Nearby() {
       </div>
       {stops.data?.message && <p className="rounded-xl border border-border bg-card/60 px-3 py-2 text-sm text-muted-foreground" role="status">{stops.data.message}</p>}
       <GlobalCoverageNotice data={stops.data?.globalCoverage} credits={list.flatMap(s=>s.routes.map(r=>r.transitland?.attribution))} onNext={setCursor} onReset={cursor?()=>setCursor(''):undefined} />
+      <TflDetails info={stops.data?.tfl} />
     </div>
   );
 

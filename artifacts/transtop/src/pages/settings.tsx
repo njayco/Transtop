@@ -138,7 +138,7 @@ export default function Settings() {
               );
             })}
           </ul>
-          <p className="text-xs text-muted-foreground">Transtop is an independent app and is not affiliated with or endorsed by the MTA, LIRR, Metro-North, NICE Bus or any agency. Transit data is provided by the agencies listed under their terms. Interactive basemaps are provided by Google Maps; route lines, stops and arrival information come from Transtop’s separately labeled transit sources.</p>
+          <p className="text-xs text-muted-foreground">Transtop is an independent app and is not affiliated with or endorsed by TfL, the MTA, LIRR, Metro-North, NICE Bus or any agency. Powered by TfL Open Data. Data provided by Transport for London. Contains public sector information licensed under the Open Government Licence v3.0 (including NaPTAN stops). TfL rail information may include National Rail Darwin / Knowledgebase data. <a href="https://tfl.gov.uk/corporate/data-sources" className="underline" target="_blank" rel="noreferrer">TfL underlying data sources</a>. Transit data is provided by the agencies listed under their terms. Interactive basemaps are provided by Google Maps; route lines, stops and arrival information come from Transtop’s separately labeled transit sources.</p>
         </Section>
 
         <Section title="Intercity Bus Network providers">
