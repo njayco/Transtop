@@ -22,6 +22,8 @@ args = [ "node", "--enable-source-maps", "artifacts/transtop/dist/server/public-
 
 [services.production.run.env]
 NODE_ENV = "production"
+PORT = "23975"
+BASE_PATH = "/"
 
 [services.env]
 PORT = "23975"

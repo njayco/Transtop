@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { trackEvent } from '@/lib/analytics';
+import { usePageMetadata } from '@/lib/use-page-metadata';
 import { Link, useParams } from 'wouter';
 import { ArrowLeft, Accessibility, Radio } from 'lucide-react';
 import { getGetStopQueryKey, useGetStop, type Arrival } from '@workspace/api-client-react';
@@ -31,6 +32,7 @@ export default function StopPage() {
       trackEvent('stop_viewed', { mode: stop.type });
     }
   }, [stop, stopId]);
+  usePageMetadata(`/stops/${encodeURIComponent(stopId)}`, stop);
   const freshArrivals=useFreshArrivals(stop?.arrivals??[]);
   const groups = useMemo(() => {
     const m = new Map<string, Arrival[]>();

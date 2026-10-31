@@ -1,4 +1,6 @@
 // Server-rendered read-only content. Live predictions remain in the client app.
+import { pageMetadata, SITE_ORIGIN } from '../src/lib/page-metadata.ts';
+import { renderMetadata } from './metadata.mjs';
 export const escapeHtml = (value = '') => String(value).replace(/[&<>"']/g, c => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 })[c]);
@@ -21,9 +23,10 @@ function attribution(entity) {
 
 export async function publicPage(pathname, { base = '', query = '', getData }) {
   const nav = `<nav aria-label="Public transit information"><a href="${base}/">Transtop</a> · <a href="${base}/search">Search stops and routes</a></nav>`;
-  let title, description, content, status = 200;
+  let title, description, content, metadata, status = 200;
   if (pathname === '/' || pathname === '/search') {
     const search = pathname === '/search';
+    metadata = pageMetadata(pathname);
     title = search ? 'Search transit stops and routes | Transtop' : 'Transtop — transit stops, routes and train information';
     description = search ? 'Find transit stops and routes by name or operator. Browse public station and route information before opening live arrivals.' :
       'Browse transit stops, routes and train information. Explore published transit coverage and open available live arrivals in the Transtop app.';
@@ -44,6 +47,7 @@ export async function publicPage(pathname, { base = '', query = '', getData }) {
       status = 404;
     } else {
       const data = await getData(`/${kind}/${encodeURIComponent(id)}${kind === 'trains' ? '' : '?mode=live'}`);
+      if (data) metadata = pageMetadata(pathname, data);
       if (!data) status = 404;
       else if (kind === 'stops') {
         title = `${data.name} — stop information | Transtop`;
@@ -76,7 +80,9 @@ export async function publicPage(pathname, { base = '', query = '', getData }) {
       content = `<h1>Transit page not found</h1><p>This stop, route or dated train run is not available.</p><p><a href="${base}/search">Search current stops and routes</a></p>`;
     }
   }
-  return { status, title, description, html: `<section id="public-content" aria-label="Public transit information">${nav}<main>${content}</main>${credits}</section>` };
+  return { status, title: metadata?.title ?? title, description: metadata?.description ?? description,
+    url: `${SITE_ORIGIN}${base}${metadata ? metadata.url.slice(SITE_ORIGIN.length) : pathname}`,
+    html: `<section id="public-content" aria-label="Public transit information">${nav}<main>${content}</main>${credits}</section>` };
 }
 
 export function renderDocument(template, page) {
@@ -92,5 +98,8 @@ export function renderDocument(template, page) {
     html = pattern.test(html) ? html.replace(pattern, () => tag) : html.replace('</head>', `${tag}</head>`);
   }
   if (page.status !== 200) html = html.replace('</head>', '<meta name="robots" content="noindex" /></head>');
+  // Use the same API result for content and metadata: no second provider lookup
+  // and no middleware that can swallow the public informational page.
+  if (page.url) html = renderMetadata(html, page);
   return html.replace('<!--public-content-->', () => page.html);
 }

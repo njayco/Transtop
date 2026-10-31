@@ -1,4 +1,5 @@
 import { publicPage, renderDocument } from './public-content.mjs';
+import { pageMetadata } from '../src/lib/page-metadata.ts';
 
 // Only this trusted, internal upstream is used; never build it from request headers.
 const API = 'http://127.0.0.1:8080/api/transit';
@@ -25,6 +26,7 @@ export function publicContentMiddleware({ template, base = '', api = API, fetchD
       // A source outage must not become an indexable empty page or a false 404.
       page = {
         status: 503, title: 'Transit information temporarily unavailable | Transtop',
+        url: pageMetadata(pathname).url,
         description: 'Transit information is temporarily unavailable. Please try again shortly.',
         html: '<section id="public-content"><main><h1>Transit information temporarily unavailable</h1><p>Please try again shortly. The interactive app is still available below.</p></main></section>',
       };

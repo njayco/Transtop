@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { trackEvent } from '@/lib/analytics';
+import { usePageMetadata } from '@/lib/use-page-metadata';
 import { Link, useParams, useSearch } from 'wouter';
 import { ArrowLeft, ArrowRight, ArrowUpDown, ExternalLink, X } from 'lucide-react';
 import { getGetNetworkQueryKey, getGetRouteQueryKey, useGetNetwork, useGetRoute, type GetNetworkParams } from '@workspace/api-client-react';
@@ -33,6 +34,7 @@ export default function RoutePage() {
       trackEvent('route_viewed', { mode: d.route.type });
     }
   }, [d, routeId]);
+  usePageMetadata(`/routes/${encodeURIComponent(routeId)}`, d);
   const dirs = d?.directions ?? [];
   const activeDir = direction ?? dirs[0];
   const color = d?.route.color ?? '#888';

@@ -6,6 +6,7 @@ import { ErrorState, SkeletonCards, StatusText, TransitLines } from '@/component
 import { ago } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { TrainFollowCard } from '@/components/train-follow';
+import { usePageMetadata } from '@/lib/use-page-metadata';
 
 const AMTRAK = '#e0662f';
 
@@ -81,15 +82,12 @@ export default function TrainPage() {
   const trainId = decodeURIComponent(params?.id ?? '');
   const q = useGetTrain(trainId, { query: { queryKey: getGetTrainQueryKey(trainId), refetchInterval: 30_000, retry: 1 } });
   const t = q.data;
+  usePageMetadata(`/trains/${encodeURIComponent(trainId)}`, t);
   const now = useNow();
   const live = t ? estimatesValid(t, now) : false;
   const observed = !!t && t.source.includes('Amtraker');
   const stale = observed && !live;
   const notFound = q.isError && (q.error as { status?: number } | null)?.status === 404;
-
-  useEffect(() => {
-    document.title = t ? `Train ${t.trainNumber} ${t.routeName} · ${t.serviceDate} · Transtop` : 'Train · Transtop';
-  }, [t]);
 
   const calls = t ? [...t.calls].sort((a, b) => a.sequence - b.sequence) : [];
 
