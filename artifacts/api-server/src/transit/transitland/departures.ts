@@ -90,18 +90,22 @@ export async function globalEnrich(stop: TransitStop): Promise<TransitStop> {
     return { ...stop, arrivals, alerts, transitland: { ...stop.transitland!, timezone: d.zone, notes: [...(stop.transitland?.notes||[]),d.message,...(noticeMessage?[noticeMessage]:[])] } };
   } catch (err) { return { ...stop, transitland: { ...stop.transitland!, notes: [safeMessage(err)] } }; }
 }
-export async function globalTimetable(p: {stopId?:string;routeId?:string;date:string;from?:string;offset?:number;limit?:number;direction?:string}) {
+export async function globalTimetable(
+  p: {stopId?:string;routeId?:string;date:string;from?:string;offset?:number;limit?:number;direction?:string},
+  source = { globalStop, globalRoute, stopDepartures },
+) {
   const empty = { departures: [], total: 0, offset: p.offset || 0, limit: p.limit || 40, date: p.date, message: "" };
   try {
-    let stop = p.stopId ? await globalStop(p.stopId) : undefined;
-    if (!stop && p.routeId) stop = (await globalRoute(p.routeId,p.direction))?.stops[0];
+    let stop = p.stopId ? await source.globalStop(p.stopId) : undefined;
+    // An explicit boarding selection must never become a different stop.
+    if (!p.stopId && p.routeId) stop = (await source.globalRoute(p.routeId,p.direction))?.stops[0];
     if (!stop) return { ...empty, message: "No supplied boarding stop pattern is available. Select a stop from the map." };
     if (p.routeId && !stop.routes.some(r => r.id === p.routeId)) return { ...empty, message: "This stop does not serve the selected route." };
     const limit = p.limit || 40, offset = p.offset || 0;
     // Follow at most three source pages. More results remain explicitly partial, not an invented exact total.
     let rows: any[] = [], after: string | undefined, more = false, message = "", zone = stop.transitland?.timezone;
     for (let page = 0; page < 3; page++) {
-      const d = await stopDepartures(stop,p.date,p.from || "00:00",after);
+      const d = await source.stopDepartures(stop,p.date,p.from || "00:00",after);
       rows.push(...d.rows.filter(r => (!p.routeId || r.routeId === p.routeId) && (!p.direction || r.direction === p.direction)));
       more = d.hasMore; message = d.message; zone = d.zone;
       if (!more || rows.length >= offset + limit) break;
