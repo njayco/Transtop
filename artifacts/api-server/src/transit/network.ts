@@ -13,6 +13,7 @@ import { preferDirect, resultRouteAliases } from "./tfl/crosswalk";
 import { isRetiredResearchId } from "./intercity/retired";
 import { odptEnabled } from "./odpt/registry";
 import { mapPage as parisMap } from "./idfm/queries";
+import { isWmata,boarding } from "./wmata/model";
 const broadway=[[-73.9956,40.7304],[-73.9906,40.7357],[-73.989,40.7429],[-73.987,40.7496],[-73.9868,40.7547],[-73.9807,40.7647],[-73.9819,40.7681],[-73.9819,40.7756]];
 const seventh=[[-74.0021,40.7334],[-74.0002,40.7378],[-73.9959,40.7441],[-73.9911,40.7504],[-73.9875,40.7553],[-73.9841,40.7617],[-73.9819,40.7681]];
 const sixth=[[-73.9961,40.7323],[-73.9945,40.7382],[-73.9928,40.7429],[-73.9878,40.7497],[-73.9846,40.7542],[-73.9813,40.7587],[-73.9775,40.7639]];
@@ -128,7 +129,7 @@ export async function network(p: NetworkQuery) {
     const official=canonical(l.route);
     return {...l,id:l.shapeId,...(official?{route:{...official,transitland:l.route.transitland}}:{})};
   }));
-   const ss = zoom >= 13 || p.routeId ? preferDirect([...catalog.stops,...extra.stops,...paris.stops,...globalStops,...(london?.stops||[])]).filter(s => (!s.parent||s.id.startsWith("idfm:")) && Number.isFinite(s.lat) && Number.isFinite(s.lon) &&
+   const ss = zoom >= 13 || p.routeId ? preferDirect([...catalog.stops,...extra.stops,...paris.stops,...globalStops,...(london?.stops||[])]).filter(s => (!s.parent||s.id.startsWith("idfm:")||isWmata(s.id)) && boarding(s)&&Number.isFinite(s.lat) && Number.isFinite(s.lon) &&
     (p.routeId || contains(b, s.lon, s.lat)) && s.routes.some(matches)).map(s => ({
       id: s.id, name: s.name, lat: s.lat, lon: s.lon, type: s.type, routes: s.routes.filter(matches),
     })) : [];

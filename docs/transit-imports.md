@@ -8,6 +8,10 @@ small-feed limit below is unchanged for unrelated providers.
 
 ## Publication strategy
 
+WMATA uses one combined bus/rail generation, server-authenticated downloads and
+additional expanded-archive limits. Never replace it with successive bus-only /
+rail-only imports under the same namespace. See [WMATA operation](wmata.md).
+
 No database schema migration or initial data rewrite is required. Existing
 `mode='live'` stop-time datasets remain readable through the legacy fallback.
 Deploy **all API readers and the importer together** before importing new feeds.

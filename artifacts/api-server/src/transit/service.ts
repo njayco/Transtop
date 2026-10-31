@@ -34,6 +34,9 @@ import { isIdfm, idfmEnabled, IDFM_ZONE, expiredEdition } from "./idfm/model";
 import { directStop, findStops as parisStops, parisArrivals, parisRoute } from "./idfm/queries";
 import { enrichPrim } from "./idfm/prim";
 import { primEnabled } from "./idfm/prim-model";
+import * as wmata from "./wmata/realtime";
+import { isWmata,boarding,applies as wmataApplies } from "./wmata/model";
+import { setupStatus as wmataSetup,dailyLimit as wmataLimit } from "./wmata/client";
 
 let stopCache:{at:number;demo:TransitStop[];live:TransitStop[]}|undefined;
 export async function allStops(mode:Mode) {
@@ -89,6 +92,21 @@ export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<Tran
   if(stop.id.startsWith("amtrak:"))return {...stop,arrivals:await amtrakArrivals(stop)};
   if(isDocumentId(stop.id))return {...stop,arrivals:documentArrivals(stop)};
   if(stop.type==="intercity")return {...stop,arrivals:await intercityArrivals(stop)};
+  if(isWmata(stop.id)){
+    const all=await allStops("live"),children=all.filter(s=>s.parent===stop.rawId&&isWmata(s.id));
+    if(deep)await wmata.refresh(stop.routes.map(r=>r.type).filter((t):t is "bus"|"subway"=>t==="bus"||t==="subway"));
+    const observations=(stop.wmata?.kind==="station"?children.filter(boarding):[stop]).map(s=>wmata.arrivals(s));
+    const official=observations.flatMap(o=>o.arrivals),excluded=new Set(observations.flatMap(o=>[...o.excluded]));
+    const unmatched=new Set(observations.flatMap(o=>[...o.unmatchedRoutes]));
+    const liveTrips=new Set(official.flatMap(a=>a.tripId?[a.tripId]:[]));
+    const schedule=(await scheduledArrivals(stop,excluded)).filter(a=>!liveTrips.has(a.tripId!)&&!unmatched.has(a.routeId));
+    const enriched=wmata.withStatus({...stop,arrivals:[...official,...schedule].sort((a,b)=>a.minutes-b.minutes).slice(0,36),
+      wmata:{...stop.wmata!,locations:children.map(s=>({id:s.id,name:s.name,kind:s.wmata?.kind||"location"}))}});
+    // Platform-targeted advisories are visible at the parent with their original
+    // stop scope, never promoted to route-wide alerts.
+    enriched.alerts=wmata.alerts().filter(a=>wmataApplies(a,stop)||children.some(s=>wmataApplies(a,s)));
+    return enriched;
+  }
   const {arrivals:official,excluded}=officialArrivals(stop);
   const community=deep?await communityArrivals(stop):[];
   const schedule=official.length>=3&&!deep?[]:await scheduledArrivals(stop,excluded);
@@ -100,6 +118,11 @@ export async function enrich(stop:TransitStop,mode:Mode,deep=false):Promise<Tran
   return {...stop,arrivals,alerts:liveAlerts().filter(a=>stop.routes.some(r=>a.routeIds.includes(r.id)))};
 }
 const knownPlaces=[
+  {terms:["washington","washington dc","washington d.c.","district of columbia"],lat:38.8983,lon:-77.0281},
+  {terms:["arlington","rosslyn"],lat:38.8959,lon:-77.0726},
+  {terms:["alexandria"],lat:38.8065,lon:-77.0608},
+  {terms:["silver spring"],lat:38.9939,lon:-77.0318},
+  {terms:["bethesda"],lat:38.9847,lon:-77.0947},
   {terms:["paris","île-de-france","ile-de-france"],lat:48.8566,lon:2.3522},
   {terms:["versailles"],lat:48.8049,lon:2.1204},
   {terms:["saint-denis","saint denis"],lat:48.9362,lon:2.3574},
@@ -145,7 +168,7 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
   }
   const paris=mode==="live"?await parisStops({...params,q:foundPlace?undefined:q,lat,lon},
     {south:lat-.10,north:lat+.10,west:lon-.15,east:lon+.15},80):{stops:[],total:0};
-  let rows=[...all,...paris.stops].filter(s=>(!s.parent||isIdfm(s.id))&&s.routes.length&&(!params.type||params.type==="all"||s.routes.some(r=>r.type===params.type))&&
+  let rows=[...all,...paris.stops].filter(s=>(!s.parent||isIdfm(s.id)||isWmata(s.id))&&boarding(s)&&s.routes.length&&(!params.type||params.type==="all"||s.routes.some(r=>r.type===params.type))&&
     (!params.agency||s.id.split(":")[0]===params.agency||s.routes.some(r=>r.agencyId===params.agency))&&(!params.serviceClass||params.serviceClass==="all"||s.routes.some(r=>r.serviceClass===params.serviceClass)));
   const exact=q?rows.find(s=>s.name.toLowerCase().includes(q)):undefined;
   if(exact&&!foundPlace){lat=exact.lat;lon=exact.lon;}
@@ -159,6 +182,7 @@ export async function nearby(params:{mode?:Mode;q?:string;type?:string;lat?:numb
   rows=preferDirect(unique([...rows,...(foreign?.stops||[]),...(london?.stops||[])])).map(s=>{const d=distance(lat,lon,s.lat,s.lon);return {...s,distance:Math.round(d),walkingMinutes:Math.max(1,Math.round(d/75))};})
     .filter(s=>s.distance<=(s.type==="intercity"||s.id.startsWith("nj-transit:")?3000:10000))
     .sort((a,b)=>a.distance-b.distance).slice(0,16);
+  if(mode==="live")await wmata.refresh(rows.filter(s=>isWmata(s.id)).flatMap(s=>s.routes.map(r=>r.type)).filter((t):t is "bus"|"subway"=>t==="bus"||t==="subway"));
   const enriched=await Promise.all(rows.map((s,i)=>isTransitland(s.id)&&i<4?globalEnrich(s):enrich(s,mode)));
   const londonNotices=mode==="live"?await tfl.withLineNotices(enriched.filter(s=>isTfl(s.id))):[];
   const londonById=new Map(londonNotices.map(s=>[s.id,s]));
@@ -205,6 +229,9 @@ export async function routeDetail(id:string,mode:Mode,direction?:string,lookupGl
   const [r]=await db.select().from(routes).where(and(eq(routes.id,id),eq(routes.mode,mode)));
   if(!r)return;
   const route=r.data as TransitRoute, agency=id.split(":")[0], raw=id.slice(agency.length+1);
+  if(agency==="wmata"&&(route.type==="bus"||route.type==="subway"))await wmata.refresh([route.type]);
+  if(agency==="wmata")route.scheduleNotes=[...(route.scheduleNotes||[]),
+    `Predictions: ${wmata.state(route.type==="bus"?"bus-predictions":"rail-predictions")}. Alerts: ${wmata.state(route.type==="bus"?"bus-alerts":"rail-alerts")}. Missing or expired predictions are withheld; no vehicle GPS is generated.`];
   let ss=(await allStops(mode)).filter(s=>!s.parent&&s.routes.some(r=>r.id===id)),shape:number[][]=[];
   let directions=route.type==="rail"?["Outbound","Inbound"]:["Uptown","Downtown"];
   if(mode==="demo"){
@@ -232,10 +259,13 @@ export async function routeDetail(id:string,mode:Mode,direction?:string,lookupGl
   if(!shape.length&&mode==="demo")shape=ss.map(s=>[s.lon,s.lat]);
   const vehicles=(await trackedVehicles(mode)).filter(v=>v.routeId===id);
   return {route,stops:await Promise.all(ss.map(s=>enrich(s,mode))),shape,vehicles,
-    alerts:(mode==="demo"?demoAlerts:liveAlerts()).filter(a=>a.routeIds.includes(id)),
+    alerts:(mode==="demo"?demoAlerts:liveAlerts()).filter(a=>a.agencyId==="wmata"?
+      agency==="wmata"&&a.type===route.type&&(a.systemwide||a.scopes?.some(s=>s.routeId===id&&!s.stopId)):
+      a.routeIds.includes(id)),
     directions};
 }
 export async function sources() {
+  const wmataHealth=await wmata.sourceHealth();
   const imports=await db.select().from(feedSnapshots).where(eq(feedSnapshots.mode,"live"));
   const today=DateTime.now().setZone(ZONE).toFormat("yyyyMMdd");
   const {rows:counts}=await pool.query(`SELECT agency,'routes' AS kind,count(*)::int AS count FROM transit_routes WHERE mode='live' GROUP BY agency
@@ -253,20 +283,22 @@ export async function sources() {
     const lastError=imports.find(i=>i.id===`${a.id}:import-error`);
      const amtrak=a.id==="amtrak"?amtrakHealth():undefined;
     const primState=a.id==="idfm"&&primEnabled()?imports.find(i=>i.id==="idfm:prim-status")?.data:undefined;
-    const status=a.id==="idfm"&&!idfmEnabled()?"disabled / public compliance pending":odptSource(a.id)&&!odptEnabled()?"disabled":!imp?(a.staticUrl?"not imported":a.status):(a.id==="idfm"?expiredEdition(data):data?.serviceEnd&&data.serviceEnd<sourceToday)?"expired schedules":
+    const status=a.id==="wmata"?(imp?`${data?.serviceEnd<today?"expired schedules":data?.serviceStart>today?"future schedules":"schedules available"} · ${wmataSetup()}`:wmataSetup()==="configured"?"not imported":wmataSetup()):
+      a.id==="idfm"&&!idfmEnabled()?"disabled / public compliance pending":odptSource(a.id)&&!odptEnabled()?"disabled":!imp?(a.staticUrl?"not imported":a.status):(a.id==="idfm"?expiredEdition(data):data?.serviceEnd&&data.serviceEnd<sourceToday)?"expired schedules":
       data?.components?.some((c:any)=>c.serviceEnd<today)?"partial schedules":
        data?.serviceStart&&data.serviceStart>today?"future schedules":amtrak?.fresh?"schedules + live train reports":
         health.fresh?(odptSource(a.id)?"schedules + fresh realtime feed":"schedules + live predictions"):
         a.id==="idfm"&&primEnabled()?"schedules + PRIM on demand":"scheduled only";
     const failed=lastError&&(!data||lastError.data.at>data.importedAt)?lastError.data.message:undefined;
     return {id:a.id,agency:a.name,type:a.type,status,description:a.setup+
+      (a.id==="wmata"?` Per-capability status: ${wmataHealth}. Local allowance ${wmataLimit()} requests/day in this environment; total capped at 5,000 with 10% development / 90% production reservation. Empty means a valid empty source response, not an outage or no scheduled service. See stop details for source freshness.`:"")+
       (a.id==="idfm"&&data?` Source publication ${data.lastModified}; last checked ${data.checkedAt}. Imported native route types/counts: ${JSON.stringify(Object.fromEntries(counts.filter(c=>c.agency==="idfm"&&c.kind.startsWith("native:")).map(c=>[c.kind.slice(7),c.count])))}. Supplied commercial agency networks (not a carrier-completeness guarantee): ${JSON.stringify(data.operators)}. Route details identify supplied operators from source attributions. Native legend: 0 tramway, 1 Métro, 2 RER/Transilien/TER train, 3 bus; type 3 does not reliably distinguish coaches. Exclusions by native type or demand-response: ${JSON.stringify(data.exclusions)}. Regional pages and shapes are capped; narrow the viewport or choose IDFM in Search. Published timetables remain scheduled; PRIM stop predictions are checked separately. No vehicle GPS. Rail accessibility can require assistance/reservation; unknown platform/accessibility remains unknown.`:"")+
       (data?.odpt?` Published ${data.odpt.publishedAt}; edition ${data.odpt.version}; resource valid ${data.odpt.validFrom}–${data.odpt.validThrough}. ${data.odpt.realtime}`:"")+
       (a.id==="idfm"?` PRIM: ${primEnabled()?"enabled; stop details check predictions on demand":"disabled, missing key or public license confirmation pending"}. Last check: ${primState?.checkedAt||"not checked"}. ${primState?.message||""} Partial live coverage; no vehicle GPS, no bulk polling. Local cap 180 requests/day per environment, 60-second stop cache, 2-minute production-age limit. PRIM source/terms: https://prim.iledefrance-mobilites.fr/fr/jeux-de-donnees/idfm-ivtr-requete_unitaire . Publisher page lists Licence Mobilité and an ODbL footer; public use remains separately gated pending owner resolution.`:"")+
       (a.id==="mta-bus"&&!process.env.MTA_BUS_TIME_API_KEY?" Live Bus Time credentials are not configured.":"")+
        (amtrak?` ${amtrak.fresh} fresh train reports; ${amtrak.unresolved} unresolved identities. Tracking checked ${amtrak.checkedAt||"not yet"}. Unresolved trains never replace schedules.`:"")+
       (data&&data.components?.length>1?` Packages: ${data.components.map((c:any)=>`${c.id} (${c.serviceStart}–${c.serviceEnd})`).join(", ")}.`:"")+
-       (imp&&!amtrak?` ${health.fresh}/${health.total} fresh live feeds.`:""),
+        (imp&&!amtrak&&a.id!=="wmata"?` ${health.fresh}/${health.total} fresh live feeds.`:""),
       routeCount:counts.find(c=>c.agency===a.id&&c.kind==="routes")?.count||0,stopCount:counts.find(c=>c.agency===a.id&&c.kind==="stops")?.count||0,
        importedAt:data?.importedAt,serviceStart:data?.serviceStart,serviceEnd:data?.serviceEnd,sourceUrl:data?.sourceUrl,lastError:failed||amtrak?.error,
        url:a.documentation,updatedAt:amtrak?.updatedAt||health.updatedAt||data?.importedAt||null};

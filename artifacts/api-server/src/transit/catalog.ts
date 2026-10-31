@@ -19,6 +19,7 @@ import { isTfl } from "./tfl/model";
 import { odptEnabled, odptSource } from "./odpt/registry";
 import { isIdfm } from "./idfm/model";
 import { findStops as parisStops, findRoutes as parisRoutes, parisTimetable } from "./idfm/queries";
+import { isWmata,boarding } from "./wmata/model";
 type CatalogParams=z.infer<typeof GetCatalogQueryParams>;
 type TimetableParams=z.infer<typeof GetTimetableQueryParams>;
 
@@ -48,7 +49,7 @@ export async function catalog(p:CatalogParams) {
   const rr=[...importedRoutes,...parisR.routes]
     .filter(r=>!isRetiredResearchId(r.id)&&match(r)&&(!q||`${r.name} ${r.longName||""} ${r.agency} ${r.searchNames?.join(" ")||""}`.toLowerCase().includes(q)))
     .sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
-  const ss=(await allStops(mode)).filter(s=>!s.parent&&s.routes.some(match)&&
+  const ss=(await allStops(mode)).filter(s=>(!s.parent||isWmata(s.id))&&boarding(s)&&s.routes.some(match)&&
     (!q||`${s.name} ${s.agency} ${s.searchNames?.join(" ")||""}`.toLowerCase().includes(q)||s.routes.some(r=>match(r)&&`${r.name} ${r.longName||""}`.toLowerCase().includes(q))))
     .sort((a,b)=>a.name.localeCompare(b.name));
   const london=mode==="live"&&(q||p.agency?.startsWith("tfl"))?await tfl.discover({...p,q:q||"London"}):undefined;
@@ -111,7 +112,7 @@ export async function timetable(p:TimetableParams) {
     JOIN transit_routes r ON r.mode=t.mode AND r.id=(t.agency||':'||(t.data->>'route_id'))
     LEFT JOIN transit_calendars c ON c.mode=t.mode AND c.id=(t.agency||':'||(t.data->>'service_id'))
     WHERE t.mode='live' AND t.agency=$1 AND ($2::text IS NULL OR t.data->>'route_id'=$2)
-      AND st.departure_seconds>=0 AND ($1 NOT LIKE 'odpt-%' OR COALESCE(st.data->>'pickup_type','0')<>'1') AND ($1<>'amtrak' OR (COALESCE(st.data->>'pickup_type','0')<>'1'
+      AND st.departure_seconds>=0 AND (($1 NOT LIKE 'odpt-%' AND $1<>'wmata') OR COALESCE(st.data->>'pickup_type','0')<>'1') AND ($1<>'amtrak' OR (COALESCE(st.data->>'pickup_type','0')<>'1'
         AND st.sequence < (SELECT max(last_call.sequence) FROM transit_stop_times last_call
           WHERE last_call.mode=st.mode AND last_call.trip_id=st.trip_id)))`,
     ids?[agency,rawRoute,ids]:[agency,rawRoute]);

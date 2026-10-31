@@ -10,6 +10,7 @@ import { refreshIntercity } from "./intercity/service";
 import { pollAmtrak } from "./amtrak-live";
 import { odptEnabled, odptSource, odptRefreshDue } from "./odpt/registry";
 import { idfmEnabled, refreshDue } from "./idfm/model";
+import { setupStatus as wmataSetup } from "./wmata/client";
 export async function startTransitJobs() {
   await seedDemo();
   for(const a of adapters) {
@@ -44,7 +45,7 @@ export async function startTransitJobs() {
   if(process.env.TRANSIT_AUTO_IMPORT==="true"){
     const runImport=async()=>{
       try{
-        for(const a of adapters.filter(a=>a.id!=="idfm"&&a.staticUrl&&(!odptSource(a.id)||odptEnabled()))){
+        for(const a of adapters.filter(a=>a.id!=="idfm"&&a.staticUrl&&(a.id!=="wmata"||wmataSetup()==="configured")&&(!odptSource(a.id)||odptEnabled()))){
           const {rows}=await pool.query("SELECT data FROM transit_feed_snapshots WHERE mode='live' AND id=$1",[`${a.id}:static`]);
           if(odptSource(a.id)?!odptRefreshDue(rows[0]?.data):rows[0]&&Date.now()-Date.parse(rows[0].data.importedAt)<22*3600000)continue;
           try{await importGtfs(a.id);}catch{logger.warn({agency:a.id},"Scheduled import failed; previous dataset retained");}

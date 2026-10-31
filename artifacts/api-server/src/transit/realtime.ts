@@ -13,6 +13,7 @@ import {trackedVehicleId} from "./vehicle-catalog";
 import { odptSource, odptEnabled } from "./odpt/registry";
 import { odptFetch,verifyRealtimeAccess } from "./odpt/client";
 import { matchOdptRealtime } from "./odpt/realtime";
+import { alerts as wmataAlerts } from "./wmata/realtime";
 export interface LiveFeed { timestamp:number; fetchedAt:number; entities:any[]; error?:string }
 const cache=new Map<string,LiveFeed>(), inflight=new Map<string,Promise<void>>();
 export const FRESH_MS=60_000;
@@ -115,5 +116,5 @@ export function liveAlerts():TransitAlert[] {
     const periods=e.alert.activePeriod||[];
     return !periods.length||periods.some((p:any)=>(!p.start||Number(p.start)<=now)&&(!p.end||Number(p.end)>=now));
   }).map(e=>officialAlert(e,agency)));
-  return [...new Map(alerts.map(a=>[a.id,a])).values()];
+  return [...new Map([...alerts,...wmataAlerts()].map(a=>[a.id,a])).values()];
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { providerName } from '@/lib/provider-name';
+import { providerName,sourceMatchesMode } from '@/lib/provider-name';
 import { Link } from 'wouter';
 import { Search as SearchIcon, ArrowUpRight } from 'lucide-react';
 import { getGetCatalogQueryKey, useGetCatalog, useGetSources, useGetIntercityProviders, getGetIntercityProvidersQueryKey, type GetCatalogParams, type GetCatalogServiceClass } from '@workspace/api-client-react';
@@ -38,12 +38,12 @@ export default function SearchPage() {
   const sources = useGetSources();
   const intercity = useGetIntercityProviders({ query: { queryKey: getGetIntercityProvidersQueryKey(), enabled: type === 'intercity' || type === '', staleTime: 300_000 } });
   const gaps = (intercity.data ?? []).filter((p) => providerStatus(p.status).k !== 'imported');
-  const pickType = (t: string) => { setType(t); if (agency && t && !(sources.data ?? []).some((s) => s.id === agency && (s.type === t||s.id==="idfm"&&["bus","subway","rail"].includes(t)))) setAgency(''); if (t === 'intercity') setServiceClass('all'); };
+  const pickType = (t: string) => { setType(t); if (agency && t && !(sources.data ?? []).some((s) => s.id === agency && sourceMatchesMode(s,t))) setAgency(''); if (t === 'intercity') setServiceClass('all'); };
   const params: GetCatalogParams = { mode, offset, limit: LIMIT, serviceClass,...(cursor?{cursor}:{}), ...(q ? { q } : {}), ...(agency ? { agency } : {}), ...(type ? { type } : {}) };
   const res = useGetCatalog(params, { query: { queryKey: getGetCatalogQueryKey(params), placeholderData: (p) => p, retry: 1 } });
   const d = res.data;
   const agencies=useMemo(()=>{
-    const all=new Map((sources.data??[]).filter(s=>(type?[type]:['subway','bus','rail','intercity']).includes(s.type||'')||s.id==="idfm"&&type!=="intercity").map(s=>[s.id,{id:s.id,agency:s.agency}]));
+    const all=new Map((sources.data??[]).filter(s=>type?sourceMatchesMode(s,type):['subway','bus','rail','intercity'].includes(s.type||'')).map(s=>[s.id,{id:s.id,agency:s.agency}]));
     for(const r of [...(d?.routes||[]),...(d?.stops||[]).flatMap(s=>s.routes)])if(r.transitland&&r.agencyId)all.set(r.agencyId,{id:r.agencyId,agency:r.agency});
     if(agency&&!all.has(agency))all.set(agency,{id:agency,agency:"Selected provider · no matches on this page"});
     return [...all.values()].map(s=>({...s,agency:providerName(s.id,s.agency)})).sort((a,b)=>a.agency.localeCompare(b.agency));

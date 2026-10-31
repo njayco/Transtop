@@ -21,6 +21,7 @@ import { TflError } from "../transit/tfl/client";
 import { CheckFavoriteAvailabilityBody, CheckFavoriteAvailabilityResponse } from "@workspace/api-zod";
 import { favoriteAvailability } from "../transit/favorite-availability";
 import { idfmMethod } from "../transit/idfm/method";
+import { refresh as refreshWmata } from "../transit/wmata/realtime";
 function sourceFailure(error:unknown,res:import("express").Response){
   if(error instanceof TflError){res.status(503).json({error:error.message});return true;}
   if(error instanceof Error&&["Invalid TfL identity","Invalid TfL direction"].includes(error.message)){res.status(400).json({error:error.message});return true;}
@@ -117,6 +118,7 @@ router.get("/transit/map-vehicles",async(req,res):Promise<void>=>{
 router.get("/transit/alerts",async(req,res):Promise<void>=>{
   const p=GetAlertsQueryParams.safeParse(req.query);
   if(!p.success){res.status(400).json({error:"Invalid data mode"});return;}
+  if(p.data.mode==="live")await refreshWmata(["bus","subway"],false);
   res.json(GetAlertsResponse.parse(p.data.mode==="live"?liveAlerts():demoAlerts));
 });
 router.post("/transit/rides",contributionLimit,start);

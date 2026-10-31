@@ -1,5 +1,6 @@
 import { busRealtimeUrls } from "./bus-time";
 import { odptRegistry, catalogUrl, attribution, realtimeUrl } from "./odpt/registry";
+import { sourceUrl as wmataUrl, WMATA_CREDIT } from "./wmata/client";
 
 export interface AgencyAdapter {
   id:string; name:string; type:"subway"|"bus"|"rail"; staticUrl?:string; realtimeUrls:string[];
@@ -13,6 +14,10 @@ const rt="https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/";
 // Allowlist verified against https://www.mta.info/developers and the linked
 // official realtime catalog on 2026-10-29. No caller-supplied fetch URLs.
 export const adapters:AgencyAdapter[]=[
+  {id:"wmata",name:"WMATA Metrobus / Metrorail",type:"subway",staticUrl:wmataUrl("static"),
+    staticAgencyIds:["1"],staticRouteTypes:["1","3"],realtimeUrls:[],
+    documentation:"https://developer.wmata.com/",status:"access verification required",
+    setup:`${WMATA_CREDIT} Direct official combined GTFS, Metrobus and Metrorail predictions and alerts. Server-only WMATA_API_KEY and owner-verified WMATA_VERIFIED_DAILY_LIMIT required. America/New_York; platform identities retained. Predictions are checked on demand, not vehicle GPS. Alerts have independent freshness. GTFS product access does not prove other API entitlements. Terms: https://developer.wmata.com/license . No independent bulk-data API license is implied.`},
   {id:"idfm",name:"Île-de-France Mobilités",type:"rail",staticUrl:"https://eu.ftp.opendatasoft.com/stif/GTFS/IDFM-gtfs.zip",
     realtimeUrls:[],documentation:"https://data.iledefrance-mobilites.fr/explore/dataset/offre-horaires-tc-gtfs-idfm/",status:"scheduled only",
     setup:"Contient des informations des Horaires prévus Île-de-France Mobilités, sous Licence Mobilités (https://cloud.fabmob.io/s/eYWWJBdM3fQiFNm/download). Mixed Métro, RER/Transilien/train, tramway, fixed-route bus/coach schedules in Europe/Paris. Optional PRIM predictions on selected stop details use a server-side key; no GPS or bulk polling. Schedules publication 08:00, 13:00, 17:00 Paris time. Funicular and unsupported native types excluded. Public use is blocked until owner resolves required sharing/notification and PRIM license notices; see docs/idfm.md."},

@@ -16,6 +16,9 @@ import { resolveEdition, odptFetch, type Edition } from "./odpt/client";
 import { validateArchive, translations } from "./odpt/gtfs";
 import type { OdptInfo } from "./types";
 import { importIdfm } from "./idfm/import";
+import { download as wmataDownload, WMATA_CREDIT, WMATA_DOCS } from "./wmata/client";
+import { routeType as wmataType,locationInfo } from "./wmata/model";
+import { validateArchive as validateWmataArchive } from "./wmata/archive";
 const tables=[agencies,routes,trips,stopTimes,calendars,calendarExceptions,shapes,stops];
 
 export async function importGtfs(agency:string) {
@@ -60,7 +63,8 @@ async function importLocked(agency:string) {
   for(const feed of a.staticFeeds||[{id:agency,url:a.staticUrl}]){
   const selection=new GtfsSelection(a.staticAgencyIds,a.staticRouteTypes);
   const scope=(id:string)=>a.staticFeeds?`${feed.id}~${id}`:id;
-  const response=odpt?new Response(new Uint8Array(await odptFetch(feed.url,odpt,"static"))):await fetch(feed.url,{signal:AbortSignal.timeout(120000),redirect:"error"});
+   const response=agency==="wmata"?new Response(new Uint8Array(await wmataDownload("static"))):
+     odpt?new Response(new Uint8Array(await odptFetch(feed.url,odpt,"static"))):await fetch(feed.url,{signal:AbortSignal.timeout(120000),redirect:"error"});
   if(!response.ok)throw new Error(`GTFS download returned ${response.status}`);
   const chunks:Uint8Array[]=[]; let size=0;
   if(!response.body)throw new Error("GTFS download has no body");
@@ -71,6 +75,7 @@ async function importLocked(agency:string) {
   }
   const bytes=Buffer.concat(chunks);
   const zip=await Open.buffer(bytes);
+   if(agency==="wmata")validateWmataArchive(zip);
   if(odpt)validateArchive(zip);
   const translated=odpt?await translations(zip):()=>[] as string[];
   const file=(n:string)=>zip.files.find(f=>f.path===`${n}.txt`);
@@ -95,6 +100,7 @@ async function importLocked(agency:string) {
     agencyNames.set(row.agency_id||"",row.agency_name||a.name);
      agencyZones.set(row.agency_id||"",row.agency_timezone);
      if(odpt&&row.agency_timezone!=="Asia/Tokyo")throw new Error("ODPT agency timezone missing or changed");
+      if(agency==="wmata"&&row.agency_timezone!=="America/New_York")throw new Error("WMATA timezone missing or changed");
      if(odpt&&agencyZones.size>100)throw new Error("ODPT agency limit");
   }
     const specs:[string,any,(r:Record<string,string>)=>string][]=[
@@ -114,6 +120,7 @@ async function importLocked(agency:string) {
       }};
       for await(const row of parser) {
          if(odpt&&count+batch.length>1500000)throw new Error("ODPT record limit");
+          if(agency==="wmata"&&count+batch.length>6000000)throw new Error("WMATA record limit");
          const r={...row} as Record<string,string>;
          // Keep route/stop IDs stable across boroughs; scope trip, service and
          // shape IDs, which can collide between independently published feeds.
@@ -122,12 +129,14 @@ async function importLocked(agency:string) {
          if(!selection.accept(name,r))continue;
          if(name==="calendar"||name==="calendar_dates"){
            const start=r.start_date||r.date,end=r.end_date||r.date;
+            if(agency==="wmata"&&(!/^\d{8}$/.test(start)||!/^\d{8}$/.test(end)))throw new Error("WMATA calendar date invalid");
            if(name==="calendar"||r.exception_type==="1"){
              if(start&&(!serviceStart||start<serviceStart))serviceStart=start;
              if(end&&end>serviceEnd)serviceEnd=end;
            }
          }
         if(name==="routes") {
+             if(agency==="wmata"&&(!r.route_id||r.route_color&&!/^[0-9a-f]{6}$/i.test(r.route_color)))throw new Error("WMATA route identity or color invalid");
             if(odpt&&!odpt.routeTypes.includes(r.route_type))throw new Error("Unapproved ODPT route type");
             if(odpt&&!agencyZones.has(r.agency_id||"")){
               if(agencyZones.size!==1)throw new Error("ODPT route agency timezone unverified");
@@ -135,8 +144,10 @@ async function importLocked(agency:string) {
             }
             routeZones.set(r.route_id,agencyZones.get(r.agency_id||"")||"America/New_York");
            const name=a.routeName||r.route_short_name||r.route_long_name;
-           const express=a.type==="bus"&&isExpressRoute(agency,name,`${r.route_long_name} ${r.route_desc}`);
-           const rr:TransitRoute={id:`${agency}:${r.route_id}`,name,longName:a.routeName||r.route_long_name||name,color:"#"+(r.route_color||"468AC4"),type:a.type,agency:agencyNames.get(r.agency_id||"")||a.name,agencyId:agency,serviceClass:express?"express":"local"};
+            const type=agency==="wmata"?wmataType(r.route_type)!:a.type;
+            const express=type==="bus"&&isExpressRoute(agency,name,`${r.route_long_name} ${r.route_desc}`);
+            const rr:TransitRoute={id:`${agency}:${r.route_id}`,name:agency==="wmata"&&type==="subway"?`${r.route_long_name} Line`:name,longName:a.routeName||r.route_long_name||name,color:"#"+(r.route_color||"468AC4"),type,agency:agencyNames.get(r.agency_id||"")||a.name,agencyId:agency,serviceClass:express?"express":"local"};
+            if(agency==="wmata"){rr.sourceUrl=WMATA_DOCS;rr.scheduleNotes=[WMATA_CREDIT,"Official WMATA combined GTFS · America/New_York. Published schedules, not live predictions."]; }
           allRoutes.set(r.route_id,rr);
            if(odptInfo){
              rr.odpt=odptInfo;rr.sourceUrl=odptInfo.url;
@@ -146,10 +157,12 @@ async function importLocked(agency:string) {
            }
         }
          if(name==="trips"){
+            if(agency==="wmata"&&(!r.trip_id||!allRoutes.has(r.route_id)))throw new Error("WMATA trip references unknown route");
            if(odpt&&(!allRoutes.has(r.route_id)||routeZones.get(r.route_id)!=="Asia/Tokyo"))throw new Error("ODPT trip references unverified route");
            tripRoute.set(r.trip_id,r.route_id);r.agency_timezone=routeZones.get(r.route_id)||"America/New_York";
            if(odpt)r.transtop_headsign_translations=translated("trips","trip_headsign",r.trip_id,r.trip_headsign).join(" / ");}
         if(name==="stop_times"){
+            if(agency==="wmata"&&(!tripRoute.has(r.trip_id)||!r.stop_id))throw new Error("WMATA timing references unknown trip or stop");
            if(odpt&&!tripRoute.has(r.trip_id))throw new Error("ODPT timing references unknown trip");
            if(odpt&&r.stop_headsign)r.transtop_headsign_translations=translated("stop_times","stop_headsign",r.trip_id,r.stop_headsign,r.stop_sequence).join(" / ");
            if(r.departure_time)maxDepartureSeconds=Math.max(maxDepartureSeconds,gtfsSeconds(r.departure_time));
@@ -172,18 +185,31 @@ async function importLocked(agency:string) {
     const stopsParser=file("stops")!.stream().compose(parse({columns:true,bom:true,skip_empty_lines:true,max_record_size:256*1024}));
     for await(const r of stopsParser){
       if(odpt&&allStops.size>=100000)throw new Error("ODPT stop limit");
+       if(agency==="wmata"&&(!r.stop_id||allStops.has(r.stop_id)))throw new Error("WMATA stop identity missing or duplicated");
+       if(agency==="wmata"&&(allStops.size>=30000||!r.stop_lat||!r.stop_lon||Math.abs(Number(r.stop_lat))>90||Math.abs(Number(r.stop_lon))>180))throw new Error("WMATA stop bounds");
       if(!Number.isFinite(Number(r.stop_lat))||!Number.isFinite(Number(r.stop_lon)))throw new Error("Invalid stop coordinates");
       if(odpt&&(!r.stop_lat||!r.stop_lon||Math.abs(Number(r.stop_lat))>90||Math.abs(Number(r.stop_lon))>180))throw new Error("Invalid ODPT coordinates");
       allStops.set(r.stop_id,r);
       if(odpt)stopNames.set(r.stop_id,translated("stops","stop_name",r.stop_id,r.stop_name));
     }
-    selection.retainStops(allStops);
+    if(agency!=="wmata")selection.retainStops(allStops);
+    if(agency==="wmata"){
+      const info=feedInfo[0];
+      if(!info?.feed_start_date||!info.feed_end_date)throw new Error("WMATA publication window missing");
+      serviceStart=[serviceStart,info.feed_start_date].sort().at(-1)!;
+      serviceEnd=[serviceEnd,info.feed_end_date].sort()[0];
+      if(serviceStart>serviceEnd)throw new Error("WMATA calendar outside publication window");
+    }
   components.push({id:feed.id,url:feed.url,serviceStart,serviceEnd,...{maxDepartureSeconds,feedInfo}});
     const shapeEntry=file("shapes");
     if(shapeEntry) {
       const shapeParser=shapeEntry.stream().compose(parse({columns:true,bom:true,skip_empty_lines:true,max_record_size:256*1024}));
       let shapeRows=0;
       for await(const r of shapeParser) {
+         if(agency==="wmata"&&(++shapeRows>1000000||!r.shape_pt_lat||!r.shape_pt_lon||
+           !Number.isFinite(Number(r.shape_pt_sequence))||!Number.isFinite(Number(r.shape_pt_lat))||
+           !Number.isFinite(Number(r.shape_pt_lon))||Math.abs(Number(r.shape_pt_lat))>90||Math.abs(Number(r.shape_pt_lon))>180))
+           throw new Error("WMATA shape bounds violation");
         if(odpt&&(++shapeRows>1000000||!r.shape_pt_lat||!r.shape_pt_lon||
           !Number.isFinite(Number(r.shape_pt_sequence))||!Number.isFinite(Number(r.shape_pt_lat))||!Number.isFinite(Number(r.shape_pt_lon))||
           Math.abs(Number(r.shape_pt_lat))>90||Math.abs(Number(r.shape_pt_lon))>180))throw new Error("ODPT shape bounds violation");
@@ -197,6 +223,10 @@ async function importLocked(agency:string) {
     }
   }
     if(!allStops.size||!allRoutes.size||components.some(c=>!c.serviceEnd))throw new Error("GTFS feed is empty or lacks service dates");
+     if(agency==="wmata"&&([...routeStops.keys()].some(id=>!allStops.has(id))||
+       [...allStops.values()].some(s=>s.parent_station&&!allStops.has(s.parent_station))||
+       ![...allRoutes.values()].some(r=>r.type==="bus")||![...allRoutes.values()].some(r=>r.type==="subway")))
+       throw new Error("WMATA combined feed lacks verified bus/rail boarding data");
     // Aggregate child-platform route membership to parent stations.
     for(const [id,r] of allStops) {
       if(r.parent_station){
@@ -216,7 +246,8 @@ async function importLocked(agency:string) {
     }
     const stopRows=[...allStops].map(([id,r])=>({
       id:`${agency}:${id}`,agency,mode:stage,data:{...r,id:`${agency}:${id}`,rawId:id,name:r.stop_name,lat:Number(r.stop_lat),lon:Number(r.stop_lon),
-        agency:a.name,type:a.type,parent:r.parent_station||"",accessible:r.wheelchair_boarding==="1",
+         agency:a.name,type:agency==="wmata"?allRoutes.get([...(routeStops.get(id)||[])][0])?.type||(r.location_type||r.parent_station?"subway":"bus"):a.type,parent:r.parent_station||"",accessible:r.wheelchair_boarding==="1",
+         ...(agency==="wmata"?{wmata:locationInfo(r),stop_timezone:"America/New_York"}:{}),
          ...(odptInfo?{odpt:odptInfo,stop_timezone:"Asia/Tokyo",searchNames:stopNames.get(id)||[],
            name:[r.stop_name,...(stopNames.get(id)||[]).filter(n=>/^[\x20-\x7e]+$/.test(n)&&n!==r.stop_name)].join(" / ")}:{}),
         routes:[...(routeStops.get(id)||[])].map(r=>allRoutes.get(r)).filter(Boolean),
@@ -254,7 +285,8 @@ async function importLocked(agency:string) {
     invalidateNetwork();
     logger.info({agency,records:count,stops:stopRows.length,durationMs:Date.now()-started},"GTFS import complete");
   } catch(error) {
-    const safeError=odpt?new Error("ODPT import failed: source unavailable, invalid, expired or changed; previous complete generation retained"):error;
+    const safeError=agency==="wmata"?new Error("WMATA import failed: verify server credential, quota, product access and valid source; previous complete generation retained"):
+      odpt?new Error("ODPT import failed: source unavailable, invalid, expired or changed; previous complete generation retained"):error;
     const data={message:safeError instanceof Error?safeError.message:"GTFS import failed",at:new Date().toISOString()};
     await db.insert(feedSnapshots).values({id:`${agency}:import-error`,mode:"live",agency,data})
       .onConflictDoUpdate({target:[feedSnapshots.mode,feedSnapshots.id],set:{data,updatedAt:new Date()}});

@@ -18,3 +18,4 @@
 - [Vite preview isolation](vite-preview-isolation.md) — disposable browser fixtures must not invalidate optimized dependencies used by the managed preview.
 - [IDFM access boundaries](idfm-access.md) — schedules and existing-account PRIM are approved; public sharing/license duties remain owner actions, not signup or paid-service permission.
 - [Regional import capacity](regional-import-capacity.md) — measure validation plans and abandoned-generation storage, not only ZIP size and parser memory.
+- [WMATA access boundaries](wmata-access.md) — owner confirmed terms accepted; API catalog listings do not establish subscribed products or account quotas.

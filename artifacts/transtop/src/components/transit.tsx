@@ -95,6 +95,7 @@ export function AlertRow({ alert }: { alert: Alert }) {
           <div className="mt-3"><AlertContent blocks={formatted.blocks} /></div>
         </details> : <p className="font-semibold leading-snug">{formatted.title}</p>}
         <p className="mt-2 text-[11px] uppercase tracking-wider text-muted-foreground/80">Source: {formatAlertContent(SOURCE_LABEL[alert.source] ?? alert.source, '').title}</p>
+        {alert.agencyId==="wmata"&&<p className="mt-1 text-xs text-muted-foreground">{alert.systemwide?"Systemwide advisory":alert.stopIds?.length?"Affected station/platform advisory":"Affected line advisory"}{alert.updatedAt?` · Source updated ${ago(alert.updatedAt)}`:""}{alert.url&&<> · <a className="underline" href={alert.url} target="_blank" rel="noreferrer">WMATA</a></>}</p>}
       </div>
     </div>
   );
@@ -106,7 +107,7 @@ export function ServiceAlerts({ alerts }: { alerts: Alert[] }) {
     <summary className="cursor-pointer rounded text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
       {alerts.length} service alert{alerts.length === 1 ? '' : 's'} on routes at these stops
     </summary>
-    <p className="mt-2 text-xs text-muted-foreground">Route-wide alerts; they may not affect every stop shown.</p>
+    <p className="mt-2 text-xs text-muted-foreground">Advisories may cover a line, an affected boarding location or the network. Read each notice for its scope.</p>
     <div className="mt-3 space-y-2">{alerts.map(a => <AlertRow key={`${a.source}|${a.id}`} alert={a} />)}</div>
   </details>;
 }

@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:wmata": "tsx --test tests/wmata.ts",
+    "test:wmata-import": "tsx tests/wmata-import.ts",
     "test:entry-country": "tsx --test tests/entry-country.ts",
     "prepare:entry-country": "node scripts/prepare-country-database.mjs",
     "import-gtfs": "tsx src/transit/import-cli.ts",

@@ -446,10 +446,31 @@ components:
         severity: {type: string}
         routeIds: {type: array, items: {type: string}}
         source: {type: string}
+        stopIds: {type: array, items: {type: string}}
+        agencyId: {type: string}
+        type: {type: string, enum: [subway, bus, rail, intercity]}
+        systemwide: {type: boolean}
+        updatedAt: {type: string}
+        url: {type: string}
+        activePeriods:
+          type: array
+          items:
+            type: object
+            properties:
+              start: {type: number}
+              end: {type: number}
+        scopes:
+          type: array
+          items:
+            type: object
+            properties:
+              routeId: {type: string}
+              stopId: {type: string}
     Stop:
       type: object
       required: [id, name, agency, type, lat, lon, distance, walkingMinutes, routes, arrivals, alerts, accessible, updatedAt]
       properties:
+        wmata: {$ref: "#/components/schemas/WmataInfo"}
         idfm: {$ref: "#/components/schemas/IdfmInfo"}
         odpt: {$ref: "#/components/schemas/OdptInfo"}
         tfl: {$ref: "#/components/schemas/TflInfo"}
@@ -643,6 +664,27 @@ components:
         limit: {type: integer}
         date: {type: string}
         message: {type: string}
+    WmataInfo:
+      type: object
+      required: [kind, attribution, url, timezone]
+      properties:
+        kind: {type: string}
+        platform: {type: string}
+        parentId: {type: string}
+        attribution: {type: string}
+        url: {type: string}
+        timezone: {type: string}
+        predictions: {type: string}
+        alerts: {type: string}
+        locations:
+          type: array
+          items:
+            type: object
+            required: [id, name, kind]
+            properties:
+              id: {type: string}
+              name: {type: string}
+              kind: {type: string}
     IdfmInfo:
       type: object
       required: [url, license, attribution, timezone]

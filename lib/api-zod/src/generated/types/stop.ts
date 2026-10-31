@@ -12,8 +12,10 @@ import type { Route } from './route';
 import type { StopType } from './stopType';
 import type { TflInfo } from './tflInfo';
 import type { TransitlandInfo } from './transitlandInfo';
+import type { WmataInfo } from './wmataInfo';
 
 export interface Stop {
+  wmata?: WmataInfo;
   idfm?: IdfmInfo;
   odpt?: OdptInfo;
   tfl?: TflInfo;

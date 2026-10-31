@@ -237,6 +237,26 @@ export interface Arrival {
   expiresAt?: string;
 }
 
+export type AlertType = typeof AlertType[keyof typeof AlertType];
+
+
+export const AlertType = {
+  subway: 'subway',
+  bus: 'bus',
+  rail: 'rail',
+  intercity: 'intercity',
+} as const;
+
+export type AlertActivePeriodsItem = {
+  start?: number;
+  end?: number;
+};
+
+export type AlertScopesItem = {
+  routeId?: string;
+  stopId?: string;
+};
+
 export interface Alert {
   id: string;
   title: string;
@@ -244,6 +264,14 @@ export interface Alert {
   severity: string;
   routeIds: string[];
   source: string;
+  stopIds?: string[];
+  agencyId?: string;
+  type?: AlertType;
+  systemwide?: boolean;
+  updatedAt?: string;
+  url?: string;
+  activePeriods?: AlertActivePeriodsItem[];
+  scopes?: AlertScopesItem[];
 }
 
 export type StopType = typeof StopType[keyof typeof StopType];
@@ -256,7 +284,26 @@ export const StopType = {
   intercity: 'intercity',
 } as const;
 
+export type WmataInfoLocationsItem = {
+  id: string;
+  name: string;
+  kind: string;
+};
+
+export interface WmataInfo {
+  kind: string;
+  platform?: string;
+  parentId?: string;
+  attribution: string;
+  url: string;
+  timezone: string;
+  predictions?: string;
+  alerts?: string;
+  locations?: WmataInfoLocationsItem[];
+}
+
 export interface Stop {
+  wmata?: WmataInfo;
   idfm?: IdfmInfo;
   odpt?: OdptInfo;
   tfl?: TflInfo;

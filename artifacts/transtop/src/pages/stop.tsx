@@ -14,6 +14,7 @@ import { TransitlandDetails } from '@/components/global-coverage';
 import { OdptDetails } from '@/components/odpt-details';
 import { IdfmDetails } from '@/components/idfm-details';
 import { TflDetails, tflErrorDetail } from '@/components/tfl-details';
+import { WmataDetails } from '@/components/wmata-details';
 
 export default function StopPage() {
   const { id = '' } = useParams<{ id: string }>();
@@ -96,6 +97,7 @@ export default function StopPage() {
           {stop&&<TransitlandDetails info={stop.transitland}/>}
           {stop&&<OdptDetails info={stop.odpt}/>}
           <IdfmDetails info={stop?.idfm}/>
+          <WmataDetails info={stop?.wmata}/>
           <TflDetails info={stop?.tfl} />
           {stop?.tfl?<p className="text-xs text-muted-foreground">TfL predictions are not a dated timetable. A missing prediction does not mean service has stopped.</p>:stop?.type==='intercity'&&!stop.transitland?<IntercityModule center={{lat:stop.lat,lon:stop.lon}} provider={providerFor(undefined, stop.id)} stopId={stop.id}/>:stop&&<TimetablePanel stopId={stop.id} timezone={stop.odpt?.timezone||stop.transitland?.timezone} title="Timetable for any date" />}
           {stop && <p className="text-xs text-muted-foreground">Stop data updated {ago(stop.updatedAt)}. Times refresh every 30 seconds while open.</p>}

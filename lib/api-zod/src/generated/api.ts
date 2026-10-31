@@ -202,6 +202,21 @@ export const GetStopsResponse = zod.object({
   "limit": zod.number().int().optional()
 }).optional(),
   "stops": zod.array(zod.object({
+  "wmata": zod.object({
+  "kind": zod.string(),
+  "platform": zod.string().optional(),
+  "parentId": zod.string().optional(),
+  "attribution": zod.string(),
+  "url": zod.string(),
+  "timezone": zod.string(),
+  "predictions": zod.string().optional(),
+  "alerts": zod.string().optional(),
+  "locations": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "kind": zod.string()
+})).optional()
+}).optional(),
   "idfm": zod.object({
   "url": zod.string(),
   "license": zod.string(),
@@ -355,7 +370,21 @@ export const GetStopsResponse = zod.object({
   "description": zod.string(),
   "severity": zod.string(),
   "routeIds": zod.array(zod.string()),
-  "source": zod.string()
+  "source": zod.string(),
+  "stopIds": zod.array(zod.string()).optional(),
+  "agencyId": zod.string().optional(),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']).optional(),
+  "systemwide": zod.boolean().optional(),
+  "updatedAt": zod.string().optional(),
+  "url": zod.string().optional(),
+  "activePeriods": zod.array(zod.object({
+  "start": zod.number().optional(),
+  "end": zod.number().optional()
+})).optional(),
+  "scopes": zod.array(zod.object({
+  "routeId": zod.string().optional(),
+  "stopId": zod.string().optional()
+})).optional()
 })),
   "accessible": zod.boolean(),
   "updatedAt": zod.string(),
@@ -380,6 +409,21 @@ export const GetStopQueryParams = zod.object({
 })
 
 export const GetStopResponse = zod.object({
+  "wmata": zod.object({
+  "kind": zod.string(),
+  "platform": zod.string().optional(),
+  "parentId": zod.string().optional(),
+  "attribution": zod.string(),
+  "url": zod.string(),
+  "timezone": zod.string(),
+  "predictions": zod.string().optional(),
+  "alerts": zod.string().optional(),
+  "locations": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "kind": zod.string()
+})).optional()
+}).optional(),
   "idfm": zod.object({
   "url": zod.string(),
   "license": zod.string(),
@@ -533,7 +577,21 @@ export const GetStopResponse = zod.object({
   "description": zod.string(),
   "severity": zod.string(),
   "routeIds": zod.array(zod.string()),
-  "source": zod.string()
+  "source": zod.string(),
+  "stopIds": zod.array(zod.string()).optional(),
+  "agencyId": zod.string().optional(),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']).optional(),
+  "systemwide": zod.boolean().optional(),
+  "updatedAt": zod.string().optional(),
+  "url": zod.string().optional(),
+  "activePeriods": zod.array(zod.object({
+  "start": zod.number().optional(),
+  "end": zod.number().optional()
+})).optional(),
+  "scopes": zod.array(zod.object({
+  "routeId": zod.string().optional(),
+  "stopId": zod.string().optional()
+})).optional()
 })),
   "accessible": zod.boolean(),
   "updatedAt": zod.string(),
@@ -619,6 +677,21 @@ export const GetRouteResponse = zod.object({
   "referenceDate": zod.string().optional().describe('Suggested historical service date for research-reference routes only')
 }),
   "stops": zod.array(zod.object({
+  "wmata": zod.object({
+  "kind": zod.string(),
+  "platform": zod.string().optional(),
+  "parentId": zod.string().optional(),
+  "attribution": zod.string(),
+  "url": zod.string(),
+  "timezone": zod.string(),
+  "predictions": zod.string().optional(),
+  "alerts": zod.string().optional(),
+  "locations": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "kind": zod.string()
+})).optional()
+}).optional(),
   "idfm": zod.object({
   "url": zod.string(),
   "license": zod.string(),
@@ -772,7 +845,21 @@ export const GetRouteResponse = zod.object({
   "description": zod.string(),
   "severity": zod.string(),
   "routeIds": zod.array(zod.string()),
-  "source": zod.string()
+  "source": zod.string(),
+  "stopIds": zod.array(zod.string()).optional(),
+  "agencyId": zod.string().optional(),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']).optional(),
+  "systemwide": zod.boolean().optional(),
+  "updatedAt": zod.string().optional(),
+  "url": zod.string().optional(),
+  "activePeriods": zod.array(zod.object({
+  "start": zod.number().optional(),
+  "end": zod.number().optional()
+})).optional(),
+  "scopes": zod.array(zod.object({
+  "routeId": zod.string().optional(),
+  "stopId": zod.string().optional()
+})).optional()
 })),
   "accessible": zod.boolean(),
   "updatedAt": zod.string(),
@@ -801,7 +888,21 @@ export const GetRouteResponse = zod.object({
   "description": zod.string(),
   "severity": zod.string(),
   "routeIds": zod.array(zod.string()),
-  "source": zod.string()
+  "source": zod.string(),
+  "stopIds": zod.array(zod.string()).optional(),
+  "agencyId": zod.string().optional(),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']).optional(),
+  "systemwide": zod.boolean().optional(),
+  "updatedAt": zod.string().optional(),
+  "url": zod.string().optional(),
+  "activePeriods": zod.array(zod.object({
+  "start": zod.number().optional(),
+  "end": zod.number().optional()
+})).optional(),
+  "scopes": zod.array(zod.object({
+  "routeId": zod.string().optional(),
+  "stopId": zod.string().optional()
+})).optional()
 })),
   "directions": zod.array(zod.string()),
   "timetableStops": zod.array(zod.object({
@@ -945,6 +1046,21 @@ export const GetCatalogResponse = zod.object({
   "referenceDate": zod.string().optional().describe('Suggested historical service date for research-reference routes only')
 })),
   "stops": zod.array(zod.object({
+  "wmata": zod.object({
+  "kind": zod.string(),
+  "platform": zod.string().optional(),
+  "parentId": zod.string().optional(),
+  "attribution": zod.string(),
+  "url": zod.string(),
+  "timezone": zod.string(),
+  "predictions": zod.string().optional(),
+  "alerts": zod.string().optional(),
+  "locations": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "kind": zod.string()
+})).optional()
+}).optional(),
   "idfm": zod.object({
   "url": zod.string(),
   "license": zod.string(),
@@ -1098,7 +1214,21 @@ export const GetCatalogResponse = zod.object({
   "description": zod.string(),
   "severity": zod.string(),
   "routeIds": zod.array(zod.string()),
-  "source": zod.string()
+  "source": zod.string(),
+  "stopIds": zod.array(zod.string()).optional(),
+  "agencyId": zod.string().optional(),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']).optional(),
+  "systemwide": zod.boolean().optional(),
+  "updatedAt": zod.string().optional(),
+  "url": zod.string().optional(),
+  "activePeriods": zod.array(zod.object({
+  "start": zod.number().optional(),
+  "end": zod.number().optional()
+})).optional(),
+  "scopes": zod.array(zod.object({
+  "routeId": zod.string().optional(),
+  "stopId": zod.string().optional()
+})).optional()
 })),
   "accessible": zod.boolean(),
   "updatedAt": zod.string(),
@@ -1563,7 +1693,21 @@ export const GetAlertsResponseItem = zod.object({
   "description": zod.string(),
   "severity": zod.string(),
   "routeIds": zod.array(zod.string()),
-  "source": zod.string()
+  "source": zod.string(),
+  "stopIds": zod.array(zod.string()).optional(),
+  "agencyId": zod.string().optional(),
+  "type": zod.enum(['subway', 'bus', 'rail', 'intercity']).optional(),
+  "systemwide": zod.boolean().optional(),
+  "updatedAt": zod.string().optional(),
+  "url": zod.string().optional(),
+  "activePeriods": zod.array(zod.object({
+  "start": zod.number().optional(),
+  "end": zod.number().optional()
+})).optional(),
+  "scopes": zod.array(zod.object({
+  "routeId": zod.string().optional(),
+  "stopId": zod.string().optional()
+})).optional()
 })
 export const GetAlertsResponse = zod.array(GetAlertsResponseItem)
 

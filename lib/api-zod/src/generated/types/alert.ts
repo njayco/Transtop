@@ -4,6 +4,9 @@
  * Api
  * OpenAPI spec version: 0.1.0
  */
+import type { AlertActivePeriodsItem } from './alertActivePeriodsItem';
+import type { AlertScopesItem } from './alertScopesItem';
+import type { AlertType } from './alertType';
 
 export interface Alert {
   id: string;
@@ -12,4 +15,12 @@ export interface Alert {
   severity: string;
   routeIds: string[];
   source: string;
+  stopIds?: string[];
+  agencyId?: string;
+  type?: AlertType;
+  systemwide?: boolean;
+  updatedAt?: string;
+  url?: string;
+  activePeriods?: AlertActivePeriodsItem[];
+  scopes?: AlertScopesItem[];
 }

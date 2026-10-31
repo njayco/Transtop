@@ -1,5 +1,6 @@
 export type Mode = "demo" | "live";
 export type TransitType = "subway" | "bus" | "rail" | "intercity";
+export interface WmataInfo {kind:string;platform?:string;parentId?:string;attribution:string;url:string;timezone:string;predictions?:string;alerts?:string;locations?:{id:string;name:string;kind:string}[]}
 export interface IdfmInfo {url:string;license:string;attribution:string;timezone:string;modeDetail?:string;publishedAt?:string;validFrom?:string;validThrough?:string;platform?:string;accessibility?:string;realtimeStatus?:string;realtimeCheckedAt?:string;realtimeUrl?:string;realtimeLicense?:string}
 export interface OdptInfo {attribution:string;url:string;license:string;terms:string;timezone:string;version:string;publishedAt:string;validFrom:string;validThrough:string;modeDetail:string;realtime:string}
 export interface TflInfo {status:string;message:string;attribution:string;url:string;timezone:string;lastSuccess?:string;platform?:string;parentId?:string}
@@ -11,7 +12,9 @@ export interface Arrival {
   status:string; scheduledAt:string; tripId?:string; rangeMax?:number; confidence?:string;
    trainNumber?:string;runId?:string;timezone?:string;publishedAt?:string;expiresAt?:string;platform?:string;
 }
-export interface TransitAlert {id:string; title:string; description:string; severity:string; routeIds:string[]; source:string}
+export interface TransitAlert {id:string; title:string; description:string; severity:string; routeIds:string[]; source:string;
+  stopIds?:string[];agencyId?:string;type?:TransitType;systemwide?:boolean;updatedAt?:string;url?:string;activePeriods?:{start?:number;end?:number}[];
+  scopes?:{routeId?:string;stopId?:string}[]}
 export interface TransitStop {
   id:string; name:string; agency:string; type:TransitType; lat:number; lon:number; distance:number; walkingMinutes:number;
   routes:TransitRoute[]; arrivals:Arrival[]; alerts:TransitAlert[]; accessible:boolean; updatedAt:string; neighborhood?:string;
@@ -22,6 +25,7 @@ export interface TransitStop {
   searchNames?:string[];
   transitland?:TransitlandInfo;
    tfl?:TflInfo;
+  wmata?:WmataInfo;
 }
 export interface TransitVehicle {id:string; lat:number; lon:number; source:string; updatedAt:string;
   routeId?:string;agencyId?:string;routeName?:string;trainNumber?:string;destination?:string;runId?:string;expiresAt?:string;vehicleType?:TransitType;color?:string}

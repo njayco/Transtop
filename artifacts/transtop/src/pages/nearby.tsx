@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { providerName } from '@/lib/provider-name';
+import { providerName,sourceMatchesMode } from '@/lib/provider-name';
 import { useLocation } from 'wouter';
 import { LocateFixed, Search, List, Map as MapIcon, X, MapPin, Globe2 } from 'lucide-react';
 import { getGetMapVehiclesQueryKey, getGetNetworkQueryKey, getGetStopsQueryKey, useGetMapVehicles, useGetNetwork, useGetSources, useGetStops, type GetMapVehiclesParams, type GetNetworkParams, type GetStopsParams } from '@workspace/api-client-react';
@@ -40,7 +40,7 @@ export default function Nearby() {
     setFilterRaw(f);
     setCursor('');
     setProvider('');
-    if (f==='intercity'||agency && !(sources.data ?? []).some((s) => s.id === agency && (f === 'all' || s.type === f||s.id==="idfm"&&["bus","subway","rail"].includes(f)))) setAgency('');
+    if (f==='intercity'||agency && !(sources.data ?? []).some((s) => s.id === agency && sourceMatchesMode(s,f))) setAgency('');
     if (f === 'intercity' || f === 'subway') setSvc('all');
   };
   const [view, setView] = useState<'list' | 'map'>('list');
@@ -61,7 +61,7 @@ export default function Nearby() {
   const agencies = useMemo(() => [...new Map([
     ...(sources.data??[]).map(s=>({id:s.id,agency:s.agency,type:s.type})),
     ...list.flatMap(s=>s.routes.map(r=>({id:r.agencyId||r.id.split(':')[0],agency:r.agency,type:r.type}))),
-  ].filter(s=>(filter==='all'?['subway','bus','rail','intercity']:[filter]).includes(s.type||'')||s.id==="idfm"&&filter!=="intercity").map(s=>[s.id,{...s,agency:providerName(s.id,s.agency)}])).values()]
+  ].filter(s=>filter==='all'?['subway','bus','rail','intercity'].includes(s.type||''):sourceMatchesMode(s,filter)).map(s=>[s.id,{...s,agency:providerName(s.id,s.agency)}])).values()]
     .sort((a,b)=>a.agency.localeCompare(b.agency)),[sources.data,list,filter]);
   const center = stops.data?.centerLat != null && stops.data?.centerLon != null
     ? { lat: stops.data.centerLat, lon: stops.data.centerLon }

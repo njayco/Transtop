@@ -4,6 +4,16 @@ A mobile-first transit app based on the creator's original Transtop concept. Ver
 
 ## Current features and recent updates
 
+### Washington Metrobus / Metrorail
+
+Direct official WMATA combined schedules add Washington-area bus stops,
+Metrorail stations/platforms, line colors, favorites and dated timetables to the
+existing rider screens. Official GTFS predictions and mode-scoped service alerts
+are checked on demand with separate freshness/status, server-only credentials
+and conservative shared request limits. Published schedules remain scheduled
+during outages; predictions never generate vehicle GPS.
+See [WMATA verified access, attribution, operations and limitations](docs/wmata.md).
+
 ### Paris / Île-de-France published schedules
 
 Official IDFM GTFS is integrated into existing location search, Nearby, maps,
